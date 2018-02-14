@@ -1,0 +1,3 @@
+#!/bin/bash
+mkdir "$1" && cd $1 && mkdir black white && cp ../empty black/black && cp ../empty black/white && cp ../empty white/black && cp ../empty white/white
+
