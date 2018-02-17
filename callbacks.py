@@ -629,20 +629,22 @@ def board_scroll_event_callback(widget, event):
 @gui_callback
 def repertoire_name_entry_callback(widget, dialog):
     G.repertoire_file_name = widget.get_text()
-    dialog.destroy()
-    return False
-
-@gui_callback
-def load_repertoire_callback(widget=None):
     try:
-        rep2 = Repertoire(repertoire_file_name)
+        rep2 = Repertoire(G.repertoire_file_name)
         if G.rep:
             G.rep.flush()
             G.rep.close()
         G.rep = rep2
         mark_nodes(G.g.root())
+        dialog.destroy()
     except:
-        display_status("Error loading repertoire '%s'." % answerList[1])
+        display_status("Error loading repertoire '%s'." % G.repertoire_file_name)
+    return False
+
+@gui_callback
+def load_repertoire_callback(widget=None):
+    G.controlPressed = False # Necessary since key release won't work since focus is moved to dialog
+    prompt(G.window, "Enter repertoire name:", repertoire_name_entry_callback)
     return False
 
 @gui_callback
