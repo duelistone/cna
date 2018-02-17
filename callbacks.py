@@ -635,10 +635,11 @@ def repertoire_name_entry_callback(widget, dialog):
             G.rep.flush()
             G.rep.close()
         G.rep = rep2
-        mark_nodes(G.g.root())
         dialog.destroy()
     except:
         display_status("Error loading repertoire '%s'." % G.repertoire_file_name)
+    mark_nodes(G.g.root())
+    update_pgn_message()
     return False
 
 @gui_callback
