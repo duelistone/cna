@@ -7,7 +7,7 @@ from gi.repository import Gdk as gdk
 from gi.repository import GLib
 import chess, chess.uci
 import global_variables as G
-import signal
+import signal, math
 
 '''Module for functions for working with engine.'''
 
@@ -36,13 +36,41 @@ def engine_go(engine):
 
 # Prepare engine
 def engine_init():
-    stockfish = chess.uci.popen_engine("stockfish")
-    stockfish.uci()
-    stockfish.setoption({"MultiPV" : G.NUM_VARIATIONS, "Hash" : G.HASH_SIZE, "Threads" : G.NUM_THREADS, "SyzygyPath" : "/home/duelist/tb/tablebases"})
+    engine = chess.uci.popen_engine("stockfish")
+    engine.uci()
+    engine.setoption({"MultiPV" : G.NUM_VARIATIONS, "Hash" : G.HASH_SIZE, "Threads" : G.NUM_THREADS, "SyzygyPath" : "/home/duelist/tb/tablebases"})
     info_handler = MyInfoHandler()
-    stockfish.info_handlers.append(info_handler)
-    stockfish.isready()
-    return stockfish
+    engine.info_handlers.append(info_handler)
+    engine.isready()
+    return engine
+
+def weak_engine_init(level):
+    weak_engine = chess.uci.popen_engine("stockfish")
+    weak_engine.uci()
+    weak_engine.setoption({"Skill Level": level})
+    weak_engine.level = level
+    info_handler = EvalInfoHandler()
+    weak_engine.info_handlers.append(info_handler)
+    weak_engine.isready()
+    return weak_engine
+
+def score_to_level(score, defaultLevel):
+    levelSize = 50
+    levelsFromEqual = int(abs(score / levelSize))
+    sign = int(score / abs(score))
+    proposal = defaultLevel - sign * levelsFromEqual
+    print(proposal)
+    if proposal < 0: 
+        proposal = 0
+    elif proposal > 20:
+        proposal = 20
+    return proposal
+
+def change_level(engine, new_level):
+    # Meant for usage with a weak_engine
+    engine.setoption({"Skill Level": new_level})
+    engine.isready()
+    engine.level = new_level
 
 def change_multipv(n):
     if G.stockfish != None:
@@ -56,6 +84,17 @@ def change_multipv(n):
 # Display analysis lines
 def display_stockfish_string(s):
     GLib.idle_add(lambda x : G.stockfish_buffer.set_text(x), s)
+
+# Simple handler to keep track of evaluation of search
+class EvalInfoHandler(chess.uci.InfoHandler):
+    def __init__(self):
+        super(EvalInfoHandler, self).__init__()
+        self.e = 0 # To store current eval
+
+    def score(self, cp, mate, lowerbound, upperbound):
+        if not lowerbound and not upperbound:
+            self.e = chess.uci.Score(cp, mate)
+        super(EvalInfoHandler, self).score(cp, mate, lowerbound, upperbound)
 
 # Handler to receive data from engine
 class MyInfoHandler(chess.uci.InfoHandler):

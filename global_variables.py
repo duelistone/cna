@@ -14,7 +14,6 @@ g = chess.pgn.Game()
 player = chess.WHITE
 games = [g]
 currentGame = 0
-board_flipped = False
 
 # Gtk global constants
 # These will be defined after the builder loads the ui file
@@ -65,6 +64,13 @@ inCommand = None
 currentMove = ""
 currentCommand = ""
 
+# Generator for opening trainer positions
+ot_gen = None
+
+# Callback for after legal move is complete
+# Default is to do nothing
+move_completed_callback = lambda x : None
+
 # Engine
 stockfish_text_lock = threading.Lock()
 stockfish_enabled = False
@@ -73,3 +79,8 @@ NUM_THREADS = 2
 HASH_SIZE = 4096
 stockfish = None 
 playLevel = 20 # Int represents depth, float represents time
+
+# Weak engine
+weak_stockfish = None
+weak_stockfish_enabled = False
+WEAK_STOCKFISH_DEFAULT_LEVEL = 4

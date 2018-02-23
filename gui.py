@@ -17,7 +17,20 @@ def main():
     builder = gtk.Builder()
     builder.add_from_file("/home/duelist/cna/chessboard.ui")
     builder.connect_signals(G.handlers)
-    preparations(builder)
+    if '-b' in sys.argv:
+        G.player = chess.BLACK
+        sys.argv.remove('-b')
+    useOpeningMode = '--ot' in sys.argv
+    if useOpeningMode:
+        otIndex = sys.argv.index('--ot')
+        fenString = " ".join(sys.argv[otIndex + 1:])
+        del sys.argv[otIndex:]
+        G.ot_board = chess.Board(fen=fenString)
+        if G.ot_board == None: raise ValueError("Bad FEN") # Temporary
+        preparations(builder)
+        ot_correct_answer_callback()
+    else:
+        preparations(builder)
     G.window.show_all()
     G.stockfish_textview.hide()
     G.glib_mainloop.run()
@@ -60,17 +73,13 @@ def preparations(builder):
     if len(sys.argv) > 1:
         load_new_game_from_pgn_file(sys.argv[1])
     
-    # Flip board if necessary
-    if G.g.board().turn == chess.BLACK:
-        G.board_flipped = True
-
     # Prepare repertoire and mark nodes
     try:
         G.rep = Repertoire("main.rep")
     except:
         pass
     mark_nodes(G.g.root())
-
+    
 GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGINT, signal_handler, signal.SIGINT)
 GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGTERM, signal_handler, signal.SIGTERM)
 

@@ -17,6 +17,7 @@ from mmrw import *
 from engine import *
 from drawing import *
 from dfs import *
+from rep_visitor import rep_visitor
 from pgn_visitor import game_gui_string
 
 # Helper functions
@@ -28,11 +29,13 @@ def make_move(m):
     if m in moves:
         G.g = G.g.variation(m)
         update_pgn_textview_move()
+        G.move_completed_callback(m)
         return True
     elif m in G.g.board().legal_moves:
         G.g = G.g.add_main_variation(m)
         mark_nodes(G.g)
         update_pgn_message()
+        G.move_completed_callback(m)
         return True
     return False
 
@@ -185,7 +188,7 @@ def board_coords_to_square(x, y):
     square_size = get_square_size(G.board_display)
     board_x = x // square_size
     board_y = y // square_size
-    if not G.board_flipped:
+    if G.player == chess.WHITE:
         board_y = 7 - board_y
     else:
         board_x = 7 - board_x
@@ -221,7 +224,6 @@ def load_new_game_from_board(board):
         G.currentGame += 1
         G.g = new_game
         G.player = board.turn
-        G.board_flipped = False if G.player == chess.WHITE else True
         G.board_display.queue_draw()
         update_pgn_message()
     except:
@@ -269,7 +271,6 @@ def load_new_game_from_pgn_file(file_name):
     G.currentGame += 1
     G.g = new_game
     G.player = G.g.board().turn
-    G.board_flipped = False if G.player == chess.WHITE else True
     update_pgn_message()
     return True
 
@@ -506,8 +507,12 @@ def delete_children_callback(widget=None):
 @gui_callback
 def opening_test_callback(widget=None):
     if G.rep:
-        create_opening_game("currentTest.pgn", G.rep, G.player, G.g)
-        subprocess.Popen(['ot', 'currentTest.pgn'])
+        #create_opening_game("currentTest.pgn", G.rep, G.player, G.g)
+        #subprocess.Popen(['ot', 'currentTest.pgn'])
+        if G.player == chess.WHITE:
+            subprocess.Popen(['python3', 'gui.py', '--ot', G.g.board().fen()])
+        else:
+            subprocess.Popen(['python3', 'gui.py', '-b', '--ot', G.g.board().fen()])
     else:
         display_status("No repertoire file loaded.")
     return False 
@@ -525,9 +530,9 @@ def board_draw_callback(widget, cr):
     # Color light squares
     cr.set_line_width(0)
     for file in range(8):
-        x = 7 - file if G.board_flipped else file
+        x = 7 - file if G.player == chess.BLACK else file
         for rank in range(7, -1, -1):
-            y = 7 - rank if G.board_flipped else rank
+            y = 7 - rank if G.player == chess.BLACK else rank
             if (x + y) % 2 == 0:
                 # Dark squares
                 cr.set_source_rgb(0.450980, 0.53725, 0.713725)
@@ -925,29 +930,56 @@ def key_press_callback(widget, event):
         G.currentCommand = ""
         G.inMove = False
         G.currentMove = ""
+    elif event.keyval == gdk.KEY_t:
+        # Play engine in training mode
+        if G.weak_stockfish == None:
+            G.weak_stockfish = weak_engine_init(G.WEAK_STOCKFISH_DEFAULT_LEVEL)
+        while 1:
+            G.weak_stockfish.position(G.g.board())
+            best, _ = G.weak_stockfish.go(movetime=1000)
+            score = G.weak_stockfish.info_handlers[0].e
+            print(score)
+            if score.cp != None:
+                correctLevel = score_to_level(score.cp, G.WEAK_STOCKFISH_DEFAULT_LEVEL)
+                if correctLevel == G.weak_stockfish.level:
+                    break
+                change_level(G.weak_stockfish, correctLevel)
+            else:
+                # If a mate was found, we don't care about the level right now
+                break
+        display_status("Current level: %s" % G.weak_stockfish.level)
+        make_move(best)
     elif event.keyval == gdk.KEY_c:
+        # Add comment
         commentPrompt(G.window, "Edit comment:", comment_key_press_callback, G.g.comment)
     elif event.keyval == gdk.KEY_f:
-        G.player = not G.player # TODO: Remove redundancy
-        G.board_flipped = not G.board_flipped
+        # Flip board
+        G.player = not G.player
         mark_nodes(G.g.root())
         update_pgn_message()
     elif event.keyval == gdk.KEY_g:
+        # Go to beginning
         G.g = G.g.root()
         update_pgn_textview_move()
     elif event.keyval == gdk.KEY_G:
+        # Go to end
         while len(G.g.variations) > 0:
             G.g = G.g.variation(0)
         update_pgn_textview_move()
     elif event.keyval == gdk.KEY_v:
+        # Show variations in current game
         display_variations()
     elif event.keyval == gdk.KEY_Left or event.keyval == gdk.KEY_k:
+        # Go back
         go_back()
     elif event.keyval == gdk.KEY_Right or event.keyval == gdk.KEY_j:
+        # Go forward
         go_forward()
     elif event.keyval == gdk.KEY_Down:
+        # Demote current variation
         demote_callback()
     elif event.keyval == gdk.KEY_Up:
+        # Promote current variation
         promote_callback()
 
     # Redraw board
@@ -957,6 +989,32 @@ def key_press_callback(widget, event):
 
 # Other callbacks
 
+def ot_move_completed_callback(answer):
+    # Currying
+    def f(guess):
+        if guess.from_square == answer.from_square and guess.to_square == answer.to_square and guess.promotion == answer.promotion:
+            ot_correct_answer_callback()
+        else:
+            go_back()
+    return f
+
+def ot_correct_answer_callback():
+    # Load generator if first time
+    if G.ot_gen == None and G.ot_board != None:
+        G.ot_gen = rep_visitor(G.ot_board, G.player)
+
+    # Get next position
+    try:
+        b, m = next(G.ot_gen)
+    except StopIteration:
+        display_status("Training complete!")
+        G.move_completed_callback = ot_move_completed_callback(chess.Move.null())
+        return
+
+    # Set new answer + callback, and load new board
+    G.move_completed_callback = ot_move_completed_callback(m) # This is a function
+    load_new_game_from_board(b)
+    
 def cleanup(showMessage=False):
     if G.stockfish != None:
         G.stockfish.process.process.send_signal(signal.SIGCONT) # In case stopped
