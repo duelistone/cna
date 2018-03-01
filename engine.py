@@ -31,7 +31,9 @@ def find_current_best_move(engine):
 
 # Standard infinite go
 def engine_go(engine):
+    engine.isready()
     engine.position(engine.info_handlers[0].curr_pos)
+    engine.isready()
     engine.go(infinite=True, async_callback=True)
 
 # Prepare engine
@@ -57,9 +59,8 @@ def weak_engine_init(level):
 def score_to_level(score, defaultLevel):
     levelSize = 50
     levelsFromEqual = int(abs(score / levelSize))
-    sign = int(score / abs(score))
+    sign = 1 if score >= 0 else -1
     proposal = defaultLevel - sign * levelsFromEqual
-    print(proposal)
     if proposal < 0: 
         proposal = 0
     elif proposal > 20:
