@@ -14,7 +14,7 @@ def game_gui_string_list(game, offset=0, firstMoveOfVariation=False, firstMoveAf
         G.bookRanges = []
         G.commentRanges = []
         # Header
-        headerString = "%s vs %s, %s, %s, %s\n\n" % (game.root().headers["White"], game.root().headers["Black"], game.root().headers["Event"], game.root().headers["Site"], game.root().headers["Date"])
+        headerString = "%s vs %s, %s, %s, %s, %s\n\n" % (game.headers["White"], game.headers["Black"], game.headers["Event"], game.headers["Site"], game.headers["Date"], game.headers["Result"])
         strings.append(headerString)
         offset += len(headerString)
         # Move string
@@ -83,6 +83,14 @@ def game_gui_string_list(game, offset=0, firstMoveOfVariation=False, firstMoveAf
         offset += len(strings[-1])
         strings.append(" ")
         offset += 1
+        # NAG
+        if len(game.nags) > 0:
+            nag_strings = ["", "!", "?", "\u203c", "\u2047", "\u2049", "\u2048", "\u25a1", "", "", "=", "", "", "\u221e", "\u2a72", "\u2a71", "\u00b1", "\u2213", "+-", "-+", "1-0", "0-1", "\u2a00", "\u2a00"] + (256 - 24) * [""]
+            for e in game.nags:
+                strings.append(nag_strings[e])
+                offset += len(strings[-1])
+                strings.append(" ")
+                offset += 1
         # Comment
         commentLength = len(game.comment)
         if commentLength > 0:

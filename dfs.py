@@ -1,9 +1,9 @@
 # dfs.py
 
 '''Depth first search module, made to work with game trees created by 
-python-chess module. Also includes a random search function.'''
+python-chess module. Also includes a random search function, and a copy game function.'''
 
-import random
+import random, chess.pgn
 
 def dfs(node, color=None):
     '''Generates games, one for each line encountered in a
@@ -48,3 +48,26 @@ def countNodes(node, color=None):
     for v in node.variations:
         result += countNodes(v, color)
     return result
+
+def copy_game(game, condition_function=lambda x:True, parent=None):
+    '''Traverses a game recursively and copies it, ignoring any
+    nodes not satisfying the given condition (and any of its subnodes).'''
+    if game.parent == None:
+        new_game = chess.pgn.Game()
+        new_game.headers = game.headers
+    else:
+        new_game = chess.pgn.GameNode()
+    # Copy data (except parent and variations, which are copied further below)
+    new_game.parent = parent
+    new_game.move = game.move # We're trusting that moves are immutable here
+    new_game.nags = game.nags # ...and this set as immutable, which it isn't.
+    new_game.comment = game.comment
+    new_game.starting_comment = game.starting_comment
+    # Add subnodes
+    new_game.variations = []
+    for child in game.variations:
+        if condition_function(child):
+            child_copy = copy_game(child, condition_function, new_game)
+            new_game.variations.append(child_copy)
+    return new_game
+

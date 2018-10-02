@@ -10,7 +10,7 @@ from gi.repository import Gdk as gdk
 from gi.repository import Pango as pango
 from gi.repository import GLib
 import global_variables as G
-import signal, math, subprocess, sys, os, os.path
+import signal, math, subprocess, sys, os, os.path, shutil, chess, chess.pgn
 from functools import reduce
 from opening_pgn import *
 from mmrw import *
@@ -33,7 +33,7 @@ def make_move(m):
         return True
     elif m in G.g.board().legal_moves:
         G.g = G.g.add_main_variation(m)
-        mark_nodes(G.g)
+        mark_nodes(G.g.root())
         update_pgn_message()
         G.move_completed_callback(m)
         return True
@@ -71,9 +71,8 @@ def mark_nodes(game):
     if num_children > 0:
         mark_nodes(game.variation(0))
 
-def save_special_nodes_to_repertoire(game):
-    '''Adds new nodes beneath an input node into repertoire for
-    the G.player side.'''
+def save_special_node_to_repertoire(game):
+    '''Adds new node into repertoire for G.player side.'''
     # Select correct helper functions for each side
     findMoves = G.rep.findMovesWhite
     append = G.rep.appendWhite
@@ -91,6 +90,11 @@ def save_special_nodes_to_repertoire(game):
                 break
         if not moveInBook: # If it isn't in the book, add it
             append(board, move)
+
+def save_special_nodes_to_repertoire(game):
+    '''Adds new nodes beneath an input node into repertoire for
+    the G.player side.'''
+    save_special_node_to_repertoire(game)
     # Recursion
     for node in game.variations:
         if node.special:
@@ -101,14 +105,8 @@ def display_status(s):
     G.status_bar.push(G.status_bar_cid, s)
 
 def update_game_info():
-    stringToDisplay = "%s vs %s, %s, %s, %s" % (G.g.root().headers["White"], G.g.root().headers["Black"], G.g.root().headers["Event"], G.g.root().headers["Site"], G.g.root().headers["Date"])
+    stringToDisplay = "%s vs %s, %s, %s, %s, %s" % (G.g.root().headers["White"], G.g.root().headers["Black"], G.g.root().headers["Event"], G.g.root().headers["Site"], G.g.root().headers["Date"], G.g.root().headers["Result"])
     display_status(stringToDisplay)
-
-def display_variations():
-    words = ["Variations:"]
-    for child in G.g.variations:
-        words.append(G.g.board().san(child.move))
-    display_status(" ".join(words))
 
 def delete_opening_node(color, game):
     # Cannot delete root node
@@ -124,7 +122,7 @@ def delete_opening_node(color, game):
 
 def commonString(s, t):
     i = 0
-    while i < len(s):
+    while i < len(s) and i < len(t):
         if s[i] != t[i]:
             break
         i += 1
@@ -184,6 +182,28 @@ def commentPrompt(parent, message, callback, startingText=""):
     content_area.add(entry)
     dialog.show_all()
 
+def multiPrompt(parent, messages, callback):
+    '''An extension of a prompt with n entries.'''
+    # Widget definitions
+    dialog = gtk.Dialog(title="Message", parent=parent, flags=0); # 0 is for DIALOG_DESTROY_WITH_PARENT
+    content_area = dialog.get_content_area()
+    labels = []
+    entries = []
+    for message in messages: 
+        labels.append(gtk.Label(message))
+        entries.append(gtk.Entry())
+
+    # Callbacks
+    for entry in entries:
+        entry.connect("activate", callback, dialog, entries) # Note extra arguments!
+    dialog.connect("response", lambda x, _: x.destroy())
+
+    # Put it all together
+    for i in range(len(messages)):
+        content_area.add(labels[i])
+        content_area.add(entries[i])
+    dialog.show_all()
+    
 def board_coords_to_square(x, y):
     square_size = get_square_size(G.board_display)
     board_x = x // square_size
@@ -197,16 +217,6 @@ def board_coords_to_square(x, y):
         return chess.square(int(board_x), int(board_y))
     return None
 
-def go_back():
-    if G.g.parent:
-        G.g = G.g.parent
-    update_pgn_textview_move()
-
-def go_forward():
-    if len(G.g.variations) > 0:
-        G.g = G.g.variation(0)
-    update_pgn_textview_move()
-
 def findFork(game):
     fork = game.parent
     transitionMove = game.move
@@ -215,19 +225,23 @@ def findFork(game):
         fork = fork.parent
     return fork, transitionMove
 
+def load_new_game_from_game(game, player=chess.WHITE, save_file_name="savedGame.pgn"):
+    # Warning: game isn't copied by value, so changing 
+    # the input game later will also change the G.g game.
+    G.games.append(game)
+    G.save_file_names.append("savedGame.pgn")
+    G.save_file_name = save_file_name
+    G.currentGame += 1
+    G.g = game
+    G.player = player
+    G.board_display.queue_draw()
+    mark_nodes(G.g)
+    update_pgn_message()
+    
 def load_new_game_from_board(board):
     new_game = chess.pgn.Game()
-    try:
-        new_game.setup(board)
-        mark_nodes(new_game)
-        G.games.append(new_game)
-        G.currentGame += 1
-        G.g = new_game
-        G.player = board.turn
-        G.board_display.queue_draw()
-        update_pgn_message()
-    except:
-        display_status("Unexpected error loading FEN.") # Errors caused by bad FEN should be handled elsewhere
+    new_game.setup(board)
+    load_new_game_from_game(new_game, board.turn)
 
 def load_new_game_from_pgn_file(file_name):
     pgnFile = None
@@ -246,16 +260,17 @@ def load_new_game_from_pgn_file(file_name):
     # Read game from pgn file
     if pgnFile != None:
         try:
+            offset = pgnFile.tell()
             firstChar = pgnFile.read(1)
             if firstChar == '%':
                 restOfLine = pgnFile.readline()
                 movePath = map(int, restOfLine.split())
             else:
-                pgnFile.seek(0)
+                pgnFile.seek(offset)
             new_game = chess.pgn.read_game(pgnFile)
             mark_nodes(new_game)
         except:
-            stringToDisplay = "Error loading PGN file '%s'." % file_name
+            stringToDisplay = "Error loading PGN file '%s', or end of file reached." % file_name
             display_status(stringToDisplay)
             return False
         try:
@@ -263,25 +278,29 @@ def load_new_game_from_pgn_file(file_name):
                 new_game = new_game.variation(m)
         except:
             pass
-        try:
-            pgnFile.close()
-        except:
-            pass
     G.games.append(new_game)
+    G.save_file_names.append(file_name if type(file_name) == str else file_name.name)
+    G.pgnFile = pgnFile
     G.currentGame += 1
     G.g = new_game
+    G.save_file_name = G.save_file_names[-1]
     G.player = G.g.board().turn
     update_pgn_message()
+    update_game_info()
     return True
 
 def update_pgn_textview_tags():
     if G.pgn_textview_enabled:
+        # Useful iterators
         veryStart = G.pgn_buffer.get_start_iter()
         veryEnd = G.pgn_buffer.get_end_iter()
-        # Are these necessary?
-        #G.pgn_buffer.remove_tag_by_name("special", veryStart, veryEnd)
-        #G.pgn_buffer.remove_tag_by_name("book", veryStart, veryEnd)
-        #G.pgn_buffer.remove_tag_by_name("comment", veryStart, veryEnd)
+
+        # Are these necessary to clear the old tags?
+        G.pgn_buffer.remove_tag_by_name("special", veryStart, veryEnd)
+        G.pgn_buffer.remove_tag_by_name("book", veryStart, veryEnd)
+        G.pgn_buffer.remove_tag_by_name("comment", veryStart, veryEnd)
+
+        # Applying tags
         G.pgn_buffer.apply_tag_by_name("monospace", veryStart, veryEnd)
         for start, end in G.specialRanges:
             start = G.pgn_buffer.get_iter_at_offset(start)
@@ -304,6 +323,7 @@ def update_pgn_message():
 
         # Update text tags
         update_pgn_textview_tags()
+    G.pgn_textview.queue_draw()
 
 def update_pgn_textview_move():
     if G.pgn_textview_enabled:
@@ -313,6 +333,23 @@ def update_pgn_textview_move():
         end = G.pgn_buffer.get_iter_at_offset(end)
         G.pgn_buffer.apply_tag_by_name("current", start, end)
         G.pgn_textview.scroll_to_iter(start, 0, False, 0.5, 0.5)
+
+def make_report():
+    if G.rep:
+        create_opening_game("currentTest.pgn", G.rep, G.player, G.g)
+        splitter = subprocess.Popen(["split_game", "currentTest.pgn", "-o"])
+        file_names = ["currentTest.pgn", "currentTest.pgn.split"] + list(map(lambda x : G.rep.directory + os.sep + 'games' + os.sep + x, G.rep.list_games(G.g.board())))
+        reportFile = open("currentReport.pgn", 'w')
+        splitter.wait()
+        for name in file_names:
+            fil = open(name, 'r')
+            shutil.copyfileobj(fil, reportFile)
+            print(file=reportFile)
+        reportFile.close()
+        display_status("Report saved to currentReport.pgn.")
+    else:
+        display_status("No repertoire file loaded.")
+    return False
 
 def execute_command():
     pass
@@ -339,14 +376,63 @@ def gui_callback(cb):
 # GUI callbacks
 
 @gui_callback
-def opening_save_callback(widget=None):
-    if G.player == chess.BLACK:
-        return opening_black_save_callback()
-    else:
-        return opening_white_save_callback()
+def flip_callback(widget=None):
+    # Flip board
+    if not G.inMove:
+        G.player = not G.player
+        mark_nodes(G.g.root())
+        update_pgn_message()
+        G.board_display.queue_draw()
+    return False
 
 @gui_callback
-def opening_white_save_callback(widget=None):
+def go_back_callback(widget=None):
+    if G.g.parent:
+        G.g = G.g.parent
+    update_pgn_textview_move()
+    G.board_display.queue_draw()
+    return False
+
+@gui_callback
+def go_forward_callback(widget=None):
+    if len(G.g.variations) > 0:
+        G.g = G.g.variation(0)
+    update_pgn_textview_move()
+    G.board_display.queue_draw()
+    return False
+
+@gui_callback
+def go_to_beginning_callback(widget=None):
+    if not G.inMove:
+        G.g = G.g.root()
+        update_pgn_textview_move()
+        G.board_display.queue_draw()
+    return False
+
+@gui_callback
+def go_to_end_callback(widget=None):
+    if not G.inMove:
+        while len(G.g.variations) > 0:
+            G.g = G.g.variation(0)
+        update_pgn_textview_move()
+        G.board_display.queue_draw()
+    return False
+    
+@gui_callback
+def add_comment_callback(widget=None):
+    if not G.inMove:
+        commentPrompt(G.window, "Edit comment:", comment_key_press_callback, G.g.comment)
+    return False
+
+@gui_callback
+def opening_games_callback(widget=None):
+    games = G.rep.list_games(G.g.board())
+    display_string = " ".join(games)
+    display_status(display_string)
+    return False
+
+@gui_callback
+def opening_save_callback(widget=None):
     if G.rep:
         save_special_nodes_to_repertoire(G.g.root())
         G.rep.flush()
@@ -357,14 +443,42 @@ def opening_white_save_callback(widget=None):
     return False
 
 @gui_callback
-def opening_black_save_callback(widget=None):
+def opening_single_save_callback(widget=None):
     if G.rep:
-        save_special_nodes_to_repertoire(G.g.root())
+        save_special_node_to_repertoire(G.g)
         G.rep.flush()
         mark_nodes(G.g.root())
         update_pgn_message()
     else:
         display_status("No repertoire file loaded.")
+    return False    
+
+@gui_callback
+def opening_save_game_callback(widget=None):
+    if G.rep:
+        G.rep.add_games([G.g.root()])
+    else:
+        display_status("No repertoire file loaded.")
+    return False
+
+@gui_callback
+def display_repertoire_moves_callback(widget=None):
+    if G.rep:
+        words = ["Repertoire moves:"]
+        board = G.g.board()
+        for move in G.rep.findMoves(G.player, board):
+            words.append(board.san(move))
+        display_status(" ".join(words))
+    else:
+        display_status("No repertoire loaded.")
+    return True
+
+@gui_callback
+def display_variations_callback(widget=None):
+    words = ["Variations:"]
+    for child in G.g.variations:
+        words.append(G.g.board().san(child.move))
+    display_status(" ".join(words))
     return False
 
 @gui_callback
@@ -411,6 +525,7 @@ def load_fen_entry_callback(widget, dialog):
     fen_string = widget.get_text()
     G.selection.set_text(fen_string, -1) # To make already typed FEN retrievable if something goes wrong
     board = None
+    # TODO: Put the FEN logic in a function like load_new_game_from_*
     try:
         board = chess.Board(fen_string)
     except ValueError:
@@ -420,13 +535,100 @@ def load_fen_entry_callback(widget, dialog):
         load_new_game_from_board(board)
         dialog.destroy()
         G.board_display.queue_draw()
-    else:
-        success = load_new_game_from_pgn_file(fen_string)
-        if success:
-            dialog.destroy()
-            G.save_file_name = fen_string
+    elif load_new_game_from_pgn_file(fen_string):
+        dialog.destroy()
         G.board_display.queue_draw()
-    # TODO: Also allow pasted PGN and list of pieces
+    elif load_new_game_from_piece_list(fen_string) or load_new_game_from_pgn_string(fen_string):
+        dialog.destroy()
+        G.save_file_name = "savedGame.pgn"
+        G.board_display.queue_draw()
+        display_status("Loaded input position or PGN string")
+    return False
+
+def load_new_game_from_piece_list(piece_list_string):
+    words = piece_list_string.split()
+    isWhiteMarker = lambda x : x in ["W:", "w:", "W", "w"]
+    isBlackMarker = lambda x : x in ["B:", "b:", "B", "b"]
+
+    # Determine turn
+    turn = chess.WHITE
+    if len(words) < 1 and isBlackMarker(words[-1]):
+            turn = chess.BLACK
+    words = words[:-1]
+
+    # Get pieces
+    if len(words) < 1 and not isWhiteMarker(words[0]):
+        return False
+    i = 1
+    whitePieces = []
+    blackPieces = []
+    currentList = whitePieces
+    while i < len(words):
+        if isBlackMarker(words[i]):
+            currentList = blackPieces
+            i += 1
+            continue
+
+        # Get square
+        try:
+            square = chess.SQUARE_NAMES.index(words[i][-2:])
+            if len(words[i]) == 2:
+                piece_type = chess.PAWN
+            else:
+                piece_type = [None, None, 'N', 'B', 'R', 'Q', 'K'].index(words[i][0])
+            currentList.append((piece_type, square))
+        except:
+            return False
+
+        i += 1
+
+    # Place pieces
+    board = chess.Board(fen=None)
+    board.turn = turn
+    for pt, sq in whitePieces:
+        p = chess.Piece(pt, chess.WHITE)
+        board.set_piece_at(sq, p)
+    for pt, sq in blackPieces:
+        p = chess.Piece(pt, chess.BLACK)
+        board.set_piece_at(sq, p)
+
+    # Load game
+    try:
+        game = chess.pgn.Game()
+        game.setup(board)
+        load_new_game_from_game(game)
+    except:
+        return False
+
+    return True
+
+def load_new_game_from_pgn_string(pgn_string):
+    pgnFile = io.StringIO(pgn_string)
+    game = chess.pgn.read_game(pgnFile)
+    if game != None:
+        load_new_game_from_game(game)
+        return True
+    else:
+        return False
+
+@gui_callback
+def header_entry_callback(widget, dialog, entries):
+    if len(entries) != 2:
+        # Error...incorrect number of entries
+        # Ignore for now
+        return
+    tag = entries[0].get_text()
+    value = entries[1].get_text()
+    G.g.root().headers[tag] = value
+    dialog.destroy()
+    update_pgn_message()
+    return False
+
+@gui_callback
+def header_set_callback(widget=None):
+    G.controlPressed = False
+    messages = ["Tag name (defaults: Event, Site, Date, Round, White, Black, Result)", "Value"]
+    multiPrompt(G.window, messages, header_entry_callback)
     return False
 
 @gui_callback
@@ -434,8 +636,10 @@ def previous_game_callback(widget=None):
     if G.currentGame > 0:
         G.currentGame -= 1
         G.g = G.games[G.currentGame]
+        G.save_file_name = G.save_file_names[G.currentGame]
         G.board_display.queue_draw()
         update_pgn_message()
+        update_game_info()
     return False
 
 @gui_callback
@@ -443,14 +647,14 @@ def next_game_callback(widget=None):
     if G.currentGame < len(G.games) - 1:
         G.currentGame += 1
         G.g = G.games[G.currentGame]
+        G.save_file_name = G.save_file_names[G.currentGame]
         G.board_display.queue_draw()
         update_pgn_message()
+        update_game_info()
     elif G.currentGame == len(G.games) - 1 and G.pgnFile != None:
         # Try to read next game, if not give up.
-        try:
-            load_new_game_from_pgn_file(G.pgnFile) # Already updates pgn message
-        except:
-            return
+        success = load_new_game_from_pgn_file(G.pgnFile) # Already updates pgn message
+        if not success: return False
         G.board_display.queue_draw()
 
     return False
@@ -460,6 +664,7 @@ def demote_callback(widget=None):
     if G.g.parent != None:
         fork, transitionMove = findFork(G.g)
         fork.demote(transitionMove)
+        mark_nodes(G.g.root())
         update_pgn_message()
     return False
 
@@ -468,6 +673,7 @@ def promote_callback(widget=None):
     if G.g.parent != None:
         fork, transitionMove = findFork(G.g)
         fork.promote(transitionMove)
+        mark_nodes(G.g.root())
         update_pgn_message()
     return False
 
@@ -476,6 +682,7 @@ def promote_to_main_callback(widget=None):
     if G.g.parent != None:
         fork, transitionMove = findFork(G.g)
         fork.promote_to_main(transitionMove)
+        mark_nodes(G.g.root())
         update_pgn_message()
     return False
 
@@ -486,6 +693,7 @@ def demote_to_last_callback(widget=None):
         fork, transitionMove = findFork(G.g)
         for i in range(len(fork.variations) - 1):
             fork.demote(transitionMove)
+        mark_nodes(G.g.root())
         update_pgn_message()
     return False
 
@@ -501,13 +709,22 @@ def delete_children_callback(widget=None):
         G.g = G.g.parent
         G.g.remove_variation(var.move)
         G.board_display.queue_draw()
+    mark_nodes(G.g.root())
     update_pgn_message()
     return False
 
 @gui_callback
+def delete_nonspecial_nodes_callback(widget=None):
+    # Opens new game with just special nodes
+    game = copy_game(G.g.root(), lambda node : node.special)
+    print(game)
+    load_new_game_from_game(game)
+    return False
+    
+@gui_callback
 def opening_test_callback(widget=None):
     if G.rep:
-        #create_opening_game("currentTest.pgn", G.rep, G.player, G.g)
+        create_opening_game("currentTest.pgn", G.rep, G.player, G.g)
         #subprocess.Popen(['ot', 'currentTest.pgn'])
         if G.player == chess.WHITE:
             subprocess.Popen(['python3', 'gui.py', '--ot', G.g.board().fen()])
@@ -625,10 +842,9 @@ def board_mouse_move_callback(widget, event):
 @gui_callback
 def board_scroll_event_callback(widget, event):
     if event.direction == gdk.ScrollDirection.UP:
-        go_back()
+        go_back_callback()
     elif event.direction == gdk.ScrollDirection.DOWN:
-        go_forward()
-    G.board_display.queue_draw()
+        go_forward_callback()
     return False
 
 @gui_callback
@@ -813,6 +1029,11 @@ def load_fen_callback(widget=None):
     return False
 
 @gui_callback
+def make_report_callback(widget=None):
+    make_report()
+    return False
+
+@gui_callback
 def textview_mouse_pressed_callback(widget, event):
     text_window = gtk.TextWindowType.WIDGET
     pressed_tuple = widget.window_to_buffer_coords(text_window, event.x, event.y)
@@ -864,10 +1085,20 @@ def comment_key_press_callback(widget, event, dialog=None):
 @gui_callback
 def key_press_callback(widget, event):
     # Check for modifier keys
-    if G.controlPressed:
+    if G.controlPressed or event.keyval in G.ignoreKeys:
         return False
 
-    # Check if inputting move or command
+    # Deal with annoying arrow key GTK exception manually
+    if event.keyval == gdk.KEY_Left:
+        return go_back_callback()
+    elif event.keyval == gdk.KEY_Right:
+        return go_forward_callback()
+    elif event.keyval == gdk.KEY_Down:
+        return demote_callback()
+    elif event.keyval == gdk.KEY_Up:
+        return promote_callback()
+        
+    # Check if inputting move
     if G.inMove:
         completionString = ""
         if event.keyval in G.escapeKeys:
@@ -881,9 +1112,13 @@ def key_press_callback(widget, event):
             G.currentMove = G.currentMove[:-1]
         else:
             c = gdk.keyval_name(event.keyval)
-            if len(c) == 1 or c == "minus":
+            if len(c) == 1 or c in ["minus", "plus", "equal"]:
                 if c == "minus":
                     c = '-'
+                elif c == "plus":
+                    c = '+'
+                elif c == "equal":
+                    c = '='
                 G.currentMove += c
         try:
             parsedMove = G.g.board().parse_san(G.currentMove)
@@ -896,24 +1131,6 @@ def key_press_callback(widget, event):
             pass
         display_status("Inputting move: %s%s" % (G.currentMove, completionString))
         return False
-    elif G.inCommand:
-        if event.keyval in G.escapeKeys:
-            G.inCommand = False
-            G.currentCommand = ""
-            return False
-        if event.keyval == gdk.KEY_Return:
-            execute_command(G.currentCommand)
-            G.currentCommand = ""
-        elif event.keyval == gdk.KEY_BackSpace:
-            G.currentCommand = G.currentCommand[:-1]
-        elif event.keyval == gdk.KEY_Tab:
-            G.currentCommand = command_completion(G.currentCommand)
-        else:
-            c = gdk.keyval_name(event.keyval)
-            if c.isalnum():
-                G.currentCommand += c
-            display_status(":%s" % G.currentCommand)
-        return False
 
     # Casework
     if event.keyval in [gdk.KEY_Control_L, gdk.KEY_Control_R]:
@@ -921,15 +1138,6 @@ def key_press_callback(widget, event):
     elif event.keyval == gdk.KEY_i:
         G.inMove = True
         display_status("Inputting move:")
-    elif event.keyval == gdk.KEY_colon:
-        G.inCommand = True
-    elif event.keyval == gdk.KEY_space:
-        play_move_callback()
-    elif event.keyval == gdk.KEY_Escape:
-        G.inCommand = False
-        G.currentCommand = ""
-        G.inMove = False
-        G.currentMove = ""
     elif event.keyval == gdk.KEY_t:
         # Play engine in training mode
         if G.weak_stockfish == None:
@@ -938,7 +1146,6 @@ def key_press_callback(widget, event):
             G.weak_stockfish.position(G.g.board())
             best, _ = G.weak_stockfish.go(movetime=1000)
             score = G.weak_stockfish.info_handlers[0].e
-            print(score)
             if score.cp != None:
                 correctLevel = score_to_level(score.cp, G.WEAK_STOCKFISH_DEFAULT_LEVEL)
                 if correctLevel == G.weak_stockfish.level:
@@ -947,40 +1154,8 @@ def key_press_callback(widget, event):
             else:
                 # If a mate was found, we don't care about the level right now
                 break
-        display_status("Current level: %s" % G.weak_stockfish.level)
+        print("Current level: %s" % G.weak_stockfish.level)
         make_move(best)
-    elif event.keyval == gdk.KEY_c:
-        # Add comment
-        commentPrompt(G.window, "Edit comment:", comment_key_press_callback, G.g.comment)
-    elif event.keyval == gdk.KEY_f:
-        # Flip board
-        G.player = not G.player
-        mark_nodes(G.g.root())
-        update_pgn_message()
-    elif event.keyval == gdk.KEY_g:
-        # Go to beginning
-        G.g = G.g.root()
-        update_pgn_textview_move()
-    elif event.keyval == gdk.KEY_G:
-        # Go to end
-        while len(G.g.variations) > 0:
-            G.g = G.g.variation(0)
-        update_pgn_textview_move()
-    elif event.keyval == gdk.KEY_v:
-        # Show variations in current game
-        display_variations()
-    elif event.keyval == gdk.KEY_Left or event.keyval == gdk.KEY_k:
-        # Go back
-        go_back()
-    elif event.keyval == gdk.KEY_Right or event.keyval == gdk.KEY_j:
-        # Go forward
-        go_forward()
-    elif event.keyval == gdk.KEY_Down:
-        # Demote current variation
-        demote_callback()
-    elif event.keyval == gdk.KEY_Up:
-        # Promote current variation
-        promote_callback()
 
     # Redraw board
     G.board_display.queue_draw()
@@ -995,7 +1170,7 @@ def ot_move_completed_callback(answer):
         if guess.from_square == answer.from_square and guess.to_square == answer.to_square and guess.promotion == answer.promotion:
             ot_correct_answer_callback()
         else:
-            go_back()
+            go_back_callback()
     return f
 
 def ot_correct_answer_callback():

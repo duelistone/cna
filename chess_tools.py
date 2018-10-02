@@ -8,7 +8,7 @@ zobrist_hash = chess.polyglot.zobrist_hash
 
 def moveToBits(m):
     result = 0
-    if m.promotion != None: result |= m.promotion
+    if m.promotion != None: result |= m.promotion - 1
     result <<= 3
     result |= m.from_square // 8
     result <<= 3
@@ -33,7 +33,7 @@ def bitsToMove(bits):
     target = 8 * targetRank + targetFile
     source = 8 * sourceRank + sourceFile
     
-    return chess.Move(source, target, promotion=promotionPiece)
+    return chess.Move(source, target, promotion=promotionPiece - 1)
 
 def bitsToMove2(bits):
     targetRank = bits & 7

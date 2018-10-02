@@ -40,7 +40,7 @@ def engine_go(engine):
 def engine_init():
     engine = chess.uci.popen_engine("stockfish")
     engine.uci()
-    engine.setoption({"MultiPV" : G.NUM_VARIATIONS, "Hash" : G.HASH_SIZE, "Threads" : G.NUM_THREADS, "SyzygyPath" : "/home/duelist/tb/tablebases"})
+    engine.setoption({"MultiPV" : G.NUM_VARIATIONS, "Hash" : G.HASH_SIZE, "Threads" : G.NUM_THREADS, "Contempt" : "0", "SyzygyPath" : "/home/duelist/tb/tablebases"})
     info_handler = MyInfoHandler()
     engine.info_handlers.append(info_handler)
     engine.isready()
@@ -58,9 +58,9 @@ def weak_engine_init(level):
 
 def score_to_level(score, defaultLevel):
     levelSize = 50
-    levelsFromEqual = int(abs(score / levelSize))
-    sign = 1 if score >= 0 else -1
-    proposal = defaultLevel - sign * levelsFromEqual
+    levelSizeLower = 2 * levelSize
+    levelsFromEqual = int(abs(score / levelSize)) if score < 0 else -int(abs(score / levelSizeLower))
+    proposal = defaultLevel + levelsFromEqual
     if proposal < 0: 
         proposal = 0
     elif proposal > 20:

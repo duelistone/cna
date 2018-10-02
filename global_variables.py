@@ -54,15 +54,15 @@ promotion_piece = chess.QUEEN
 rep = None
 pgnFile = None
 save_file_name = "savedGame.pgn"
+save_file_names = ["savedGame.pgn"]
 repertoire_file_name = "main.rep"
-escapeKeys = [gdk.KEY_Escape, gdk.KEY_semicolon, gdk.KEY_Control_L, gdk.KEY_Control_R]
+escapeKeys = [gdk.KEY_Escape, gdk.KEY_semicolon, gdk.KEY_Control_L, gdk.KEY_Control_R, gdk.KEY_o, gdk.KEY_v, gdk.KEY_Left, gdk.KEY_Right]
+ignoreKeys = [gdk.KEY_j, gdk.KEY_k]
 
 # For key press events
 controlPressed = False
 inMove = None
-inCommand = None
 currentMove = ""
-currentCommand = ""
 
 # Generator for opening trainer positions
 ot_gen = None
