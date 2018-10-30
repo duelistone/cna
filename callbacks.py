@@ -552,7 +552,7 @@ def load_new_game_from_piece_list(piece_list_string):
 
     # Determine turn
     turn = chess.WHITE
-    if len(words) < 1 and isBlackMarker(words[-1]):
+    if len(words) > 0 and isBlackMarker(words[-1]):
             turn = chess.BLACK
     words = words[:-1]
 
