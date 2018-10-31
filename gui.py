@@ -13,13 +13,22 @@ from drawing import *
 from callbacks import *
 
 def main():
-    load_svgs("/home/duelist/cna/chessboard/pieces/merida/")
+    # Change directory to application directory
+    if G.base_directory != "": 
+        os.chdir(G.base_directory)
+
+    # Load images and GUI elements
+    load_svgs("chessboard/pieces/merida/")
     builder = gtk.Builder()
-    builder.add_from_file("/home/duelist/cna/chessboard.ui")
+    builder.add_from_file("chessboard.ui")
     builder.connect_signals(G.handlers)
+
+    # Determine player color
     if '-b' in sys.argv:
         G.player = chess.BLACK
         sys.argv.remove('-b')
+
+    # Check if should use opening test mode and finish preperations
     useOpeningMode = '--ot' in sys.argv
     if useOpeningMode:
         otIndex = sys.argv.index('--ot')
@@ -31,8 +40,12 @@ def main():
         ot_correct_answer_callback()
     else:
         preparations(builder)
+
+    # Show elements
     G.window.show_all()
     G.stockfish_textview.hide()
+
+    # Start main loop
     G.glib_mainloop.run()
 
 def preparations(builder):
@@ -83,6 +96,7 @@ def preparations(builder):
         pass
     mark_nodes(G.g.root())
     
+# For graceful exits
 GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGINT, signal_handler, signal.SIGINT)
 GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGTERM, signal_handler, signal.SIGTERM)
 

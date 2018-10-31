@@ -5,7 +5,7 @@ from gi.repository import Gtk as gtk
 from gi.repository import Gdk as gdk
 from gi.repository import GLib
 import chess, chess.pgn
-import threading
+import threading, os, sys
 
 '''Global variables defined here so they are accessible to all modules. The coder is responsible for not using these before they are defined correctly.'''
 
@@ -50,6 +50,7 @@ commentRanges = []
 currentMoveRange = (None, None)
 
 # Other global constants
+base_directory = os.path.dirname(sys.argv[0])
 piece_images = [None] * 12
 promotion_piece = chess.QUEEN
 rep = None
