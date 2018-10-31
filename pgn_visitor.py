@@ -85,9 +85,8 @@ def game_gui_string_list(game, offset=0, firstMoveOfVariation=False, firstMoveAf
         offset += 1
         # NAG
         if len(game.nags) > 0:
-            nag_strings = ["", "!", "?", "\u203c", "\u2047", "\u2049", "\u2048", "\u25a1", "", "", "=", "", "", "\u221e", "\u2a72", "\u2a71", "\u00b1", "\u2213", "+-", "-+", "1-0", "0-1", "\u2a00", "\u2a00"] + (256 - 24) * [""]
             for e in game.nags:
-                strings.append(nag_strings[e])
+                strings.append(G.nag_strings[e])
                 offset += len(strings[-1])
                 strings.append(" ")
                 offset += 1

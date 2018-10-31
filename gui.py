@@ -46,6 +46,7 @@ def preparations(builder):
     G.pgn_buffer = G.pgn_textview.get_buffer()
     G.board_h_box = builder.get_object("board_h_box")
     G.scrolled_window = builder.get_object("scrolled_window")
+    G.entry_bar = builder.get_object("entry_bar")
 
     # Extra definitions
     G.status_bar_cid = G.status_bar.get_context_id("")
@@ -61,6 +62,8 @@ def preparations(builder):
     G.board_display.connect("motion-notify-event", board_mouse_move_callback)
     G.board_display.connect("scroll-event", board_scroll_event_callback)
     G.pgn_textview.connect("key-press-event", pgn_textview_key_press_callback)
+
+    G.key_binding_map[gdk.KEY_i] = G.entry_bar.grab_focus
 
     # PGN textview tags
     G.pgn_buffer.create_tag(tag_name="monospace", family="Monospace")

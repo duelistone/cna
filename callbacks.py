@@ -10,7 +10,7 @@ from gi.repository import Gdk as gdk
 from gi.repository import Pango as pango
 from gi.repository import GLib
 import global_variables as G
-import signal, math, subprocess, sys, os, os.path, shutil, chess, chess.pgn
+import signal, math, subprocess, sys, os, os.path, shutil, chess, chess.pgn, shlex
 from functools import reduce
 from opening_pgn import *
 from mmrw import *
@@ -367,24 +367,41 @@ def move_completion(s):
 def command_completion(s):
     return s
 
-# Decorator
+# Decorators
 
 def gui_callback(cb):
     G.handlers[cb.__name__] = cb
     return cb
 
+# Decorators returning decorators!
+
+def entry_callback(*strings):
+    def result(cb):
+        for s in strings:
+            G.command_callbacks[s] = cb
+        return cb
+    return result
+
+def key_callback(*keys):
+    def result(cb):
+        for k in keys:
+            G.key_binding_map[k] = cb
+        return cb
+    return result
+
 # GUI callbacks
 
+@key_callback(gdk.KEY_f)
 @gui_callback
 def flip_callback(widget=None):
     # Flip board
-    if not G.inMove:
-        G.player = not G.player
-        mark_nodes(G.g.root())
-        update_pgn_message()
-        G.board_display.queue_draw()
+    G.player = not G.player
+    mark_nodes(G.g.root())
+    update_pgn_message()
+    G.board_display.queue_draw()
     return False
 
+@key_callback(gdk.KEY_Left, gdk.KEY_k)
 @gui_callback
 def go_back_callback(widget=None):
     if G.g.parent:
@@ -393,6 +410,7 @@ def go_back_callback(widget=None):
     G.board_display.queue_draw()
     return False
 
+@key_callback(gdk.KEY_Right, gdk.KEY_j)
 @gui_callback
 def go_forward_callback(widget=None):
     if len(G.g.variations) > 0:
@@ -401,14 +419,15 @@ def go_forward_callback(widget=None):
     G.board_display.queue_draw()
     return False
 
+@key_callback(gdk.KEY_g)
 @gui_callback
 def go_to_beginning_callback(widget=None):
-    if not G.inMove:
-        G.g = G.g.root()
-        update_pgn_textview_move()
-        G.board_display.queue_draw()
+    G.g = G.g.root()
+    update_pgn_textview_move()
+    G.board_display.queue_draw()
     return False
 
+@key_callback(gdk.KEY_G)
 @gui_callback
 def go_to_end_callback(widget=None):
     if not G.inMove:
@@ -418,10 +437,17 @@ def go_to_end_callback(widget=None):
         G.board_display.queue_draw()
     return False
     
+@entry_callback("ec", "edit_comment")
 @gui_callback
 def add_comment_callback(widget=None):
     if not G.inMove:
         commentPrompt(G.window, "Edit comment:", comment_key_press_callback, G.g.comment)
+    return False
+
+@entry_callback("c", "comment", "set_comment")
+def set_comment_callback(*args):
+    G.g.comment = " ".join(args)
+    update_pgn_message()
     return False
 
 @gui_callback
@@ -431,6 +457,7 @@ def opening_games_callback(widget=None):
     display_status(display_string)
     return False
 
+@entry_callback("save_opening")
 @gui_callback
 def opening_save_callback(widget=None):
     if G.rep:
@@ -442,6 +469,7 @@ def opening_save_callback(widget=None):
         display_status("No repertoire file loaded.")
     return False
 
+@entry_callback("save_opening_node")
 @gui_callback
 def opening_single_save_callback(widget=None):
     if G.rep:
@@ -453,6 +481,7 @@ def opening_single_save_callback(widget=None):
         display_status("No repertoire file loaded.")
     return False    
 
+@entry_callback("save_game_to_repertoire")
 @gui_callback
 def opening_save_game_callback(widget=None):
     if G.rep:
@@ -461,6 +490,8 @@ def opening_save_game_callback(widget=None):
         display_status("No repertoire file loaded.")
     return False
 
+@key_callback(gdk.KEY_o)
+@entry_callback("o", "display_repertoire_moves")
 @gui_callback
 def display_repertoire_moves_callback(widget=None):
     if G.rep:
@@ -473,6 +504,8 @@ def display_repertoire_moves_callback(widget=None):
         display_status("No repertoire loaded.")
     return True
 
+@key_callback(gdk.KEY_v)
+@entry_callback("v", "display_variations")
 @gui_callback
 def display_variations_callback(widget=None):
     words = ["Variations:"]
@@ -611,15 +644,50 @@ def load_new_game_from_pgn_string(pgn_string):
     else:
         return False
 
+@entry_callback("sh", "header", "set_header")
+def set_header_callback(*args):
+    if len(args) < 2:
+        return False
+    G.g.root().headers[args[0]] = args[1]
+    return set_header_callback(args[2:])
+
+@entry_callback("nag", "add_nag", "set_nag")
+def set_nag_callback(*args):
+    errors = []
+    for s in args:
+        nag_number = None
+        try:
+            nag_number = G.nag_strings.index(s)
+        except ValueError:
+            try:
+                nag_number = G.nag_names.index(s)
+            except ValueError:
+                errors.append(s)
+        if nag_number:
+            print(nag_number)
+            print(G.nag_strings[nag_number])
+            G.g.nags.add(nag_number)
+    if len(errors) > 0:
+        display_status("Could not understand these nags: " + str(errors))
+    if len(errors) < len(args):
+        update_pgn_message()
+    return False
+
+@entry_callback("remove_nags")
+def remove_nags_callback():
+    if len(G.g.nags) > 0:
+        G.g.nags.clear()
+        update_pgn_message()
+    return False
+        
 @gui_callback
 def header_entry_callback(widget, dialog, entries):
-    if len(entries) != 2:
+    if len(entries) < 2:
         # Error...incorrect number of entries
         # Ignore for now
-        return
-    tag = entries[0].get_text()
-    value = entries[1].get_text()
-    G.g.root().headers[tag] = value
+        return False
+    entries = map(lambda x: x.get_text(), entries)
+    set_header_callback(*entries)
     dialog.destroy()
     update_pgn_message()
     return False
@@ -659,6 +727,7 @@ def next_game_callback(widget=None):
 
     return False
 
+@key_callback(gdk.KEY_Down)
 @gui_callback
 def demote_callback(widget=None):
     if G.g.parent != None:
@@ -668,6 +737,7 @@ def demote_callback(widget=None):
         update_pgn_message()
     return False
 
+@key_callback(gdk.KEY_Up)
 @gui_callback
 def promote_callback(widget=None):
     if G.g.parent != None:
@@ -697,6 +767,8 @@ def demote_to_last_callback(widget=None):
         update_pgn_message()
     return False
 
+@key_callback(gdk.KEY_Delete)
+@entry_callback("delete_children")
 @gui_callback
 def delete_children_callback(widget=None):
     # If there are children, delete those
@@ -713,6 +785,7 @@ def delete_children_callback(widget=None):
     update_pgn_message()
     return False
 
+@entry_callback("delete_nonspecial_nodes")
 @gui_callback
 def delete_nonspecial_nodes_callback(widget=None):
     # Opens new game with just special nodes
@@ -797,6 +870,9 @@ def board_draw_callback(widget, cr):
 
 @gui_callback
 def board_mouse_down_callback(widget, event):
+    # Remove focus from entry bar
+    G.board_display.grab_focus()
+
     if event.button != 1:
         # TODO: Arrows, selection paste, other possibilities...
         return False
@@ -995,6 +1071,8 @@ def set_multipv_5_callback(widget=None):
     if G.stockfish_enabled:
         engine_go(G.stockfish)
 
+@key_callback(gdk.KEY_space)
+@entry_callback("play_move")
 @gui_callback
 def play_move_callback(widget=None):
     if G.stockfish_enabled:
@@ -1067,6 +1145,92 @@ def pgn_textview_key_press_callback(widget, event):
     return True
 
 @gui_callback
+def entry_bar_callback(widget):
+    text = widget.get_text()
+    args = shlex.split(text)
+    move = None
+
+    if len(args) > 0:
+        # Save in history
+        G.command_history.append(text)
+
+        # Try to parse move
+        try:
+            move = G.g.board().parse_san(args[0])
+        except ValueError:
+            pass
+
+        if move:
+            # Legal move given
+            make_move(move)
+            G.board_display.queue_draw()
+            widget.set_text("")
+            G.command_index = 0
+        else:
+            # Command given
+            if args[0] in G.command_callbacks:
+                G.command_callbacks[args[0]](*args[1:])
+                widget.set_text("")
+                G.command_index = 0
+
+    return False
+
+@gui_callback
+def entry_bar_key_press_callback(widget, event):
+    # Autocomplete
+    if event.keyval == gdk.KEY_Tab:
+        text = widget.get_text()
+        words = shlex.split(text)
+        if len(words) == 1:
+            # Command completion
+            partial = words[0]
+            if partial != "":
+                matches = []
+                moves = map(lambda m: G.g.board().san(m), G.g.board().legal_moves)
+                for command in G.command_callbacks:
+                    if partial == command[:len(partial)]:
+                        matches.append(command)
+                for command in moves:
+                    if partial == command[:len(partial)]:
+                        matches.append(command)
+                display_status(", ".join(matches))
+                new_entry_string = reduce(commonString, matches)
+                widget.set_text(new_entry_string)
+                widget.set_position(-1)
+        elif len(words) > 1:
+            # Other type of completion
+            # For now, we'll just assume this should be file completion
+            partial = words[-1]
+            prev = " ".join(words[:-1]) + " "
+            path, tail = os.path.split(partial)
+            try:
+                candidates = list(filter(lambda x: x[0:len(tail)] == tail, os.listdir(path if path != '' else '.')))
+            except:
+                return True
+            if len(candidates) > 0:
+                widget.set_text(prev + path + (os.sep if path != '' else '') + reduce(commonString, candidates))
+                display_status(", ".join(candidates))
+                widget.set_position(-1)
+        return True
+
+    # Scroll through history
+    if event.keyval == gdk.KEY_Up:
+        if -G.command_index < len(G.command_history):
+            G.command_index -= 1
+            widget.set_text(G.command_history[G.command_index])
+        return True
+    if event.keyval == gdk.KEY_Down:
+        if G.command_index < 0:
+            G.command_index += 1
+            if G.command_index < 0:
+                widget.set_text(G.command_history[G.command_index])
+            else:
+                widget.set_text("")
+        return True
+
+    return False
+    
+@gui_callback
 def key_release_callback(widget, event):
     if event.keyval in [gdk.KEY_Control_L, gdk.KEY_Control_R]:
         G.controlPressed = False
@@ -1085,60 +1249,24 @@ def comment_key_press_callback(widget, event, dialog=None):
 @gui_callback
 def key_press_callback(widget, event):
     # Check for modifier keys
-    if G.controlPressed or event.keyval in G.ignoreKeys:
+    if G.controlPressed:
         return False
 
-    # Deal with annoying arrow key GTK exception manually
-    if event.keyval == gdk.KEY_Left:
-        return go_back_callback()
-    elif event.keyval == gdk.KEY_Right:
-        return go_forward_callback()
-    elif event.keyval == gdk.KEY_Down:
-        return demote_callback()
-    elif event.keyval == gdk.KEY_Up:
-        return promote_callback()
-        
-    # Check if inputting move
-    if G.inMove:
-        completionString = ""
-        if event.keyval in G.escapeKeys:
-            G.inMove = False
-            G.currentMove = ""
-            display_status("")
-            return False
-        if event.keyval == gdk.KEY_Tab or event.keyval == gdk.KEY_Return:
-            G.currentMove, completionString = move_completion(G.currentMove)
-        elif event.keyval == gdk.KEY_BackSpace:
-            G.currentMove = G.currentMove[:-1]
-        else:
-            c = gdk.keyval_name(event.keyval)
-            if len(c) == 1 or c in ["minus", "plus", "equal"]:
-                if c == "minus":
-                    c = '-'
-                elif c == "plus":
-                    c = '+'
-                elif c == "equal":
-                    c = '='
-                G.currentMove += c
-        try:
-            parsedMove = G.g.board().parse_san(G.currentMove)
-            if parsedMove:
-                make_move(parsedMove)
-                G.board_display.queue_draw()
-                display_status("")
-                G.currentMove = ""
-        except:
-            pass
-        display_status("Inputting move: %s%s" % (G.currentMove, completionString))
-        return False
-
-    # Casework
+    # Set controlPressed flag if necessary
     if event.keyval in [gdk.KEY_Control_L, gdk.KEY_Control_R]:
         G.controlPressed = True
-    elif event.keyval == gdk.KEY_i:
-        G.inMove = True
-        display_status("Inputting move:")
-    elif event.keyval == gdk.KEY_t:
+
+    # Return focus outside of entry
+    if event.keyval in G.escapeKeys:
+        G.board_display.grab_focus()
+        return False
+    
+    # Check if focus is on entry bar
+    if G.entry_bar.is_focus():
+        return False
+
+    # Unorganized callbacks
+    if event.keyval == gdk.KEY_t:
         # Play engine in training mode
         if G.weak_stockfish == None:
             G.weak_stockfish = weak_engine_init(G.WEAK_STOCKFISH_DEFAULT_LEVEL)
@@ -1156,11 +1284,93 @@ def key_press_callback(widget, event):
                 break
         print("Current level: %s" % G.weak_stockfish.level)
         make_move(best)
+        G.board_display.queue_draw()
+        return True
 
-    # Redraw board
-    G.board_display.queue_draw()
+    # Organized callbacks
+    if event.keyval in G.key_binding_map:
+        G.key_binding_map[event.keyval]()
+        return True
 
     return False
+
+#    # Check for modifier keys
+#    if G.controlPressed or event.keyval in G.ignoreKeys:
+#        return False
+#
+#    # Deal with annoying arrow key GTK exception manually
+#    if event.keyval == gdk.KEY_Left:
+#        return go_back_callback()
+#    elif event.keyval == gdk.KEY_Right:
+#        return go_forward_callback()
+#    elif event.keyval == gdk.KEY_Down:
+#        return demote_callback()
+#    elif event.keyval == gdk.KEY_Up:
+#        return promote_callback()
+#        
+#    # Check if inputting move
+#    if G.inMove:
+#        completionString = ""
+#        if event.keyval in G.escapeKeys:
+#            G.inMove = False
+#            G.currentMove = ""
+#            display_status("")
+#            return False
+#        if event.keyval == gdk.KEY_Tab or event.keyval == gdk.KEY_Return:
+#            G.currentMove, completionString = move_completion(G.currentMove)
+#        elif event.keyval == gdk.KEY_BackSpace:
+#            G.currentMove = G.currentMove[:-1]
+#        else:
+#            c = gdk.keyval_name(event.keyval)
+#            if len(c) == 1 or c in ["minus", "plus", "equal"]:
+#                if c == "minus":
+#                    c = '-'
+#                elif c == "plus":
+#                    c = '+'
+#                elif c == "equal":
+#                    c = '='
+#                G.currentMove += c
+#        try:
+#            parsedMove = G.g.board().parse_san(G.currentMove)
+#            if parsedMove:
+#                make_move(parsedMove)
+#                G.board_display.queue_draw()
+#                display_status("")
+#                G.currentMove = ""
+#        except:
+#            pass
+#        display_status("Inputting move: %s%s" % (G.currentMove, completionString))
+#        return False
+#
+#    # Casework
+#    if event.keyval in [gdk.KEY_Control_L, gdk.KEY_Control_R]:
+#        G.controlPressed = True
+#    elif event.keyval == gdk.KEY_i:
+#        G.inMove = True
+#        display_status("Inputting move:")
+#    elif event.keyval == gdk.KEY_t:
+#        # Play engine in training mode
+#        if G.weak_stockfish == None:
+#            G.weak_stockfish = weak_engine_init(G.WEAK_STOCKFISH_DEFAULT_LEVEL)
+#        while 1:
+#            G.weak_stockfish.position(G.g.board())
+#            best, _ = G.weak_stockfish.go(movetime=1000)
+#            score = G.weak_stockfish.info_handlers[0].e
+#            if score.cp != None:
+#                correctLevel = score_to_level(score.cp, G.WEAK_STOCKFISH_DEFAULT_LEVEL)
+#                if correctLevel == G.weak_stockfish.level:
+#                    break
+#                change_level(G.weak_stockfish, correctLevel)
+#            else:
+#                # If a mate was found, we don't care about the level right now
+#                break
+#        print("Current level: %s" % G.weak_stockfish.level)
+#        make_move(best)
+#
+#    # Redraw board
+#    G.board_display.queue_draw()
+#
+#    return False
 
 # Other callbacks
 
