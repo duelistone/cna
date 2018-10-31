@@ -86,6 +86,7 @@ NUM_THREADS = 2
 HASH_SIZE = 4096
 stockfish = None 
 playLevel = 20 # Int represents depth, float represents time
+tablebase_path = ""
 
 # Weak engine
 weak_stockfish = None

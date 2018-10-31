@@ -40,7 +40,7 @@ def engine_go(engine):
 def engine_init():
     engine = chess.uci.popen_engine("stockfish")
     engine.uci()
-    engine.setoption({"MultiPV" : G.NUM_VARIATIONS, "Hash" : G.HASH_SIZE, "Threads" : G.NUM_THREADS, "Contempt" : "0", "SyzygyPath" : "/home/duelist/tb/tablebases"})
+    engine.setoption({"MultiPV" : G.NUM_VARIATIONS, "Hash" : G.HASH_SIZE, "Threads" : G.NUM_THREADS, "Contempt" : "0", "SyzygyPath" : G.tablebase_path})
     info_handler = MyInfoHandler()
     engine.info_handlers.append(info_handler)
     engine.isready()
