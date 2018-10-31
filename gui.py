@@ -18,7 +18,7 @@ def main():
         os.chdir(G.base_directory)
 
     # Load images and GUI elements
-    load_svgs("chessboard/pieces/merida/")
+    load_svgs("pieces/merida/")
     builder = gtk.Builder()
     builder.add_from_file("chessboard.ui")
     builder.connect_signals(G.handlers)
