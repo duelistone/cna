@@ -647,6 +647,7 @@ def load_new_game_from_pgn_string(pgn_string):
 @entry_callback("sh", "header", "set_header")
 def set_header_callback(*args):
     if len(args) < 2:
+        update_pgn_message()
         return False
     G.g.root().headers[args[0]] = args[1]
     return set_header_callback(args[2:])
