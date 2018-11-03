@@ -270,7 +270,7 @@ def load_new_game_from_pgn_file(file_name):
             new_game = chess.pgn.read_game(pgnFile)
             mark_nodes(new_game)
         except:
-            stringToDisplay = "Error loading PGN file '%s', or end of file reached." % file_name
+            stringToDisplay = "Error loading PGN file '%s', or end of file reached." % pgnFile.name
             display_status(stringToDisplay)
             return False
         try:
@@ -871,9 +871,6 @@ def board_draw_callback(widget, cr):
 
 @gui_callback
 def board_mouse_down_callback(widget, event):
-    # Remove focus from entry bar
-    G.board_display.grab_focus()
-
     if event.button != 1:
         # TODO: Arrows, selection paste, other possibilities...
         return False
@@ -881,6 +878,12 @@ def board_mouse_down_callback(widget, event):
     clicked_square = board_coords_to_square(event.x, event.y)
     if clicked_square != None and G.g.board().piece_at(clicked_square) != None:
         G.drag_source = clicked_square
+        wx, wy = G.board_display.translate_coordinates(G.board_display.get_toplevel(), 0, 0)
+        G.mouse_x = event.x + wx
+        G.mouse_y = event.y + wy
+
+    # Remove focus from entry bar
+    G.board_display.grab_focus()
 
     return False
 
