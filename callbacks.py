@@ -1175,7 +1175,6 @@ def pgn_textview_key_press_callback(widget, event):
 def entry_bar_callback(widget):
     text = widget.get_text()
     args = shlex.split(text)
-    move = None
 
     # Save in history
     if len(args) > 0:
@@ -1183,6 +1182,7 @@ def entry_bar_callback(widget):
 
     while len(args) > 0:
         # Try to parse moves
+        move = None
         try:
             move = G.g.board().parse_san(args[0])
         except ValueError:
@@ -1202,7 +1202,7 @@ def entry_bar_callback(widget):
                 widget.set_text("")
                 G.command_index = 0
             break
-
+        
     return False
 
 @gui_callback
