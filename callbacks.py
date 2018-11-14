@@ -419,7 +419,7 @@ def go_forward_callback(widget=None):
     G.board_display.queue_draw()
     return False
 
-@key_callback(gdk.KEY_g)
+@key_callback(gdk.KEY_g, gdk.KEY_Home)
 @gui_callback
 def go_to_beginning_callback(widget=None):
     G.g = G.g.root()
@@ -427,7 +427,7 @@ def go_to_beginning_callback(widget=None):
     G.board_display.queue_draw()
     return False
 
-@key_callback(gdk.KEY_G)
+@key_callback(gdk.KEY_G, gdk.KEY_End)
 @gui_callback
 def go_to_end_callback(widget=None):
     if not G.inMove:
@@ -437,6 +437,7 @@ def go_to_end_callback(widget=None):
         G.board_display.queue_draw()
     return False
     
+@key_callback(gdk.KEY_c)
 @entry_callback("ec", "edit_comment")
 @gui_callback
 def add_comment_callback(widget=None):
@@ -576,7 +577,7 @@ def load_fen_entry_callback(widget, dialog):
     G.board_display.queue_draw()
     return False
 
-@entry_callback("load")
+@entry_callback("load", "l")
 def load_callback(*args):
     if len(args) != 1:
         display_status("You must give exactly one position or PGN to load.")
@@ -1031,7 +1032,9 @@ def analyze_callback(widget=None):
     movePath.reverse()
     prelude = '%' + " ".join(map(str, movePath))
     save_callback(G.g.root(), save_file_name="game.temp", showStatus=False, prelude=prelude)
-    subprocess.Popen(["python3", "gui.py", "game.temp"]) # Should eventually replace with 'at'
+    # Should eventually replace with 'at' script or with memorized command line arguments
+    # Issue currently is that this does not keep current command line arguments like a tablebases folder
+    subprocess.Popen(["python3", "gui.py", "game.temp"]) 
     return False
 
 @gui_callback
@@ -1039,6 +1042,7 @@ def copy_fen_callback(widget=None):
     G.clipboard.set_text(G.g.board().fen(), -1)
     return False
 
+@key_callback(gdk.KEY_e)
 @gui_callback
 def toggle_stockfish_callback(widget=None):
     if G.stockfish == None:
