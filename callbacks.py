@@ -681,6 +681,12 @@ def load_new_game_from_pgn_string(pgn_string):
     else:
         return False
 
+@entry_callback("clear_arrows")
+def clear_arrows_callback(*args):
+    G.arrows.clear()
+    G.board_display.queue_draw()
+    return False
+
 @entry_callback("sh", "header", "set_header")
 def set_header_callback(*args):
     if len(args) < 2:
@@ -855,12 +861,14 @@ def board_draw_callback(widget, cr):
     cr.translate(padding, padding);
     cr.save()
 
-    # Color light squares
     cr.set_line_width(0)
     for file in range(8):
         x = 7 - file if G.player == chess.BLACK else file
         for rank in range(7, -1, -1):
             y = 7 - rank if G.player == chess.BLACK else rank
+            square = chess.square(x, y)
+
+            # Color light/dark squares
             if (x + y) % 2 == 0:
                 # Dark squares
                 cr.set_source_rgb(0.450980, 0.53725, 0.713725)
@@ -872,8 +880,12 @@ def board_draw_callback(widget, cr):
                 cr.rectangle(0, 0, square_size, square_size)
                 cr.fill()
 
+            # Highlight square if necessary
+            if (square, square) in G.arrows:
+                highlight_square(cr, square_size)
+
             # Draw the piece, if there is one
-            piece = G.g.board().piece_at(chess.square(x, y))
+            piece = G.g.board().piece_at(square)
             if piece != None and (G.drag_source == G.NULL_SQUARE or chess.square(x, y) != G.drag_source):
                 draw_piece(cr, piece, square_size)
 
@@ -883,11 +895,17 @@ def board_draw_callback(widget, cr):
         # Go to next file
         cr.translate(square_size, -square_size * 8);
 
+    cr.restore()
+
+    # Draw arrows
+    for e in G.arrows:
+        if e[0] == e[1]: continue # These are the highlighted squares, already done
+        draw_arrow(cr, square_size, e[0], e[1])
+    
     # Draw little circle for side to move on bottom left
     margin = int(math.ceil(0.01 * square_size))
     radius = int(math.ceil(0.05 * square_size))
     centerCoord = margin + radius
-    cr.restore()
     cr.save()
     cr.translate(centerCoord, 8 * square_size - centerCoord) # To get bottom left
     if G.g.board().turn == chess.WHITE:
@@ -900,21 +918,25 @@ def board_draw_callback(widget, cr):
 
     # Dragging pieces
     if G.drag_source != G.NULL_SQUARE:
+        cr.save()
         cr.identity_matrix()
         cr.translate(padding + G.mouse_x - square_size // 2, padding + G.mouse_y - square_size // 2)
         draw_piece(cr, G.g.board().piece_at(G.drag_source), square_size)
+        cr.restore()
 
     return False
 
 @gui_callback
 def board_mouse_down_callback(widget, event):
-    if event.button != 1:
-        # TODO: Arrows, selection paste, other possibilities...
+    if event.button not in [1, 3]:
         return False
 
     clicked_square = board_coords_to_square(event.x, event.y)
-    if clicked_square != None and G.g.board().piece_at(clicked_square) != None:
-        G.drag_source = clicked_square
+    if clicked_square != None:
+        if event.button == 1 and G.g.board().piece_at(clicked_square) != None:
+            G.drag_source = clicked_square
+        elif event.button == 3:
+            G.arrow_source = clicked_square
         wx, wy = G.board_display.translate_coordinates(G.board_display.get_toplevel(), 0, 0)
         G.mouse_x = event.x + wx
         G.mouse_y = event.y + wy
@@ -926,11 +948,24 @@ def board_mouse_down_callback(widget, event):
 
 @gui_callback
 def board_mouse_up_callback(widget, event):
-    if G.drag_source == G.NULL_SQUARE:
+    if event.button == 3:
+        if G.arrow_source == G.NULL_SQUARE:
+            return False
+
+        arrow_target = board_coords_to_square(event.x, event.y)
+        
+        if arrow_target != None and G.arrow_source != None:
+            elem = (G.arrow_source, arrow_target)
+            if elem in G.arrows:
+                G.arrows.remove(elem)
+            else:
+                G.arrows.add(elem)
+
+        G.arrow_source = G.NULL_SQUARE
+        G.board_display.queue_draw()
         return False
 
-    if event.button != 1:
-        # TODO
+    if event.button != 1 or G.drag_source == G.NULL_SQUARE:
         return False
 
     drag_target = board_coords_to_square(event.x, event.y)

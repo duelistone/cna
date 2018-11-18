@@ -52,6 +52,12 @@ bookRanges = []
 commentRanges = []
 currentMoveRange = (None, None)
 
+# Arrows
+# Should be a list of pairs of squares
+# If the two squares are the same, that means to highlight the square
+arrows = set()
+arrow_source = NULL_SQUARE
+
 # Other global constants
 base_directory = os.path.dirname(sys.argv[0])
 piece_images = [None] * 12
