@@ -67,7 +67,7 @@ def game_gui_string_list(game, offset=0, firstMoveOfVariation=False, firstMoveAf
             piece = "%d. " % game.parent.board().fullmove_number
             strings.append(piece)
             offset += len(piece)
-        elif firstMoveOfVariation or firstMoveAfterVariation:
+        elif firstMoveOfVariation or firstMoveAfterVariation or game.parent == game.root():
             piece = "%d... " % game.parent.board().fullmove_number
             strings.append(piece)
             offset += len(piece)
