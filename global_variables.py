@@ -14,6 +14,9 @@ g = chess.pgn.Game()
 player = chess.WHITE
 games = [g]
 currentGame = 0
+ADD_MAIN_VARIATION = 1
+ADD_LAST_VARIATION = -1
+new_move_mode = ADD_MAIN_VARIATION
 
 # Gtk global constants
 # These will be defined after the builder loads the ui file

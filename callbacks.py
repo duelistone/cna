@@ -32,7 +32,10 @@ def make_move(m):
         G.move_completed_callback(m)
         return True
     elif m in G.g.board().legal_moves:
-        G.g = G.g.add_main_variation(m)
+        if G.new_move_mode == G.ADD_MAIN_VARIATION:
+            G.g = G.g.add_main_variation(m)
+        elif G.new_move_mode == G.ADD_LAST_VARIATION:
+            G.g = G.g.add_variation(m)
         mark_nodes(G.g.root())
         update_pgn_message()
         G.move_completed_callback(m)
@@ -449,6 +452,16 @@ def add_comment_callback(widget=None):
 def set_comment_callback(*args):
     G.g.comment = " ".join(args)
     update_pgn_message()
+    return False
+
+@entry_callback("add_last")
+def add_last_callback(*args):
+    G.new_move_mode = G.ADD_LAST_VARIATION
+    return False
+
+@entry_callback("add_first", "add_main")
+def add_main_callback(*args):
+    G.new_move_mode = G.ADD_MAIN_VARIATION
     return False
 
 @gui_callback
@@ -998,6 +1011,7 @@ def delete_opening_node_callback(widget=None):
         display_status("No repertoire file loaded.")
     return False
 
+@entry_callback("save")
 @gui_callback
 def save_callback(widget=None, save_file_name=None, showStatus=True, prelude=None):
     if save_file_name == None:
