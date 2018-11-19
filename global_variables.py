@@ -126,3 +126,5 @@ nag_names[136:140] = 4 * ["time_trouble"]
 nag_names[140:143] = ["with_idea", "countering", "better_is"]
 nag_names[145:147] = ["editorial_comment", "novelty"]
 nag_names[238:246] = ["space", "file", "diagonal", "", "kingside", "queenside", "weakness", "endgame"]
+
+nag_set = set(nag_strings + nag_names)

@@ -367,9 +367,6 @@ def move_completion(s):
     # There are multiple candidates if we get here
     return s, " (%s)" % " ".join(candidates)
 
-def command_completion(s):
-    return s
-
 # Decorators
 
 def gui_callback(cb):
@@ -1282,7 +1279,7 @@ def entry_bar_key_press_callback(widget, event):
                 widget.set_position(-1)
         elif len(words) > 1:
             # Other type of completion
-            # For now, we'll just assume this should be file completion
+            # For now, we'll just assume this should be file completion or NAG completion
             partial = words[-1]
             prev = " ".join(words[:-1]) + " "
             path, tail = os.path.split(partial)
@@ -1290,6 +1287,7 @@ def entry_bar_key_press_callback(widget, event):
                 candidates = list(filter(lambda x: x[0:len(tail)] == tail, os.listdir(path if path != '' else '.')))
             except:
                 return True
+            candidates += list(filter(lambda x : x[0:len(tail)] == tail, G.nag_set))
             if len(candidates) > 0:
                 widget.set_text(prev + path + (os.sep if path != '' else '') + reduce(commonString, candidates))
                 display_status(", ".join(candidates))
