@@ -679,10 +679,11 @@ def load_new_game_from_pgn_string(pgn_string):
         return False
 
 @entry_callback("clear_arrows")
+@gui_callback
 def clear_arrows_callback(*args):
     G.arrows.clear()
     G.board_display.queue_draw()
-    return False
+    return True
 
 @entry_callback("sh", "header", "set_header")
 def set_header_callback(*args):
@@ -705,8 +706,6 @@ def set_nag_callback(*args):
             except ValueError:
                 errors.append(s)
         if nag_number:
-            print(nag_number)
-            print(G.nag_strings[nag_number])
             G.g.nags.add(nag_number)
     if len(errors) > 0:
         display_status("Could not understand these nags: " + str(errors))
@@ -831,7 +830,6 @@ def delete_children_callback(widget=None):
 def delete_nonspecial_nodes_callback(widget=None):
     # Opens new game with just special nodes
     game = copy_game(G.g.root(), lambda node : node.special)
-    print(game)
     load_new_game_from_game(game)
     return False
     
@@ -1273,10 +1271,13 @@ def entry_bar_key_press_callback(widget, event):
                 for command in moves:
                     if partial == command[:len(partial)]:
                         matches.append(command)
-                display_status(", ".join(matches))
-                new_entry_string = reduce(commonString, matches, partial)
-                widget.set_text(new_entry_string)
-                widget.set_position(-1)
+                if len(matches) > 0:
+                    display_status(", ".join(matches))
+                    new_entry_string = reduce(commonString, matches)
+                    widget.set_text(new_entry_string)
+                    widget.set_position(-1)
+                else:
+                    display_status("No matches for %s." % partial)
         elif len(words) > 1:
             # Other type of completion
             # For now, we'll just assume this should be file completion or NAG completion
