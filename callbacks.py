@@ -1274,7 +1274,7 @@ def entry_bar_key_press_callback(widget, event):
                     if partial == command[:len(partial)]:
                         matches.append(command)
                 display_status(", ".join(matches))
-                new_entry_string = reduce(commonString, matches)
+                new_entry_string = reduce(commonString, matches, partial)
                 widget.set_text(new_entry_string)
                 widget.set_position(-1)
         elif len(words) > 1:
