@@ -1,5 +1,7 @@
 # helper.py
 
+# Helper functions, mainly for callbacks.py
+
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
@@ -16,8 +18,6 @@ from drawing import *
 from dfs import *
 from rep_visitor import rep_visitor
 from pgn_visitor import game_gui_string
-
-# Helper functions, mainly for callbacks.py
 
 def make_move(m):
     # Make the move if legal

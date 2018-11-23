@@ -710,7 +710,7 @@ def analyze_callback(widget=None):
     movePath.reverse()
     prelude = '%' + " ".join(map(str, movePath))
     save_callback(G.g.root(), save_file_name="game.temp", showStatus=False, prelude=prelude)
-    # Should eventually replace with 'at' script or with memorized command line arguments
+    # TODO: Should eventually replace with 'at' script or with memorized command line arguments
     # Issue currently is that this does not keep current command line arguments like a tablebases folder
     subprocess.Popen(["python3", "gui.py", "game.temp"]) 
     return False
@@ -719,6 +719,37 @@ def analyze_callback(widget=None):
 def copy_fen_callback(widget=None):
     G.clipboard.set_text(G.g.board().fen(), -1)
     return False
+
+@entry_callback("add_pieces")
+def add_pieces_callback(*args):
+    board = G.g.board()
+    color = chess.WHITE
+    additions = {} # Saving changes to dictionary before implementing in case of error
+
+    # Parse inputs
+    for piece_string in args:
+        if len(piece_string) == 2:
+            piece = chess.Piece(chess.PAWN, color)
+            square = chess.SQUARE_NAMES.index(piece_string)
+            additions[square] = piece
+        elif len(piece_string) == 3:
+            piece = chess.Piece.from_symbol(piece_string[0])
+            piece.color = color
+            square = chess.SQUARE_NAMES.index(piece_string[-2:])
+            additions[square] = piece
+        elif piece_string.lower() in ["w", "white", "b", "black"]:
+            if piece_string.lower()[0] == 'w':
+                color = chess.WHITE
+            else:
+                color = chess.BLACK
+        else:
+            display_status("Syntax error in piece list. Leaving board unchanged.")
+            return
+
+    # Implement changes
+    for square, piece in additions.items():
+        board.set_piece_at(square, piece)
+    load_new_game_from_board(board)
 
 @key_callback(gdk.KEY_e)
 @gui_callback
@@ -880,8 +911,10 @@ def entry_bar_callback(widget):
         else:
             # Command given
             if args[0] in G.command_callbacks:
-                G.command_callbacks[args[0]](*args[1:])
+                future_callback = G.command_callbacks[args[0]](*args[1:])
                 widget.set_text("")
+                if callable(future_callback):
+                    future_callback()
                 G.command_index = 0
             break
         
