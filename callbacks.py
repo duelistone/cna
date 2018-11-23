@@ -237,72 +237,6 @@ def load_fen_entry_callback(widget, dialog=None):
     G.board_display.queue_draw()
     return False
 
-def load_new_game_from_piece_list(piece_list_string):
-    words = piece_list_string.split()
-    isWhiteMarker = lambda x : x in ["W:", "w:", "W", "w"]
-    isBlackMarker = lambda x : x in ["B:", "b:", "B", "b"]
-
-    # Determine turn
-    turn = chess.WHITE
-    if len(words) > 0 and isBlackMarker(words[-1]):
-            turn = chess.BLACK
-    words = words[:-1]
-
-    # Get pieces
-    if len(words) < 1 and not isWhiteMarker(words[0]):
-        return False
-    i = 1
-    whitePieces = []
-    blackPieces = []
-    currentList = whitePieces
-    while i < len(words):
-        if isBlackMarker(words[i]):
-            currentList = blackPieces
-            i += 1
-            continue
-
-        # Get square
-        try:
-            square = chess.SQUARE_NAMES.index(words[i][-2:])
-            if len(words[i]) == 2:
-                piece_type = chess.PAWN
-            else:
-                piece_type = [None, None, 'N', 'B', 'R', 'Q', 'K'].index(words[i][0])
-            currentList.append((piece_type, square))
-        except:
-            return False
-
-        i += 1
-
-    # Place pieces
-    board = chess.Board(fen=None)
-    board.turn = turn
-    for pt, sq in whitePieces:
-        p = chess.Piece(pt, chess.WHITE)
-        board.set_piece_at(sq, p)
-    for pt, sq in blackPieces:
-        p = chess.Piece(pt, chess.BLACK)
-        board.set_piece_at(sq, p)
-
-    # Load game
-    try:
-        game = chess.pgn.Game()
-        game.setup(board)
-        load_new_game_from_game(game)
-    except:
-        return False
-
-    return True
-
-def load_new_game_from_pgn_string(pgn_string):
-    pgnFile = io.StringIO(pgn_string)
-    game = chess.pgn.read_game(pgnFile)
-    if game != None:
-        load_new_game_from_game(game)
-        return True
-    else:
-        return False
-
 @entry_callback("clear_arrows")
 @gui_callback
 def clear_arrows_callback(*args):
@@ -737,18 +671,85 @@ def add_pieces_callback(*args):
             piece.color = color
             square = chess.SQUARE_NAMES.index(piece_string[-2:])
             additions[square] = piece
-        elif piece_string.lower() in ["w", "white", "b", "black"]:
-            if piece_string.lower()[0] == 'w':
-                color = chess.WHITE
-            else:
-                color = chess.BLACK
         else:
-            display_status("Syntax error in piece list. Leaving board unchanged.")
-            return
+            parse_result = parse_side(piece_string)
+            if parse_result == None:
+                display_status("Syntax error in piece list. Leaving board unchanged.")
+                return
+            else:
+                color = parse_result
 
     # Implement changes
     for square, piece in additions.items():
         board.set_piece_at(square, piece)
+    load_new_game_from_board(board)
+
+@entry_callback("remove_pieces")
+def remove_pieces_callback(*args):
+    board = G.g.board()
+    errors = []
+    for square_string in args:
+        if square_string.lower() == "all":
+            board.clear()
+            break
+        try:
+            square = chess.SQUARE_NAMES.index(square_string)
+            board.remove_piece_at(square)
+        except ValueError:
+            errors.append(square_string)
+            break
+    if len(errors) > 0:
+        display_status("Try again. Errors with these square names: %s", " ".join(errors))
+        return
+    load_new_game_from_board(board)
+
+@entry_callback("set_castling")
+def set_castling_callback(*args):
+    board = G.g.board()
+    if len(args) != 1:
+        display_status("Too many or too few arguments. Try again.")
+        return
+    board.castling_rights = 0
+    if 'K' in args[0]:
+        board.castling_rights |= chess.BB_H1
+    if 'Q' in args[0]:
+        board.castling_rights |= chess.BB_H1
+    if 'k' in args[0]:
+        board.castling_rights |= chess.BB_H8
+    if 'q' in args[0]:
+        board.castling_rights |= chess.BB_A8
+    load_new_game_from_board(board)
+
+@entry_callback("set_en_passant", "set_ep_square")
+def set_en_passant_callback(*args):
+    board = G.g.board()
+    if len(args) != 1:
+        display_status("Too many or too few arguments. Try again.")
+        return
+    try:
+        square = chess.SQUARE_NAMES.index(args[0])
+        board.ep_square = square
+    except ValueError:
+        display_status("Invalid square name given.")
+        return
+    load_new_game_from_board(board)
+
+@entry_callback("flip_turn")
+def flip_turn_callback(*args):
+    board = G.g.board()
+    if len(args) >= 1:
+        side = parse_side(args[0])
+        if side != None:
+            if side == board.turn:
+                display_status("It is already that side's turn.")
+                return
+            else:
+                board.turn = side
+        else:
+            display_status("Invalid arguments.")
+            return
+    else:
+        board.turn = not board.turn
     load_new_game_from_board(board)
 
 @key_callback(gdk.KEY_e)

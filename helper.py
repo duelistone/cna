@@ -39,6 +39,14 @@ def make_move(m):
         return True
     return False
 
+def parse_side(side_string):
+    side_string = side_string.lower()
+    if side_string in ["w", "white"]:
+        return chess.WHITE
+    elif side_string in ["b", "black"]:
+        return chess.BLACK
+    return None
+
 def mark_if_special(game):
     '''Assuming the 'player' only makes moves appearing in first variations,
     a node is special if it can be reached.'''
@@ -296,6 +304,73 @@ def load_new_game_from_pgn_file(file_name):
     update_pgn_message()
     update_game_info()
     return True
+
+def load_new_game_from_piece_list(piece_list_string):
+    words = piece_list_string.split()
+    isWhiteMarker = lambda x : x.lower() in ["w:", "w", "white:", "white"]
+    isBlackMarker = lambda x : x.lower() in ["b:", "b", "black:", "black"]
+
+    # Determine turn
+    turn = parse_side(words[-1])
+    if turn == None: 
+        turn = chess.WHITE
+    else: 
+        words = words[:-1]
+
+    # Get pieces
+    if len(words) < 1 and not isWhiteMarker(words[0]):
+        return False
+    i = 1
+    whitePieces = []
+    blackPieces = []
+    currentList = whitePieces
+    while i < len(words):
+        if isBlackMarker(words[i]):
+            currentList = blackPieces
+            i += 1
+            continue
+
+        # Get square
+        try:
+            square = chess.SQUARE_NAMES.index(words[i][-2:])
+            if len(words[i]) == 2:
+                piece_type = chess.PAWN
+            else:
+                piece_type = [None, None, 'N', 'B', 'R', 'Q', 'K'].index(words[i][0])
+            currentList.append((piece_type, square))
+        except:
+            return False
+
+        i += 1
+
+    # Place pieces
+    board = chess.Board(fen=None)
+    board.turn = turn
+    for pt, sq in whitePieces:
+        p = chess.Piece(pt, chess.WHITE)
+        board.set_piece_at(sq, p)
+    for pt, sq in blackPieces:
+        p = chess.Piece(pt, chess.BLACK)
+        board.set_piece_at(sq, p)
+
+    # Load game
+    try:
+        game = chess.pgn.Game()
+        game.setup(board)
+        load_new_game_from_game(game)
+    except:
+        return False
+
+    return True
+
+def load_new_game_from_pgn_string(pgn_string):
+    pgnFile = io.StringIO(pgn_string)
+    game = chess.pgn.read_game(pgnFile)
+    if game != None:
+        load_new_game_from_game(game)
+        return True
+    else:
+        return False
 
 def update_pgn_textview_tags():
     if G.pgn_textview_enabled:
