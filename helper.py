@@ -238,10 +238,18 @@ def load_new_game_from_game(game, player=chess.WHITE, save_file_name="savedGame.
     mark_nodes(G.g)
     update_pgn_message()
     
+def load_new_game_from_fen(fen):
+    try:
+        board = chess.Board(fen)
+    except ValueError:
+        return False
+    return load_new_game_from_board(board)
+
 def load_new_game_from_board(board):
     new_game = chess.pgn.Game()
     new_game.setup(board)
     load_new_game_from_game(new_game, board.turn)
+    return True
 
 def load_new_game_from_pgn_file(file_name):
     pgnFile = None
@@ -351,9 +359,6 @@ def make_report():
         display_status("No repertoire file loaded.")
     return False
 
-def execute_command():
-    pass
-
 def move_completion(s):
     sans = map(G.g.board().san, G.g.board().legal_moves)
     candidates = list(filter(lambda x: x[0:len(s)] == s, sans))
@@ -363,4 +368,11 @@ def move_completion(s):
         return candidates[0], ""
     # There are multiple candidates if we get here
     return s, " (%s)" % " ".join(candidates)
+
+def cleanup(showMessage=False):
+    if G.stockfish != None:
+        G.stockfish.process.process.send_signal(signal.SIGCONT) # In case stopped
+        G.stockfish.terminate()
+    if showMessage:
+        print('Exiting gracefully.')
 

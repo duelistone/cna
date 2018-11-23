@@ -221,53 +221,21 @@ def file_name_entry_callback(widget, dialog=None):
     if dialog != None: dialog.destroy()
     return False
 
-@gui_callback
-def load_fen_entry_callback(widget, dialog):
-    fen_string = widget.get_text()
-    G.selection.set_text(fen_string, -1) # To make already typed FEN retrievable if something goes wrong
-    board = None
-    # TODO: Put the FEN logic in a function like load_new_game_from_*
-    try:
-        board = chess.Board(fen_string)
-    except ValueError:
-        pass
-    if board != None:
-        # Load new game from board
-        load_new_game_from_board(board)
-        dialog.destroy()
-    elif load_new_game_from_pgn_file(fen_string):
-        dialog.destroy()
-    elif load_new_game_from_piece_list(fen_string) or load_new_game_from_pgn_string(fen_string):
-        dialog.destroy()
-        G.save_file_name = "savedGame.pgn"
-        display_status("Loaded input position or PGN string")
-    G.board_display.queue_draw()
-    return False
-
 @entry_callback("load", "l")
-def load_callback(*args):
-    if len(args) != 1:
-        display_status("You must give exactly one position or PGN to load.")
-    fen_string = args[0]
-    board = None
-
-    # TODO: Put the FEN logic in a function like load_new_game_from_*
-    # Try FEN string
-    try:
-        board = chess.Board(fen_string)
-    except ValueError:
-        pass
-    if board != None:
-        load_new_game_from_board(board)
-    # Try PGN file, piece list, or PGN string
-    elif load_new_game_from_pgn_file(fen_string):
-        pass # The function in the conditional has already done all the work
-    elif load_new_game_from_piece_list(fen_string) or load_new_game_from_pgn_string(fen_string):
-        G.save_file_name = "savedGame.pgn"
-        display_status("Loaded input position or PGN string")
+@gui_callback
+def load_fen_entry_callback(widget, dialog=None):
+    if type(widget) != str:
+        # widget is actually a widget
+        fen_string = widget.get_text()
+        G.selection.set_text(fen_string, -1) # To make already typed FEN retrievable if something goes wrong
+    else:
+        # Entry bar version, widget is the string representing what should be loaded
+        fen_string = widget
+    if load_new_game_from_pgn_file(fen_string) or load_new_game_from_fen(fen_string) or load_new_game_from_piece_list(fen_string) or load_new_game_from_pgn_string(fen_string):
+        if dialog: dialog.destroy()
+        display_status("Loaded %s" % fen_string)
     G.board_display.queue_draw()
     return False
-
 
 def load_new_game_from_piece_list(piece_list_string):
     words = piece_list_string.split()
@@ -1070,13 +1038,6 @@ def ot_correct_answer_callback():
     G.move_completed_callback = ot_move_completed_callback(m) # This is a function
     load_new_game_from_board(b)
     
-def cleanup(showMessage=False):
-    if G.stockfish != None:
-        G.stockfish.process.process.send_signal(signal.SIGCONT) # In case stopped
-        G.stockfish.terminate()
-    if showMessage:
-        print('Exiting gracefully.')
-
 def destroy_main_window_callback(widget):
     '''Destroy main window callback. Provides cleanup code for things like stockfish, etc, as well.'''
     G.glib_mainloop.quit()
