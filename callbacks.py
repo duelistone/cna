@@ -237,6 +237,20 @@ def load_fen_entry_callback(widget, dialog=None):
     G.board_display.queue_draw()
     return False
 
+@entry_callback("paste_position")
+@key_callback(gdk.KEY_p)
+def paste_callback(*args):
+    text = G.clipboard.wait_for_text()
+    def result():
+        G.entry_bar.set_text("l \"%s\"" % text)
+        G.entry_bar.grab_focus()
+        G.entry_bar.set_position(-1)
+    if len(args) > 0 and type(args[0]) != str:
+        # Key callback version
+        result()
+        return False
+    return result
+
 @entry_callback("clear_arrows")
 @gui_callback
 def clear_arrows_callback(*args):
@@ -1039,7 +1053,10 @@ def key_press_callback(widget, event):
 
     # Organized callbacks
     if event.keyval in G.key_binding_map:
-        G.key_binding_map[event.keyval]()
+        value = G.key_binding_map[event.keyval]
+        # This is for compatability with delayed entry bar callbacks
+        while callable(value):
+            value = value()
         return True
 
     return False
