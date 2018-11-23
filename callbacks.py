@@ -557,11 +557,13 @@ def save_file_name_callback(widget=None):
     prompt(G.window, promptMessage, file_name_entry_callback)
     return False
 
+@entry_callback("save_file_name")
 @gui_callback
-def file_name_entry_callback(widget, dialog):
+def file_name_entry_callback(widget, dialog=None):
     G.controlPressed = False # Necessary since key release won't work since focus is moved to dialog
-    G.save_file_name = widget.get_text()
-    dialog.destroy()
+    G.save_file_name = widget.get_text() if type(widget) != str else widget
+    G.save_file_names[G.currentGame] = G.save_file_name
+    if dialog != None: dialog.destroy()
     return False
 
 @gui_callback
@@ -1044,15 +1046,24 @@ def delete_opening_node_callback(widget=None):
 @entry_callback("save")
 @gui_callback
 def save_callback(widget=None, save_file_name=None, showStatus=True, prelude=None):
-    if save_file_name == None:
+    if type(widget) == str:
+        # Allows first argument to also set save file name (for entry save command)
+        G.save_file_name = widget
+        G.save_file_names[G.currentGame] = G.save_file_name
         save_file_name = G.save_file_name
-    outPgnFile = open(save_file_name, 'w')
+        # Ignore more than one argument in entry
+        showStatus = True
+        prelude = None
+    elif save_file_name == None:
+        # Do not set global save_file_name if keyword arg is used
+        save_file_name = G.save_file_name
+    outPgnFile = open(G.save_file_name, 'w')
     if prelude:
         print(prelude, file=outPgnFile)
     print(G.g.root(), file=outPgnFile, end="\n\n")
     outPgnFile.close()
     if showStatus:
-        display_status("Game saved to %s." % save_file_name)
+        display_status("Game saved to %s." % G.save_file_name)
     return False
 
 @gui_callback
