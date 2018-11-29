@@ -406,7 +406,7 @@ def update_pgn_message():
 
         # Update text tags
         update_pgn_textview_tags()
-    G.pgn_textview.queue_draw()
+        G.pgn_textview.queue_draw()
 
 def update_pgn_textview_move():
     if G.pgn_textview_enabled:
@@ -415,7 +415,11 @@ def update_pgn_textview_move():
         start = G.pgn_buffer.get_iter_at_offset(start)
         end = G.pgn_buffer.get_iter_at_offset(end)
         G.pgn_buffer.apply_tag_by_name("current", start, end)
-        G.pgn_textview.scroll_to_iter(start, 0, False, 0.5, 0.5)
+        if G.pgn_textview_mark == None:
+            G.pgn_textview_mark = G.pgn_buffer.create_mark(None, end, False)
+        else:
+            G.pgn_buffer.move_mark(G.pgn_textview_mark, end)
+        G.pgn_textview.scroll_to_mark(G.pgn_textview_mark, 0, True, 0.5, 0.5)
 
 def make_report():
     if G.rep:

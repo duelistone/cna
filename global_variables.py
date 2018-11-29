@@ -35,6 +35,7 @@ selection = gtk.Clipboard.get(selection=gdk.SELECTION_PRIMARY)
 board_h_box = None
 scrolled_window = None
 
+pgn_textview_mark = None
 status_bar_cid = None 
 handlers = {} # Callback functions dictionary for builder
 NULL_SQUARE = -1
