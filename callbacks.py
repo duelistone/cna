@@ -878,8 +878,22 @@ def load_fen_callback(widget=None):
     return False
 
 @gui_callback
+@entry_callback("make_report")
 def make_report_callback(widget=None):
     make_report()
+    return False
+
+@entry_callback("save_puzzle")
+def save_puzzle_callback(*args):
+    fil = open('puzzles', 'a')
+    print(G.g.board().fen(), file=fil)
+    if len(args) > 0:
+        # Add comment about position
+        print(args[0], file=fil)
+    else:
+        # Add empty line if no comment
+        print("", file=fil)
+    fil.close()
     return False
 
 @gui_callback
