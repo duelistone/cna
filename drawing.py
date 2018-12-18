@@ -61,11 +61,13 @@ def draw_arrow(cr, square_size, source, target):
     direction_vector = normalize((target_col - source_col, target_row - source_row))
     source_coords = (square_size * source_col + square_size / 2, square_size * source_row + square_size / 2)
     target_coords = (square_size * target_col + square_size / 2, square_size * target_row + square_size / 2)
+    target_coords = add(target_coords, scale(direction_vector, -TRIANGLE_RADIUS))
     cr.set_source_rgba(0, 0.4, 0, 0.5)
     cr.set_line_width(LINE_WIDTH)
     cr.move_to(*source_coords)
-    cr.line_to(*add(target_coords, scale(direction_vector, TRIANGLE_RADIUS * math.cos(2 * math.pi / 3))))
+    cr.line_to(*add(target_coords, scale(direction_vector, TRIANGLE_RADIUS * (math.cos(2 * math.pi / 3)))))
     cr.stroke()
+
 
     # Draw angled equilateral triangle at target
     top = add(target_coords, scale(direction_vector, TRIANGLE_RADIUS))
