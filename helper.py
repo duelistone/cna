@@ -59,11 +59,16 @@ def mark_if_special(game):
 
 def mark_if_book(game):
     '''Checks if a game appears in the loaded opening repertoire.'''
-    game.book = False
+    game.book = 0
     if G.rep:
-        if game.parent == None: game.book = True
-        elif G.player == chess.WHITE and G.rep.hasPositionWhite(game.parent.board()) and game.move in G.rep.findMovesWhite(game.parent.board()): game.book = True
-        elif G.player == chess.BLACK and G.rep.hasPositionBlack(game.parent.board()) and game.move in G.rep.findMovesBlack(game.parent.board()): game.book = True
+        # Normal book
+        if game.parent == None: game.book = 1
+        elif G.player == chess.WHITE and G.rep.hasPositionWhite(game.parent.board()) and game.move in G.rep.findMovesWhite(game.parent.board()): game.book = 1
+        elif G.player == chess.BLACK and G.rep.hasPositionBlack(game.parent.board()) and game.move in G.rep.findMovesBlack(game.parent.board()): game.book = 1
+        # The other player deviates first
+        elif G.player == chess.WHITE and game.parent.book == 1 and game.parent.board().turn == chess.BLACK and game.move not in G.rep.findMovesWhite(game.parent.board()): game.book = 2
+        elif G.player == chess.BLACK and game.parent.book == 1 and game.parent.board().turn == chess.WHITE and game.move not in G.rep.findMovesWhite(game.parent.board()): game.book = 2
+        elif game.parent.book == 2: game.book = 2
 
 def mark_nodes(game):
     '''Marks special and book nodes.'''

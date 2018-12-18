@@ -516,6 +516,7 @@ def board_draw_callback(widget, cr):
         draw_arrow(cr, square_size, e[0], e[1])
     
     # Draw little circle for side to move on bottom left
+    # and for opening status (if necessary)
     margin = int(math.ceil(0.01 * square_size))
     radius = int(math.ceil(0.05 * square_size))
     centerCoord = margin + radius
@@ -528,6 +529,19 @@ def board_draw_callback(widget, cr):
     cr.arc(0, 0, radius, 0, 2 * math.pi)
     cr.fill()
     cr.restore()
+
+    if G.g.book < 2:
+        cr.save()
+        cr.translate(8 * square_size - centerCoord, 8 * square_size - centerCoord) # Bottom right
+        if G.g.book == 1:
+            # Still in book
+            cr.set_source_rgb(0, 0.7, 0)
+        elif G.g.book == 0:
+            # Left book by going against repertoire
+            cr.set_source_rgb(1, 0, 0)
+        cr.arc(0, 0, radius, 0, 2 * math.pi)
+        cr.fill()
+        cr.restore()
 
     # Dragging pieces
     if G.drag_source != G.NULL_SQUARE:
