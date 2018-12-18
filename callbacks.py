@@ -209,23 +209,43 @@ def display_variations_callback(widget=None):
     return False
 
 @gui_callback
+@entry_callback("set_queen_promotion")
+@key_callback(gdk.KEY_Q)
 def queen_promotion_callback(widget=None):
-    G.promotion_piece = chess.QUEEN
+    if widget == None:
+        G.queen_promotion_item.set_active(True)
+    else:
+        G.promotion_piece = chess.QUEEN
     return False
 
 @gui_callback
+@entry_callback("set_rook_promotion")
+@key_callback(gdk.KEY_R)
 def rook_promotion_callback(widget=None):
-    G.promotion_piece = chess.ROOK
+    if widget == None:
+        G.promotion_piece = chess.ROOK
+    else:
+        G.rook_promotion_item.set_active(True)
     return False
 
 @gui_callback
+@entry_callback("set_bishop_promotion")
+@key_callback(gdk.KEY_B)
 def bishop_promotion_callback(widget=None):
-    G.promotion_piece = chess.BISHOP
+    if widget == None:
+        G.promotion_piece = chess.BISHOP
+    else:
+        G.bishop_promotion_item.set_active(True)
     return False
 
 @gui_callback
+@entry_callback("set_knight_promotion")
+@key_callback(gdk.KEY_N)
 def knight_promotion_callback(widget=None):
-    G.promotion_piece = chess.KNIGHT
+    if widget == None:
+        G.knight_promotion_item.set_active(True)
+    else:
+        G.promotion_piece = chess.KNIGHT
     return False
 
 @gui_callback

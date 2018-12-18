@@ -72,6 +72,10 @@ def preparations(builder):
     G.board_h_box = builder.get_object("board_h_box")
     G.scrolled_window = builder.get_object("scrolled_window")
     G.entry_bar = builder.get_object("entry_bar")
+    G.queen_promotion_item = builder.get_object("queen_promotion")
+    G.rook_promotion_item = builder.get_object("rook_promotion")
+    G.bishop_promotion_item = builder.get_object("bishop_promotion")
+    G.knight_promotion_item = builder.get_object("knight_promotion")
 
     # Extra definitions
     G.status_bar_cid = G.status_bar.get_context_id("")

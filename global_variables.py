@@ -34,6 +34,10 @@ clipboard = gtk.Clipboard.get(selection=gdk.SELECTION_CLIPBOARD)
 selection = gtk.Clipboard.get(selection=gdk.SELECTION_PRIMARY)
 board_h_box = None
 scrolled_window = None
+queen_promotion_item = None
+rook_promotion_item = None
+bishop_promotion_item = None
+knight_promotion_item = None
 
 pgn_textview_mark = None
 status_bar_cid = None 
