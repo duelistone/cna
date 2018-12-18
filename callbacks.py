@@ -116,6 +116,27 @@ def add_main_callback(*args):
     G.new_move_mode = G.ADD_MAIN_VARIATION
     return False
 
+@entry_callback("set_hash", "set_ram")
+def set_hash_callback(*args):
+    try:
+        hash_size = int(args[0])
+    except:
+        display_status("Could not parse hash size (in MB).")
+        return False
+    change_engine_setting("Hash", hash_size)
+    return False
+
+@entry_callback("set_engine_option")
+def set_engine_option(*args):
+    try:
+        name = args[0]
+        value = args[1]
+    except:
+        display_status("An option name and value were not provided")
+        return False
+    change_engine_setting(name, value)
+    return False
+
 @gui_callback
 def opening_games_callback(widget=None):
     games = G.rep.list_games(G.g.board())
@@ -799,32 +820,27 @@ def toggle_stockfish_callback(widget=None):
 @gui_callback
 def set_multipv_1_callback(widget=None):
     change_multipv(1)
-    if G.stockfish_enabled:
-        engine_go(G.stockfish)
+    return False
 
 @gui_callback
 def set_multipv_2_callback(widget=None):
     change_multipv(2)
-    if G.stockfish_enabled:
-        engine_go(G.stockfish)
+    return False
 
 @gui_callback
 def set_multipv_3_callback(widget=None):
     change_multipv(3)
-    if G.stockfish_enabled:
-        engine_go(G.stockfish)
+    return False
 
 @gui_callback
 def set_multipv_4_callback(widget=None):
     change_multipv(4)
-    if G.stockfish_enabled:
-        engine_go(G.stockfish)
+    return False
 
 @gui_callback
 def set_multipv_5_callback(widget=None):
     change_multipv(5)
-    if G.stockfish_enabled:
-        engine_go(G.stockfish)
+    return False
 
 @key_callback(gdk.KEY_space)
 @entry_callback("play_move")

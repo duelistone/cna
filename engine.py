@@ -36,11 +36,23 @@ def engine_go(engine):
     engine.isready()
     engine.go(infinite=True, async_callback=True)
 
+# Change setting
+def change_engine_setting(name, value):
+    if G.stockfish != None:
+        G.stockfish.process.process.send_signal(signal.SIGCONT)
+        G.stockfish.stop()
+    G.settings_dict.update({name: value})
+    if G.stockfish != None:
+        G.stockfish.setoption(G.settings_dict)
+        engine_go(G.stockfish)
+        if not G.stockfish_enabled:
+            G.stockfish.process.process.send_signal(signal.SIGSTOP)
+
 # Prepare engine
 def engine_init():
     engine = chess.uci.popen_engine("stockfish")
     engine.uci()
-    engine.setoption({"MultiPV" : G.NUM_VARIATIONS, "Hash" : G.HASH_SIZE, "Threads" : G.NUM_THREADS, "Contempt" : "0", "SyzygyPath" : G.tablebase_path})
+    engine.setoption(G.settings_dict)
     info_handler = MyInfoHandler()
     engine.info_handlers.append(info_handler)
     engine.isready()
@@ -74,13 +86,7 @@ def change_level(engine, new_level):
     engine.level = new_level
 
 def change_multipv(n):
-    if G.stockfish != None:
-        G.stockfish.process.process.send_signal(signal.SIGCONT)
-        G.stockfish.stop()
-    G.NUM_VARIATIONS = n
-    if G.stockfish != None:
-        G.stockfish.setoption({"MultiPV" : G.NUM_VARIATIONS, "Hash" : G.HASH_SIZE, "Threads" : G.NUM_THREADS, "SyzygyPath" : "/home/duelist/tb/tablebases"})
-        G.stockfish.isready()
+    change_engine_setting("MultiPV", n)
 
 # Display analysis lines
 def display_stockfish_string(s):
@@ -111,10 +117,10 @@ class MyInfoHandler(chess.uci.InfoHandler):
         self.curr_hashfull = 0
         self.curr_nps = None
         self.curr_nodes = None
-        self.lines = [""] * (G.NUM_VARIATIONS + 1) # TODO: Fill first info line
+        self.lines = [""] * (int(G.settings_dict["MultiPV"]) + 1) # TODO: Fill first info line
 
     def on_go(self):
-        self.lines = [""] * (G.NUM_VARIATIONS + 1)
+        self.lines = [""] * (int(G.settings_dict["MultiPV"]) + 1)
         super(MyInfoHandler, self).on_go()
 
     def time(self, x):

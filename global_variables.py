@@ -91,12 +91,9 @@ move_completed_callback = lambda x : None
 # Engine
 stockfish_text_lock = threading.Lock()
 stockfish_enabled = False
-NUM_VARIATIONS = 1
-NUM_THREADS = 2
-HASH_SIZE = 4096
 stockfish = None 
 playLevel = 20 # Int represents depth, float represents time
-tablebase_path = ""
+settings_dict = {"MultiPV" : 1, "Hash" : 4096, "Threads" : 2, "Contempt" : 0}
 
 # Weak engine
 weak_stockfish = None

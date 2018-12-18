@@ -32,12 +32,13 @@ def main():
     if "--tb" in sys.argv:
         tbIndex = sys.argv.index('--tb')
         try:
-            G.tablebase_path = sys.argv[tbIndex + 1]
+            tablebase_path = sys.argv[tbIndex + 1]
             del sys.argv[tbIndex + 1]
         except:
             pass
         finally:
             del sys.argv[tbIndex]
+        G.settings_dict.update({"SyzygyPath": tablebase_path})
 
     # Check if should use opening test mode and finish preperations
     useOpeningMode = '--ot' in sys.argv
