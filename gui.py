@@ -79,7 +79,6 @@ def preparations(builder):
     # Signal connections
     G.window.connect("destroy", destroy_main_window_callback)
     G.window.connect("key_press_event", key_press_callback)
-    G.window.connect("key_release_event", key_release_callback)
     G.board_display.add_events(gdk.EventMask.BUTTON_PRESS_MASK | gdk.EventMask.BUTTON_RELEASE_MASK | gdk.EventMask.POINTER_MOTION_MASK | gdk.EventMask.SCROLL_MASK)
     G.board_display.connect("draw", board_draw_callback)
     G.board_display.connect("button-press-event", board_mouse_down_callback)

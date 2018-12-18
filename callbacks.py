@@ -43,6 +43,13 @@ def key_callback(*keys):
         return cb
     return result
 
+def control_key_callback(*keys):
+    def result(cb):
+        for k in keys:
+            G.control_key_binding_map[k] = cb
+        return cb
+    return result
+
 # GUI callbacks
 
 @entry_callback("flip", "f")
@@ -228,7 +235,6 @@ def reload_callback(widget=None):
 
 @gui_callback
 def save_file_name_callback(widget=None):
-    G.controlPressed = False # Necessary since key release won't work since focus is moved to dialog
     promptMessage = "Enter path to save file. This does not save the file!"
     prompt(G.window, promptMessage, file_name_entry_callback)
     return False
@@ -236,7 +242,6 @@ def save_file_name_callback(widget=None):
 @entry_callback("save_file_name")
 @gui_callback
 def file_name_entry_callback(widget, dialog=None):
-    G.controlPressed = False # Necessary since key release won't work since focus is moved to dialog
     G.save_file_name = widget.get_text() if type(widget) != str else widget
     G.save_file_names[G.currentGame] = G.save_file_name
     if dialog != None: dialog.destroy()
@@ -328,7 +333,6 @@ def header_entry_callback(widget, dialog, entries):
 
 @gui_callback
 def header_set_callback(widget=None):
-    G.controlPressed = False
     messages = ["Tag name (defaults: Event, Site, Date, Round, White, Black, Result)", "Value"]
     multiPrompt(G.window, messages, header_entry_callback)
     return False
@@ -606,7 +610,6 @@ def repertoire_name_entry_callback(widget, dialog):
 
 @gui_callback
 def load_repertoire_callback(widget=None):
-    G.controlPressed = False # Necessary since key release won't work since focus is moved to dialog
     prompt(G.window, "Enter repertoire name:", repertoire_name_entry_callback)
     return False
 
@@ -685,8 +688,17 @@ def analyze_callback(widget=None):
     return False
 
 @gui_callback
+@control_key_callback(gdk.KEY_c)
 def copy_fen_callback(widget=None):
-    G.clipboard.set_text(G.g.board().fen(), -1)
+    if G.board_display.is_focus():
+        G.clipboard.set_text(G.g.board().fen(), -1)
+    return False
+
+@gui_callback
+def paste_fen_callback(widget=None):
+    if G.board_display.is_focus():
+        #TODO
+        pass
     return False
 
 @entry_callback("add_pieces")
@@ -872,7 +884,6 @@ def play_move_callback(widget=None):
 
 @gui_callback
 def load_fen_callback(widget=None):
-    G.controlPressed = False # Necessary since key release won't work since focus is moved to dialog
     promptMessage = "Enter FEN or path to PGN file"
     prompt(G.window, promptMessage, load_fen_entry_callback)
     return False
@@ -1024,12 +1035,6 @@ def entry_bar_key_press_callback(widget, event):
 
     return False
     
-@gui_callback
-def key_release_callback(widget, event):
-    if event.keyval in [gdk.KEY_Control_L, gdk.KEY_Control_R]:
-        G.controlPressed = False
-    return False
-
 def comment_key_press_callback(widget, event, dialog=None):
     if event.keyval == gdk.KEY_Return:
         buff = widget.get_buffer()
@@ -1042,14 +1047,6 @@ def comment_key_press_callback(widget, event, dialog=None):
 
 @gui_callback
 def key_press_callback(widget, event):
-    # Check for modifier keys
-    if G.controlPressed:
-        return False
-
-    # Set controlPressed flag if necessary
-    if event.keyval in [gdk.KEY_Control_L, gdk.KEY_Control_R]:
-        G.controlPressed = True
-
     # Return focus outside of entry
     if event.keyval in G.escapeKeys:
         G.board_display.grab_focus()
@@ -1060,6 +1057,7 @@ def key_press_callback(widget, event):
         return False
 
     # Unorganized callbacks
+    # TODO: Organize!
     if event.keyval == gdk.KEY_t:
         # Play engine in training mode
         if G.weak_stockfish == None:
@@ -1081,9 +1079,17 @@ def key_press_callback(widget, event):
         G.board_display.queue_draw()
         return True
 
+    # Check if control is pressed
+    modifiers = gtk.accelerator_get_default_mod_mask()
+    if event.state & modifiers == gdk.ModifierType.CONTROL_MASK:
+        controlPressed = True
+    else:
+        controlPressed = False
+
     # Organized callbacks
-    if event.keyval in G.key_binding_map:
-        value = G.key_binding_map[event.keyval]
+    binding_map = G.control_key_binding_map if controlPressed else G.key_binding_map
+    if event.keyval in binding_map:
+        value = binding_map[event.keyval]
         # This is for compatability with delayed entry bar callbacks
         while callable(value):
             value = value()

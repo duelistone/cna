@@ -68,13 +68,13 @@ pgnFile = None
 save_file_name = "savedGame.pgn"
 save_file_names = ["savedGame.pgn"]
 repertoire_file_name = "main.rep"
-escapeKeys = [gdk.KEY_Escape, gdk.KEY_semicolon, gdk.KEY_Control_L, gdk.KEY_Control_R]
+escapeKeys = [gdk.KEY_Escape, gdk.KEY_semicolon] #, gdk.KEY_Control_L, gdk.KEY_Control_R]
 
 # For key press events
-controlPressed = False
 inMove = None
 currentMove = ""
 key_binding_map = {}
+control_key_binding_map = {}
 
 # For entry_bar commands
 command_callbacks = {}
