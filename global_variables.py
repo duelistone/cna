@@ -60,8 +60,10 @@ currentMoveRange = (None, None)
 # Arrows
 # Should be a list of pairs of squares
 # If the two squares are the same, that means to highlight the square
+# TODO: Make dict with colors as values and current elems as keys.
 arrows = set()
 arrow_source = NULL_SQUARE
+arrowRGBA = [0, 0.4, 0, 0.5]
 
 # Other global constants
 base_directory = os.path.dirname(sys.argv[0])

@@ -74,9 +74,12 @@ def go_back_callback(widget=None):
 
 @key_callback(gdk.KEY_Right, gdk.KEY_j)
 @gui_callback
-def go_forward_callback(widget=None):
-    if len(G.g.variations) > 0:
-        G.g = G.g.variation(0)
+def go_forward_callback(var_index=0):
+    num_variations = len(G.g.variations)
+    if num_variations > 0:
+        if var_index > num_variations - 1:
+            var_index = num_variations - 1
+        G.g = G.g.variation(var_index)
     update_pgn_textview_move()
     G.board_display.queue_draw()
     return False
@@ -303,6 +306,19 @@ def clear_arrows_callback(*args):
     G.arrows.clear()
     G.board_display.queue_draw()
     return True
+
+@entry_callback("arrow_color")
+def arrow_color_callback(*args):
+    try:
+        G.arrowRGBA[0] = float(args[0])
+        G.arrowRGBA[1] = float(args[1])
+        G.arrowRGBA[2] = float(args[2])
+        G.arrowRGBA[3] = float(args[3])
+    except:
+        pass
+    finally:
+        G.board_display.queue_draw()
+    return False
 
 @entry_callback("sh", "header", "set_header")
 def set_header_callback(*args):
@@ -623,7 +639,15 @@ def board_scroll_event_callback(widget, event):
     if event.direction == gdk.ScrollDirection.UP:
         go_back_callback()
     elif event.direction == gdk.ScrollDirection.DOWN:
-        go_forward_callback()
+        var_index = 0
+        modifiers = gtk.accelerator_get_default_mod_mask()
+        if event.state & modifiers == gdk.ModifierType.CONTROL_MASK:
+            var_index = 2
+        elif event.state & modifiers == gdk.ModifierType.SHIFT_MASK:
+            var_index = 1
+        elif event.state & modifiers == gdk.ModifierType.SHIFT_MASK | gdk.ModifierType.CONTROL_MASK:
+            var_index = 3
+        go_forward_callback(var_index)
     return False
 
 @gui_callback
@@ -697,6 +721,7 @@ def save_callback(widget=None, save_file_name=None, showStatus=True, prelude=Non
 
 @gui_callback
 def open_pgn_textview_callback(widget=None):
+    # Extract modifier keys
     if G.pgn_textview_enabled:
         G.board_h_box.remove(G.scrolled_window)
     else:
@@ -718,6 +743,7 @@ def analyze_callback(widget=None):
     save_callback(G.g.root(), save_file_name="game.temp", showStatus=False, prelude=prelude)
     # TODO: Should eventually replace with 'at' script or with memorized command line arguments
     # Issue currently is that this does not keep current command line arguments like a tablebases folder
+    # OR, perhaps better, keep the command line arguments saved.
     subprocess.Popen(["python3", "gui.py", "game.temp"]) 
     return False
 
