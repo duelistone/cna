@@ -10,7 +10,7 @@ from gi.repository import Gdk as gdk
 from gi.repository import Pango as pango
 from gi.repository import GLib
 import global_variables as G
-import signal, math, subprocess, sys, os, os.path, shutil, chess, chess.pgn, shlex
+import signal, math, subprocess, sys, os, os.path, shutil, chess, chess.pgn, shlex, random
 from functools import reduce
 from helper import *
 from opening_pgn import *
@@ -966,6 +966,48 @@ def save_puzzle_callback(*args):
         print("", file=fil)
     fil.close()
     return False
+
+@entry_callback("load_puzzle")
+def load_puzzle_callback(*args):
+    fil = open('puzzles', 'r')
+    if len(args) > 0:
+        # A specific puzzle was specified by index
+        try:
+            puzzle_index = int(args[0])
+        except:
+            display_status("Puzzle index entered is not an integer.")
+            fil.close()
+            return False
+        for i in range(2 * puzzle_index):
+            fil.readline()
+        position_fen = fil.readline().strip()
+        position_comment = fil.readline().strip()
+        fil.close()
+        if position_fen != "":
+            load_new_game_from_board(chess.Board(position_fen))
+            display_status(position_comment)
+            return False
+        else:
+            display_status("Puzzle index given too large.")
+            return False
+    else:
+        # Load random puzzle
+        puzzles = []
+        comments = []
+        while True:
+            position = fil.readline().strip()
+            if position == "":
+                break
+            puzzles.append(position)
+            comments.append(fil.readline().strip())
+        fil.close()
+        if len(puzzles) == 0:
+            display_status("No puzzles available!")
+            return False
+        puzzle_number = random.randrange(len(puzzles))
+        load_new_game_from_board(chess.Board(puzzles[puzzle_number]))
+        display_status(comments[puzzle_number])
+        return False
 
 @gui_callback
 def textview_mouse_pressed_callback(widget, event):
