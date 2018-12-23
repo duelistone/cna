@@ -6,6 +6,7 @@ from gi.repository import Gdk as gdk
 from gi.repository import GLib
 import chess, chess.pgn
 import threading, os, sys
+from matplotlib import colors as mcolors
 
 '''Global variables defined here so they are accessible to all modules. The coder is responsible for not using these before they are defined correctly.'''
 
@@ -132,3 +133,10 @@ nag_names[145:147] = ["editorial_comment", "novelty"]
 nag_names[238:246] = ["space", "file", "diagonal", "", "kingside", "queenside", "weakness", "endgame"]
 
 nag_set = set(nag_strings + nag_names)
+
+# Colors
+colors = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
+# Remove annoying single letter color names
+for c in set(colors):
+    if len(c) == 1:
+        del colors[c]

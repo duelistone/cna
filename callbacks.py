@@ -303,22 +303,50 @@ def paste_callback(*args):
 @entry_callback("clear_arrows")
 @gui_callback
 def clear_arrows_callback(*args):
-    G.arrows.clear()
+    G.g.arrows.clear()
     G.board_display.queue_draw()
     return True
 
 @entry_callback("arrow_color")
 def arrow_color_callback(*args):
-    try:
-        G.arrowRGBA[0] = float(args[0])
-        G.arrowRGBA[1] = float(args[1])
-        G.arrowRGBA[2] = float(args[2])
-        G.arrowRGBA[3] = float(args[3])
-    except:
-        pass
-    finally:
-        G.board_display.queue_draw()
+    if len(args) >= 3:
+        try:
+            # Change as many fields as given correctly
+            G.arrowRGBA[0] = float(args[0])
+            G.arrowRGBA[1] = float(args[1])
+            G.arrowRGBA[2] = float(args[2])
+            G.arrowRGBA[3] = float(args[3])
+        except:
+            pass
+    elif len(args) > 0:
+        # First field should be color name.
+        # Second, optional, field is transparency.
+        color_name = args[0]
+        try:
+            assert(color_name in G.colors)
+        except:
+            display_status("Invalid color name given.")
+            return False
+        color_hex = G.colors[color_name]
+        color = gdk.color_parse(color_hex)
+        G.arrowRGBA[0] = color.red_float
+        G.arrowRGBA[1] = color.green_float
+        G.arrowRGBA[2] = color.blue_float
+        try:
+            G.arrowRGBA[3] = float(args[3])
+        except:
+            pass
     return False
+        
+@entry_callback("arrow_transparency")
+def arrow_transparency_callback(*args):
+    try:
+        transparency = float(args[3])
+        assert(transparency >= 0 and transparency <= 1)
+    except:
+        display_status("Invalid transparency value given.")
+        return False
+    G.arrowRGBA[3] = transparency
 
 @entry_callback("sh", "header", "set_header")
 def set_header_callback(*args):
@@ -510,8 +538,8 @@ def board_draw_callback(widget, cr):
                 cr.fill()
 
             # Highlight square if necessary
-            if (square, square) in G.arrows:
-                highlight_square(cr, square_size)
+            if (square, square) in G.g.arrows:
+                highlight_square(cr, G.g.arrows[(square, square)], square_size)
 
             # Draw the piece, if there is one
             piece = G.g.board().piece_at(square)
@@ -527,9 +555,9 @@ def board_draw_callback(widget, cr):
     cr.restore()
 
     # Draw arrows
-    for e in G.arrows:
+    for e in G.g.arrows:
         if e[0] == e[1]: continue # These are the highlighted squares, already done
-        draw_arrow(cr, square_size, e[0], e[1])
+        draw_arrow(cr, G.g.arrows[e], square_size, e[0], e[1])
     
     # Draw little circle for side to move on bottom left
     # and for opening status (if necessary)
@@ -592,6 +620,7 @@ def board_mouse_down_callback(widget, event):
 @gui_callback
 def board_mouse_up_callback(widget, event):
     if event.button == 3:
+        # Right click lifted
         if G.arrow_source == G.NULL_SQUARE:
             return False
 
@@ -599,10 +628,10 @@ def board_mouse_up_callback(widget, event):
         
         if arrow_target != None and G.arrow_source != None:
             elem = (G.arrow_source, arrow_target)
-            if elem in G.arrows:
-                G.arrows.remove(elem)
+            if elem in G.g.arrows:
+                del G.g.arrows[elem]
             else:
-                G.arrows.add(elem)
+                G.g.arrows[elem] = tuple(G.arrowRGBA)
 
         G.arrow_source = G.NULL_SQUARE
         G.board_display.queue_draw()
@@ -1105,15 +1134,18 @@ def entry_bar_key_press_callback(widget, event):
                     display_status("No matches for %s." % partial)
         elif len(words) > 1:
             # Other type of completion
-            # For now, we'll just assume this should be file completion or NAG completion
+            # For now, we'll just assume this should be file, color, or NAG completion
             partial = words[-1]
             prev = " ".join(words[:-1]) + " "
             path, tail = os.path.split(partial)
             try:
+                # File completion
                 candidates = list(filter(lambda x: x[0:len(tail)] == tail, os.listdir(path if path != '' else '.')))
             except:
                 return True
-            candidates += list(filter(lambda x : x[0:len(tail)] == tail, G.nag_set))
+            # NAG or color completion
+            # TODO: Only apply these for appropriate commands
+            candidates += list(filter(lambda x : x[0:len(tail)] == tail, G.nag_set.union(set(G.colors))))
             if len(candidates) > 0:
                 widget.set_text(prev + path + (os.sep if path != '' else '') + reduce(commonString, candidates))
                 display_status(", ".join(candidates))

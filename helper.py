@@ -72,6 +72,10 @@ def mark_if_book(game):
 
 def mark_nodes(game):
     '''Marks special and book nodes.'''
+    # Make sure node has an arrows attribute
+    if not hasattr(game, 'arrows'):
+        game.arrows = {}
+
     # Check if special or book node
     mark_if_special(game)
     mark_if_book(game)

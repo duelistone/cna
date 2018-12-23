@@ -32,14 +32,15 @@ def draw_piece(cr, piece, square_size):
     piece_image.render_cairo(cr)
     cr.scale(1 / scale, 1 / scale)
 
-def highlight_square(cr, square_size):
+def highlight_square(cr, color, square_size):
     cr.save()
-    cr.set_source_rgba(0, 1, 0, 0.2)
+    color = color[0], color[1], color[2], color[3] * 0.8
+    cr.set_source_rgba(*color)
     cr.rectangle(0, 0, square_size, square_size)
     cr.fill()
     cr.restore()
 
-def draw_arrow(cr, square_size, source, target):
+def draw_arrow(cr, color, square_size, source, target):
     cr.save()
     
     # Get row and column
@@ -62,7 +63,7 @@ def draw_arrow(cr, square_size, source, target):
     source_coords = (square_size * source_col + square_size / 2, square_size * source_row + square_size / 2)
     target_coords = (square_size * target_col + square_size / 2, square_size * target_row + square_size / 2)
     target_coords = add(target_coords, scale(direction_vector, -TRIANGLE_RADIUS))
-    cr.set_source_rgba(*G.arrowRGBA)
+    cr.set_source_rgba(*color)
     cr.set_line_width(LINE_WIDTH)
     cr.move_to(*source_coords)
     cr.line_to(*add(target_coords, scale(direction_vector, TRIANGLE_RADIUS * (math.cos(2 * math.pi / 3)))))
