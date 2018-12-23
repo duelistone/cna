@@ -947,6 +947,7 @@ def set_multipv_5_callback(widget=None):
 @entry_callback("play_move")
 @gui_callback
 def play_move_callback(widget=None):
+    # Casework on whether engine is currently enabled
     if G.stockfish_enabled:
         if G.stockfish.info_handlers[0].curr_pos == G.g.board():
             try:
@@ -961,14 +962,33 @@ def play_move_callback(widget=None):
         else:
             display_status("Cannot play engine move: engine currently analyzing a different position.")
     else:
-        # TODO: Play without showing analysis
-        # Use G.playLevel
-        if type(G.playLevel) == type(0):
-            # Use depth
-            pass
-        else:
-            # Use time
-            pass
+        # Make sure engine has been initialized
+        if G.stockfish == None:
+            # Start up stockfish
+            G.stockfish = engine_init()
+
+        print(G.playLevel)
+        G.stockfish.process.process.send_signal(signal.SIGCONT)
+        G.stockfish.stop()
+        G.stockfish.info_handlers[0].curr_pos = G.g.board()
+        G.stockfish.isready()
+        G.stockfish.position(G.stockfish.info_handlers[0].curr_pos)
+        G.stockfish.isready()
+
+        try:
+            # Use G.playLevel type to determine depth or time
+            # Depth - int, time - float
+            if type(G.playLevel) == int:
+                # Use depth
+                analysis_result = G.stockfish.go(depth=G.playLevel)
+            else:
+                # Use time
+                analysis_result = G.stockfish.go(wtime=G.playLevel * 1000)
+            make_move(analysis_result[0])
+            G.board_display.queue_draw()
+        except Exception as e:
+            display_status("Unexpected error finding or making engine move.")
+            print(e)
     return False
 
 @gui_callback
