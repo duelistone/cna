@@ -108,6 +108,7 @@ weak_stockfish_enabled = False
 WEAK_STOCKFISH_DEFAULT_LEVEL = 4
 
 # NAG's
+proper_save_format = False
 nag_strings = 256 * [""]
 nag_strings[1:24] = ["!", "?", "\u203c", "\u2047", "\u2049", "\u2048", "\u25a1", "\u25a1", "", "=", "", "", "\u221e", "\u2a72", "\u2a71", "\u00b1", "\u2213", "+-", "-+", "1-0", "0-1", "\u2a00", "\u2a00"] 
 nag_strings[24:30] = 6 * ["\u25cb"]

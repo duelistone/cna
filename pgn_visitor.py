@@ -32,6 +32,14 @@ def game_gui_string_list(game, offset=0, firstMoveOfVariation=False, firstMoveAf
         # Extra
         strings.append(' ')
         offset += 1
+        # NAG
+        if len(game.nags) > 0:
+            for e in game.nags:
+                if e > 255: continue
+                strings.append(G.nag_strings[e])
+                offset += len(strings[-1])
+                strings.append(" ")
+                offset += 1
         # Comment
         commentLength = len(game.comment)
         if commentLength > 0:
@@ -86,6 +94,7 @@ def game_gui_string_list(game, offset=0, firstMoveOfVariation=False, firstMoveAf
         # NAG
         if len(game.nags) > 0:
             for e in game.nags:
+                if e > 255: continue
                 strings.append(G.nag_strings[e])
                 offset += len(strings[-1])
                 strings.append(" ")

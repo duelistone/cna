@@ -49,25 +49,28 @@ def countNodes(node, color=None):
         result += countNodes(v, color)
     return result
 
-def copy_game(game, condition_function=lambda x:True, parent=None):
+def copy_game(game, condition_function=lambda x:True, parent=None, copy_improper_nags=True):
     '''Traverses a game recursively and copies it, ignoring any
     nodes not satisfying the given condition (and any of its subnodes).'''
     if game.parent == None:
         new_game = chess.pgn.Game()
-        new_game.headers = game.headers
+        new_game.headers = game.headers.copy()
     else:
         new_game = chess.pgn.GameNode()
     # Copy data (except parent and variations, which are copied further below)
     new_game.parent = parent
-    new_game.move = game.move # We're trusting that moves are immutable here
-    new_game.nags = game.nags # ...and this set as immutable, which it isn't.
+    new_game.move = None if game.move == None else chess.Move(game.move.from_square, game.move.to_square, promotion=game.move.promotion, drop=game.move.drop)
+    new_game.nags = game.nags.copy() 
+    if not copy_improper_nags:
+        new_game.nags = set(filter(lambda x : x < 256 and x >= 0, new_game.nags))
+        print(new_game.nags)
     new_game.comment = game.comment
     new_game.starting_comment = game.starting_comment
     # Add subnodes
     new_game.variations = []
     for child in game.variations:
         if condition_function(child):
-            child_copy = copy_game(child, condition_function, new_game)
+            child_copy = copy_game(child, condition_function, new_game, copy_improper_nags)
             new_game.variations.append(child_copy)
     return new_game
 

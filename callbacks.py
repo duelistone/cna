@@ -629,9 +629,12 @@ def board_mouse_up_callback(widget, event):
         if arrow_target != None and G.arrow_source != None:
             elem = (G.arrow_source, arrow_target)
             if elem in G.g.arrows:
+                nag = arrow_nag(G.arrow_source, arrow_target, G.g.arrows[elem])
+                G.g.nags.remove(nag)
                 del G.g.arrows[elem]
             else:
                 G.g.arrows[elem] = tuple(G.arrowRGBA)
+                G.g.nags.add(arrow_nag(G.arrow_source, arrow_target, G.arrowRGBA))
 
         G.arrow_source = G.NULL_SQUARE
         G.board_display.queue_draw()
@@ -725,6 +728,16 @@ def delete_opening_node_callback(widget=None):
         display_status("No repertoire file loaded.")
     return False
 
+@entry_callback("set_proper_save_format")
+def set_proper_save_format_callback(*args):
+    G.proper_save_format = True
+    return False
+
+@entry_callback("set_extended_save_format", "set_arrow_save_format")
+def set_extended_save_format_callback(*args):
+    G.proper_save_format = False
+    return False
+
 @entry_callback("save")
 @gui_callback
 def save_callback(widget=None, save_file_name=None, showStatus=True, prelude=None):
@@ -739,10 +752,13 @@ def save_callback(widget=None, save_file_name=None, showStatus=True, prelude=Non
     elif save_file_name == None:
         # Do not set global save_file_name if keyword arg is used
         save_file_name = G.save_file_name
+    game_to_save = G.g.root()
+    if G.proper_save_format:
+        game_to_save = copy_game(G.g.root(), copy_improper_nags=False)
     outPgnFile = open(G.save_file_name, 'w')
     if prelude:
         print(prelude, file=outPgnFile)
-    print(G.g.root(), file=outPgnFile, end="\n\n")
+    print(game_to_save, file=outPgnFile, end="\n\n")
     outPgnFile.close()
     if showStatus:
         display_status("Game saved to %s." % G.save_file_name)

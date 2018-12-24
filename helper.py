@@ -70,11 +70,42 @@ def mark_if_book(game):
         elif G.player == chess.BLACK and game.parent.book == 1 and game.parent.board().turn == chess.WHITE and game.move not in G.rep.findMovesWhite(game.parent.board()): game.book = 2
         elif game.parent.book == 2: game.book = 2
 
+def is_arrow_nag(nag):
+    return nag & (1 << (32 + 6 + 6))
+
+def parse_arrow_nag(nag):
+    # Binary format for special NAG's:
+    # 1xxxxxxyyyyyyzz...zz, 
+    # where xxxxxx is the starting square of the arrow,
+    # yyyyyy is the ending square of the arrow,
+    # and zz...zz (8 * 4 = 32 digits) is the color of the arrow 
+    # (rgb + transparency out of 256).
+    transparency = ((nag & 255) + 1) / 256.0
+    nag >>= 8
+    blue = ((nag & 255) + 1) / 256.0
+    nag >>= 8
+    green = ((nag & 255) + 1) / 256.0
+    nag >>= 8
+    red = ((nag & 255) + 1) / 256.0
+    nag >>= 8
+    end_square = nag & 63
+    nag >>= 6
+    start_square = nag & 63
+    return start_square, end_square, red, green, blue, transparency
+
 def mark_nodes(game):
-    '''Marks special and book nodes.'''
+    '''Marks special and book nodes, as well as the arrows given by arrow nags.'''
     # Make sure node has an arrows attribute
     if not hasattr(game, 'arrows'):
         game.arrows = {}
+
+    # Change special NAG's to arrows
+    # Reminder: Root nodes don't have nags, so no arrows of the root node will be saved
+    for nag in game.nags:
+        if is_arrow_nag(nag): 
+            # See parse_arrow_nag for details
+            start_square, end_square, red, green, blue, transparency = parse_arrow_nag(nag)
+            game.arrows[(start_square, end_square)] = (red, green, blue, transparency)
 
     # Check if special or book node
     mark_if_special(game)
@@ -456,6 +487,17 @@ def move_completion(s):
         return candidates[0], ""
     # There are multiple candidates if we get here
     return s, " (%s)" % " ".join(candidates)
+
+def arrow_nag(start_square, end_square, color_tuple):
+    result = 1
+    result <<= 6
+    result += start_square & 63
+    result <<= 6
+    result += end_square & 63
+    for i in range(4):
+        result <<= 8
+        result += int(color_tuple[i] * 255) & 255
+    return result
 
 def cleanup(showMessage=False):
     if G.stockfish != None:
