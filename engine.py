@@ -50,7 +50,7 @@ def change_engine_setting(name, value):
 
 # Prepare engine
 def engine_init():
-    engine = chess.uci.popen_engine("stockfish")
+    engine = chess.uci.popen_engine(G.engine_command)
     engine.uci()
     engine.setoption(G.settings_dict)
     info_handler = MyInfoHandler()
@@ -117,10 +117,10 @@ class MyInfoHandler(chess.uci.InfoHandler):
         self.curr_hashfull = 0
         self.curr_nps = None
         self.curr_nodes = None
-        self.lines = [""] * (int(G.settings_dict["MultiPV"]) + 1) # TODO: Fill first info line
+        self.lines = [""] * ((int(G.settings_dict["MultiPV"]) if "MultiPV" in G.settings_dict else 1) + 1) # TODO: Fill first info line
 
     def on_go(self):
-        self.lines = [""] * (int(G.settings_dict["MultiPV"]) + 1)
+        self.lines = [""] * ((int(G.settings_dict["MultiPV"]) if "MultiPV" in G.settings_dict else 1) + 1)
         super(MyInfoHandler, self).on_go()
 
     def time(self, x):
@@ -168,7 +168,7 @@ class MyInfoHandler(chess.uci.InfoHandler):
             self.lines[0] = "Time: %.1f TB: %d Hash: %.1f%% NPS: %.0f Nodes: %d" % (self.curr_time, self.curr_tbhits, self.curr_hashfull, self.curr_nps, self.curr_nodes)
 
         # Received line
-        if None not in [self.curr_depth, self.curr_pv, self.curr_multipv, self.curr_score]:
+        if None not in [self.curr_depth, self.curr_pv, self.curr_score]:
             words = []
             words.append(str(self.curr_depth))
             words.append(score_to_string(self.curr_score, self.curr_pos.turn))
@@ -188,7 +188,11 @@ class MyInfoHandler(chess.uci.InfoHandler):
             if len(sanList) > 0 and self.curr_pos.turn == chess.BLACK:
                 sanList[0] = str(self.curr_pos.fullmove_number) + '...' + sanList[0]
             words.extend(sanList)
-            self.lines[self.curr_multipv] = " ".join(words)
+            try:
+                self.lines[self.curr_multipv] = " ".join(words)
+            except:
+                # Perhaps self.curr_multipv could be None if multipv value is 1.
+                self.lines[1] = " ".join(words)
 
         display_stockfish_string("\n".join(self.lines))
         super(MyInfoHandler, self).post_info()
