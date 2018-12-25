@@ -102,6 +102,8 @@ settings_dict = {"MultiPV" : 1, "Hash" : 4096, "Threads" : 2, "Contempt" : 0}
 # For leela (or different engine), use different values for these variables, for example:
 # engine_command = "leela" # Replace with leela script or command with parameters
 # settings_dict = {}
+# engine_command = "ethereal"
+# settings_dict = {"Hash" : 4096, "Threads" : 2}
 stockfish_text_lock = threading.Lock()
 stockfish_enabled = False
 stockfish = None 
