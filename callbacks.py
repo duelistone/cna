@@ -1021,7 +1021,7 @@ def puzzle_file_name_callback(*args):
         display_status("No file name given.")
     return False
 
-@entry_callback("save_puzzle")
+@entry_callback("save_puzzle", "sp")
 def save_puzzle_callback(*args):
     fil = open(G.puzzle_file, 'a')
     print(G.g.board().fen(), file=fil)
