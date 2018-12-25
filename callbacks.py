@@ -288,6 +288,7 @@ def load_fen_entry_callback(widget, dialog=None):
 
 @entry_callback("paste_position")
 @key_callback(gdk.KEY_p)
+@control_key_callback(gdk.KEY_v)
 def paste_callback(*args):
     text = G.clipboard.wait_for_text()
     def result():
@@ -299,6 +300,13 @@ def paste_callback(*args):
         result()
         return False
     return result
+
+@gui_callback
+@control_key_callback(gdk.KEY_c)
+def copy_fen_callback(widget=None):
+    if G.board_display.is_focus():
+        G.clipboard.set_text(G.g.board().fen(), -1)
+    return False
 
 @entry_callback("clear_arrows")
 @gui_callback
@@ -792,20 +800,6 @@ def analyze_callback(widget=None):
     subprocess.Popen(["python3", "gui.py", "game.temp"]) 
     return False
 
-@gui_callback
-@control_key_callback(gdk.KEY_c)
-def copy_fen_callback(widget=None):
-    if G.board_display.is_focus():
-        G.clipboard.set_text(G.g.board().fen(), -1)
-    return False
-
-@gui_callback
-def paste_fen_callback(widget=None):
-    if G.board_display.is_focus():
-        #TODO
-        pass
-    return False
-
 @entry_callback("add_pieces")
 def add_pieces_callback(*args):
     board = G.g.board()
@@ -1019,9 +1013,17 @@ def make_report_callback(widget=None):
     make_report()
     return False
 
+@entry_callback("puzzle_file_name")
+def puzzle_file_name_callback(*args):
+    try:
+        G.puzzle_file = args[0]
+    except:
+        display_status("No file name given.")
+    return False
+
 @entry_callback("save_puzzle")
 def save_puzzle_callback(*args):
-    fil = open('puzzles', 'a')
+    fil = open(G.puzzle_file, 'a')
     print(G.g.board().fen(), file=fil)
     if len(args) > 0:
         # Add comment about position
@@ -1034,7 +1036,7 @@ def save_puzzle_callback(*args):
 
 @entry_callback("load_puzzle")
 def load_puzzle_callback(*args):
-    fil = open('puzzles', 'r')
+    fil = open(G.puzzle_file, 'r')
     if len(args) > 0:
         # A specific puzzle was specified by index
         try:

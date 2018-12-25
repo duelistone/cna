@@ -69,6 +69,7 @@ arrowRGBA = [0, 0.4, 0, 0.5]
 # Other global constants
 base_directory = os.path.dirname(sys.argv[0])
 piece_images = [None] * 12
+puzzle_file = 'puzzles'
 promotion_piece = chess.QUEEN
 rep = None
 pgnFile = None
