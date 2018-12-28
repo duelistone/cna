@@ -137,7 +137,7 @@ def set_hash_callback(*args):
     return False
 
 @entry_callback("set_engine_option")
-def set_engine_option(*args):
+def set_engine_option_callback(*args):
     try:
         name = args[0]
         value = args[1]
@@ -146,6 +146,18 @@ def set_engine_option(*args):
         return False
     change_engine_setting(name, value)
     return False
+
+@entry_callback("set_engine")
+def set_engine_callback(*args):
+    if G.stockfish != None:
+        display_status("Engine can only be changed before it is first initialized.")
+        return False
+    if args[0] not in G.engine_settings:
+        display_status("Could not find specified engine.")
+        return False
+    G.engine_command = args[0]
+    return False
+        
 
 @gui_callback
 def opening_games_callback(widget=None):

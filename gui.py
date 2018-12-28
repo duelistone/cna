@@ -38,7 +38,8 @@ def main():
             pass
         finally:
             del sys.argv[tbIndex]
-        G.settings_dict.update({"SyzygyPath": tablebase_path})
+        for e in G.engine_settings:
+            G.engine_settings[e].update({"SyzygyPath": tablebase_path})
 
     # Check if should use opening test mode and finish preperations
     useOpeningMode = '--ot' in sys.argv

@@ -41,9 +41,9 @@ def change_engine_setting(name, value):
     if G.stockfish != None:
         G.stockfish.process.process.send_signal(signal.SIGCONT)
         G.stockfish.stop()
-    G.settings_dict.update({name: value})
+    G.engine_settings[G.engine_command].update({name: value})
     if G.stockfish != None:
-        G.stockfish.setoption(G.settings_dict)
+        G.stockfish.setoption(G.engine_settings[G.engine_command])
         engine_go(G.stockfish)
         if not G.stockfish_enabled:
             G.stockfish.process.process.send_signal(signal.SIGSTOP)
@@ -52,7 +52,7 @@ def change_engine_setting(name, value):
 def engine_init():
     engine = chess.uci.popen_engine(G.engine_command)
     engine.uci()
-    engine.setoption(G.settings_dict)
+    engine.setoption(G.engine_settings[G.engine_command])
     info_handler = MyInfoHandler()
     engine.info_handlers.append(info_handler)
     engine.isready()
@@ -117,10 +117,10 @@ class MyInfoHandler(chess.uci.InfoHandler):
         self.curr_hashfull = 0
         self.curr_nps = None
         self.curr_nodes = None
-        self.lines = [""] * ((int(G.settings_dict["MultiPV"]) if "MultiPV" in G.settings_dict else 1) + 1) # TODO: Fill first info line
+        self.lines = [""] * ((int(G.engine_settings[G.engine_command]["MultiPV"]) if "MultiPV" in G.engine_settings[G.engine_command] else 1) + 1) # TODO: Fill first info line
 
     def on_go(self):
-        self.lines = [""] * ((int(G.settings_dict["MultiPV"]) if "MultiPV" in G.settings_dict else 1) + 1)
+        self.lines = [""] * ((int(G.engine_settings[G.engine_command]["MultiPV"]) if "MultiPV" in G.engine_settings[G.engine_command] else 1) + 1)
         super(MyInfoHandler, self).on_go()
 
     def time(self, x):
