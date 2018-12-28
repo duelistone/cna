@@ -376,6 +376,11 @@ def set_header_callback(*args):
     G.g.root().headers[args[0]] = args[1]
     return set_header_callback(args[2:])
 
+@entry_callback("clear_headers")
+def clear_headers_callback(*args):
+    G.g.root().headers = chess.Game().headers.copy()
+    return False
+
 @entry_callback("nag", "add_nag", "set_nag")
 def set_nag_callback(*args):
     errors = []
