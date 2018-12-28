@@ -1309,11 +1309,14 @@ def ot_correct_answer_callback():
     except StopIteration:
         display_status("Training complete!")
         G.move_completed_callback = ot_move_completed_callback(chess.Move.null())
-        return
+        return False
 
     # Set new answer + callback, and load new board
     G.move_completed_callback = ot_move_completed_callback(m) # This is a function
     load_new_game_from_board(b)
+    display_status(board_moves(b))
+
+    return False
     
 def destroy_main_window_callback(widget):
     '''Destroy main window callback. Provides cleanup code for things like stockfish, etc, as well.'''

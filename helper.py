@@ -499,6 +499,37 @@ def arrow_nag(start_square, end_square, color_tuple):
         result += int(color_tuple[i] * 255) & 255
     return result
 
+def board_moves(board):
+    '''Returns a string representing the board moves from root node to the given board.'''
+    b = board.copy()
+    move_stack = [] # Put together in reverse order, then reversed.
+    resultList = []
+    while True:
+        try:
+            m = b.pop()
+        except IndexError:
+            # Move stack is empty
+            break
+        move_stack.append(b.san(m))
+    move_stack.reverse()
+    if b.turn == chess.WHITE:
+        # Line starts on white's turn
+        for i, e in enumerate(move_stack):
+            if i % 2 == 0:
+                resultList.append(str(i // 2 + b.fullmove_number) + ". " + e)
+            else:
+                resultList.append(e)
+    else:
+        # Line starts on black's turn
+        for i, e in enumerate(move_stack):
+            if i % 2 == 1:
+                resultList.append(str(i // 2 + b.fullmove_number + 1) + ". " + e)
+            elif i == 0:
+                resultList.append(str(b.fullmove_number) + "... " + e)
+            else:
+                resultList.append(e)
+    return " ".join(resultList)
+
 def cleanup(showMessage=False):
     if G.stockfish != None:
         G.stockfish.process.process.send_signal(signal.SIGCONT) # In case stopped
