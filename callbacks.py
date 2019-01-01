@@ -1127,6 +1127,26 @@ def textview_mouse_released_callback(widget, event):
 def pgn_textview_key_press_callback(widget, event):
     return True
 
+@entry_callback("enter_analysis_mode")
+def enter_analysis_mode_callback(*args):
+    G.move_completed_callback = lambda x : None
+    return False
+
+@entry_callback("enter_test_mode")
+def enter_opening_test_mode_callback(*args):
+    if G.ot_board == None:
+        G.ot_board = chess.Board(G.g.board().fen()) # To strip board history
+        G.ot_gen = None
+    ot_correct_answer_callback()
+    return False
+
+@entry_callback("reset_test_mode")
+def reset_test_mode_callback(*args):
+    G.ot_board = G.g.board()
+    G.ot_gen = None
+    ot_correct_answer_callback()
+    return False
+
 @gui_callback
 def entry_bar_callback(widget):
     text = widget.get_text()
@@ -1290,15 +1310,18 @@ def key_press_callback(widget, event):
 # Other callbacks
 
 def ot_move_completed_callback(answer):
-    # Currying
-    def f(guess):
-        if guess.from_square == answer.from_square and guess.to_square == answer.to_square and guess.promotion == answer.promotion:
-            ot_correct_answer_callback()
-        else:
-            go_back_callback()
-    return f
+    if answer:
+        # Currying
+        def f(guess):
+            if guess.from_square == answer.from_square and guess.to_square == answer.to_square and guess.promotion == answer.promotion:
+                ot_correct_answer_callback()
+            else:
+                go_back_callback()
+        return f
+    return lambda x : None
 
 def ot_correct_answer_callback():
+    # TODO: Fix name and move to helper.py, since not really a callback
     # Load generator if first time
     if G.ot_gen == None and G.ot_board != None:
         G.ot_gen = rep_visitor(G.ot_board, G.player)

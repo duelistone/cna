@@ -91,6 +91,7 @@ command_index = 0
 
 # Generator for opening trainer positions
 ot_gen = None
+ot_board = None
 
 # Callback for after legal move is complete
 # Default is to do nothing
