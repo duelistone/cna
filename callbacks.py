@@ -1099,9 +1099,9 @@ def textview_mouse_pressed_callback(widget, event):
     text_window = gtk.TextWindowType.WIDGET
     pressed_tuple = widget.window_to_buffer_coords(text_window, event.x, event.y)
     G.textview_pressed_text_iter = G.pgn_textview.get_iter_at_location(pressed_tuple[0], pressed_tuple[1])[1] # Yeah...the [1] is necessary, which is ridiculous
-    G.textview_pressed_text_iter.backward_char()
-    if not G.textview_pressed_text_iter.starts_word() and G.textview_pressed_text_iter.inside_word():
-        G.textview_pressed_text_iter.backward_word_start()
+    # Now we're looking for the beginning of the word, and gtk's starts_word doesn't work with castling moves
+    G.textview_pressed_text_iter.backward_find_char(lambda x, _ : x == ' ')
+    G.textview_pressed_text_iter.forward_char()
     return False
 
 @gui_callback
@@ -1110,9 +1110,9 @@ def textview_mouse_released_callback(widget, event):
         text_window = gtk.TextWindowType.WIDGET
         released_tuple = widget.window_to_buffer_coords(text_window, event.x, event.y)
         text_iter = G.pgn_textview.get_iter_at_location(released_tuple[0], released_tuple[1])[1] # Yeah...the [1] is necessary, which is ridiculous
-        text_iter.backward_char()
-        if not text_iter.starts_word() and text_iter.inside_word():
-            text_iter.backward_word_start()
+        # Now we're looking for the beginning of the word, and gtk's starts_word doesn't work with castling moves
+        text_iter.backward_find_char(lambda x, _ : x == ' ')
+        text_iter.forward_char()
         if G.textview_pressed_text_iter.equal(text_iter): # The == operator isn't overloaded
             try:
                 G.g = G.bufferToNodes[text_iter.get_offset()]
