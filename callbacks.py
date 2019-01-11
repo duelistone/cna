@@ -173,6 +173,7 @@ def opening_save_callback(widget=None):
         save_special_nodes_to_repertoire(G.g.root())
         G.rep.flush()
         mark_nodes(G.g.root())
+        G.board_display.queue_draw()
         update_pgn_message()
     else:
         display_status("No repertoire file loaded.")
@@ -185,6 +186,7 @@ def opening_single_save_callback(widget=None):
         save_special_node_to_repertoire(G.g)
         G.rep.flush()
         mark_nodes(G.g.root())
+        G.board_display.queue_draw()
         update_pgn_message()
     else:
         display_status("No repertoire file loaded.")
@@ -524,8 +526,9 @@ def delete_nonspecial_nodes_callback(widget=None):
 @gui_callback
 def opening_test_callback(widget=None):
     if G.rep:
-        create_opening_game("currentTest.pgn", G.rep, G.player, G.g)
-        #subprocess.Popen(['ot', 'currentTest.pgn'])
+        # Old method commented out
+        # create_opening_game("currentTest.pgn", G.rep, G.player, G.g)
+        # subprocess.Popen(['ot', 'currentTest.pgn'])
         if G.player == chess.WHITE:
             subprocess.Popen(['python3', 'gui.py', '--ot', G.g.board().fen()])
         else:
