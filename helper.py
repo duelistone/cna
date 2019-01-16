@@ -67,7 +67,7 @@ def mark_if_book(game):
         elif G.player == chess.BLACK and G.rep.hasPositionBlack(game.parent.board()) and game.move in G.rep.findMovesBlack(game.parent.board()): game.book = 1
         # The other player deviates first
         elif G.player == chess.WHITE and game.parent.book == 1 and game.parent.board().turn == chess.BLACK and game.move not in G.rep.findMovesWhite(game.parent.board()): game.book = 2
-        elif G.player == chess.BLACK and game.parent.book == 1 and game.parent.board().turn == chess.WHITE and game.move not in G.rep.findMovesWhite(game.parent.board()): game.book = 2
+        elif G.player == chess.BLACK and game.parent.book == 1 and game.parent.board().turn == chess.WHITE and game.move not in G.rep.findMovesBlack(game.parent.board()): game.book = 2
         elif game.parent.book == 2: game.book = 2
 
 def is_arrow_nag(nag):
