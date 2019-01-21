@@ -50,7 +50,7 @@ def main():
         G.ot_board = chess.Board(fen=fenString)
         if G.ot_board == None: raise ValueError("Bad FEN") # Temporary
         preparations(builder)
-        ot_correct_answer_callback()
+        setup_ot_mode()
     else:
         preparations(builder)
 

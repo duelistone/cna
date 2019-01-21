@@ -72,7 +72,7 @@ def go_to_end_callback(widget=None):
         update_pgn_textview_move()
         G.board_display.queue_draw()
     return False
-    
+
 @key_callback(gdk.KEY_c)
 @entry_callback("ec", "edit_comment")
 @gui_callback
@@ -128,7 +128,6 @@ def set_engine_callback(*args):
         return False
     G.engine_command = args[0]
     return False
-        
 
 @gui_callback
 @entry_callback("list_opening_games")
@@ -162,7 +161,7 @@ def opening_single_save_callback(widget=None):
         update_pgn_message()
     else:
         display_status("No repertoire file loaded.")
-    return False    
+    return False
 
 @entry_callback("save_game_to_repertoire")
 @gui_callback
@@ -336,7 +335,7 @@ def arrow_color_callback(*args):
         except:
             pass
     return False
-        
+
 @entry_callback("arrow_transparency")
 def arrow_transparency_callback(*args):
     try:
@@ -387,7 +386,7 @@ def remove_nags_callback():
         G.g.nags.clear()
         update_pgn_message()
     return False
-        
+
 @gui_callback
 def header_entry_callback(widget, dialog, entries):
     if len(entries) < 2:
@@ -499,7 +498,7 @@ def delete_nonspecial_nodes_callback(widget=None):
     game = copy_game(G.g.root(), lambda node : node.special)
     load_new_game_from_game(game)
     return False
-    
+
 @gui_callback
 def opening_test_callback(widget=None):
     if G.rep:
@@ -512,7 +511,7 @@ def opening_test_callback(widget=None):
             subprocess.Popen(['python3', 'gui.py', '-b', '--ot', G.g.board().fen()])
     else:
         display_status("No repertoire file loaded.")
-    return False 
+    return False
 
 @gui_callback
 def board_draw_callback(widget, cr):
@@ -564,7 +563,7 @@ def board_draw_callback(widget, cr):
     for e in G.g.arrows:
         if e[0] == e[1]: continue # These are the highlighted squares, already done
         draw_arrow(cr, G.g.arrows[e], square_size, e[0], e[1])
-    
+
     # Draw little circle for side to move on bottom left
     # and for opening status (if necessary)
     margin = int(math.ceil(0.01 * square_size))
@@ -631,7 +630,7 @@ def board_mouse_up_callback(widget, event):
             return False
 
         arrow_target = board_coords_to_square(event.x, event.y)
-        
+
         if arrow_target != None and G.arrow_source != None:
             elem = (G.arrow_source, arrow_target)
             if elem in G.g.arrows:
@@ -650,7 +649,7 @@ def board_mouse_up_callback(widget, event):
         return False
 
     drag_target = board_coords_to_square(event.x, event.y)
-    
+
     if drag_target != None and G.drag_source != None:
         m = chess.Move(G.drag_source, drag_target)
         if not make_move(m):
@@ -795,7 +794,7 @@ def analyze_callback(widget=None):
     # TODO: Should eventually replace with 'at' script or with memorized command line arguments
     # Issue currently is that this does not keep current command line arguments like a tablebases folder
     # OR, perhaps better, keep the command line arguments saved.
-    subprocess.Popen(["python3", "gui.py", "game.temp"]) 
+    subprocess.Popen(["python3", "gui.py", "game.temp"])
     return False
 
 @entry_callback("add_pieces")
@@ -927,26 +926,31 @@ def toggle_stockfish_callback(widget=None):
     return False
 
 @gui_callback
+@control_key_callback(gdk.KEY_1)
 def set_multipv_1_callback(widget=None):
     change_multipv(1)
     return False
 
 @gui_callback
+@control_key_callback(gdk.KEY_2)
 def set_multipv_2_callback(widget=None):
     change_multipv(2)
     return False
 
 @gui_callback
+@control_key_callback(gdk.KEY_3)
 def set_multipv_3_callback(widget=None):
     change_multipv(3)
     return False
 
 @gui_callback
+@control_key_callback(gdk.KEY_4)
 def set_multipv_4_callback(widget=None):
     change_multipv(4)
     return False
 
 @gui_callback
+@control_key_callback(gdk.KEY_5)
 def set_multipv_5_callback(widget=None):
     change_multipv(5)
     return False
@@ -997,6 +1001,29 @@ def play_move_callback(widget=None):
         except Exception as e:
             display_status("Unexpected error finding or making engine move.")
             print(e)
+    return False
+
+@key_callback(gdk.KEY_t)
+@entry_callback("play_training_move")
+def play_training_move_callback(*args):
+    # Play engine in training mode
+    if G.weak_stockfish == None:
+        G.weak_stockfish = weak_engine_init(G.WEAK_STOCKFISH_DEFAULT_LEVEL)
+    while 1:
+        G.weak_stockfish.position(G.g.board())
+        best, _ = G.weak_stockfish.go(movetime=1000)
+        score = G.weak_stockfish.info_handlers[0].e
+        if score.cp != None:
+            correctLevel = score_to_level(score.cp, G.WEAK_STOCKFISH_DEFAULT_LEVEL)
+            if correctLevel == G.weak_stockfish.level:
+                break
+            change_level(G.weak_stockfish, correctLevel)
+        else:
+            # If a mate was found, we don't care about the level right now
+            break
+    print("Current level: %s" % G.weak_stockfish.level)
+    make_move(best)
+    G.board_display.queue_draw()
     return False
 
 @gui_callback
@@ -1117,14 +1144,14 @@ def enter_opening_test_mode_callback(*args):
     if G.ot_board == None:
         G.ot_board = chess.Board(G.g.board().fen()) # To strip board history
         G.ot_gen = None
-    ot_correct_answer_callback()
+    setup_ot_mode()
     return False
 
 @entry_callback("reset_test_mode")
 def reset_test_mode_callback(*args):
     G.ot_board = G.g.board()
     G.ot_gen = None
-    ot_correct_answer_callback()
+    setup_ot_mode()
     return False
 
 @gui_callback
@@ -1160,7 +1187,7 @@ def entry_bar_callback(widget):
                     future_callback()
                 G.command_index = 0
             break
-        
+
     return False
 
 @gui_callback
@@ -1224,7 +1251,7 @@ def entry_bar_key_press_callback(widget, event):
         return True
 
     return False
-    
+
 def comment_key_press_callback(widget, event, dialog=None):
     if event.keyval == gdk.KEY_Return:
         buff = widget.get_buffer()
@@ -1241,33 +1268,10 @@ def key_press_callback(widget, event):
     if event.keyval in G.escapeKeys:
         G.board_display.grab_focus()
         return False
-    
+
     # Check if focus is on entry bar
     if G.entry_bar.is_focus():
         return False
-
-    # Unorganized callbacks
-    # TODO: Organize!
-    if event.keyval == gdk.KEY_t:
-        # Play engine in training mode
-        if G.weak_stockfish == None:
-            G.weak_stockfish = weak_engine_init(G.WEAK_STOCKFISH_DEFAULT_LEVEL)
-        while 1:
-            G.weak_stockfish.position(G.g.board())
-            best, _ = G.weak_stockfish.go(movetime=1000)
-            score = G.weak_stockfish.info_handlers[0].e
-            if score.cp != None:
-                correctLevel = score_to_level(score.cp, G.WEAK_STOCKFISH_DEFAULT_LEVEL)
-                if correctLevel == G.weak_stockfish.level:
-                    break
-                change_level(G.weak_stockfish, correctLevel)
-            else:
-                # If a mate was found, we don't care about the level right now
-                break
-        print("Current level: %s" % G.weak_stockfish.level)
-        make_move(best)
-        G.board_display.queue_draw()
-        return True
 
     # Check if control is pressed
     modifiers = gtk.accelerator_get_default_mod_mask()
@@ -1289,38 +1293,6 @@ def key_press_callback(widget, event):
 
 # Other callbacks
 
-def ot_move_completed_callback(answer):
-    if answer:
-        # Currying
-        def f(guess):
-            if guess.from_square == answer.from_square and guess.to_square == answer.to_square and guess.promotion == answer.promotion:
-                ot_correct_answer_callback()
-            else:
-                go_back_callback()
-        return f
-    return lambda x : None
-
-def ot_correct_answer_callback():
-    # TODO: Fix name and move to helper.py, since not really a callback
-    # Load generator if first time
-    if G.ot_gen == None and G.ot_board != None:
-        G.ot_gen = rep_visitor(G.ot_board, G.player)
-
-    # Get next position
-    try:
-        b, m = next(G.ot_gen)
-    except StopIteration:
-        display_status("Training complete!")
-        G.move_completed_callback = ot_move_completed_callback(chess.Move.null())
-        return False
-
-    # Set new answer + callback, and load new board
-    G.move_completed_callback = ot_move_completed_callback(m) # This is a function
-    load_new_game_from_board(b)
-    display_status(board_moves(b))
-
-    return False
-    
 def destroy_main_window_callback(widget):
     '''Destroy main window callback. Provides cleanup code for things like stockfish, etc, as well.'''
     G.glib_mainloop.quit()
@@ -1328,6 +1300,9 @@ def destroy_main_window_callback(widget):
     return False
 
 def signal_handler(signum=None):
-    '''Signal handling (SIGINT). Surprisingly, this doesn't need to do anything.'''
+    '''Signal handling (SIGINT or SIGTERM). Cleans up child processes and exits.'''
+    # signum is ignored because this handler is only registered elsewhere
+    # for SIGINT and SIGTERM. If that changes, this function needs to be changed
+    # appropriately.
     cleanup(True)
     exit(0)

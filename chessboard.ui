@@ -292,53 +292,8 @@
                       <object class="GtkMenuItem" id="play_move_menuitem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Play engine move (depth)</property>
+                        <property name="label" translatable="yes">Play engine move</property>
                         <signal name="activate" handler="play_move_callback" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="multipv_1_menuitem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">1 engine var</property>
-                        <signal name="activate" handler="set_multipv_1_callback" swapped="no"/>
-                        <accelerator key="1" signal="activate" modifiers="GDK_CONTROL_MASK"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="multipv_2_menuitem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">2 engine var</property>
-                        <signal name="activate" handler="set_multipv_2_callback" swapped="no"/>
-                        <accelerator key="2" signal="activate" modifiers="GDK_CONTROL_MASK"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="multipv_3_menuitem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">3 engine var</property>
-                        <signal name="activate" handler="set_multipv_3_callback" swapped="no"/>
-                        <accelerator key="3" signal="activate" modifiers="GDK_CONTROL_MASK"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="multipv_4_menuitem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">4 engine var</property>
-                        <signal name="activate" handler="set_multipv_4_callback" swapped="no"/>
-                        <accelerator key="4" signal="activate" modifiers="GDK_CONTROL_MASK"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="multipv_5_menuitem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">5 engine var</property>
-                        <signal name="activate" handler="set_multipv_5_callback" swapped="no"/>
-                        <accelerator key="5" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
                     </child>
                   </object>

@@ -489,6 +489,9 @@ def move_completion(s):
     return s, " (%s)" % " ".join(candidates)
 
 def arrow_nag(start_square, end_square, color_tuple):
+    '''Produces integer NAG to represent an arrow.
+    The integers produced here are intentionally huge.
+    In particular, they do not collide with regular NAGs, which should be < 256.'''
     result = 1
     result <<= 6
     result += start_square & 63
@@ -530,7 +533,42 @@ def board_moves(board):
                 resultList.append(e)
     return " ".join(resultList)
 
+def ot_move_completed_callback(answer):
+    '''This technically isn't a callback function, but rather a function that generates
+    the callback function for an answer being given in opening trainer mode.'''
+    if answer:
+        # Currying
+        def f(guess):
+            if guess.from_square == answer.from_square and guess.to_square == answer.to_square and guess.promotion == answer.promotion:
+                setup_ot_mode()
+            else:
+                G.handlers["go_back_callback"]() # Uses dictionary to avoid circular reference problem
+        return f
+    return lambda x : None
+
+def setup_ot_mode():
+    '''Sets up opening trainer mode, and starts it or continues it with the next problem).'''
+    # Load generator if first time
+    if G.ot_gen == None and G.ot_board != None:
+        G.ot_gen = rep_visitor(G.ot_board, G.player)
+
+    # Get next position
+    try:
+        b, m = next(G.ot_gen)
+    except StopIteration:
+        display_status("Training complete!")
+        G.move_completed_callback = ot_move_completed_callback(chess.Move.null())
+        return False
+
+    # Set new answer + callback, and load new board
+    G.move_completed_callback = ot_move_completed_callback(m) # This is a function
+    load_new_game_from_board(b)
+    display_status(board_moves(b))
+
+    return False
+    
 def cleanup(showMessage=False):
+    '''Cleans up any child processes to quit cleanly.'''
     if G.stockfish != None:
         G.stockfish.process.process.send_signal(signal.SIGCONT) # In case stopped
         G.stockfish.terminate()
