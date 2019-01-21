@@ -131,6 +131,7 @@ def set_engine_callback(*args):
         
 
 @gui_callback
+@entry_callback("list_opening_games")
 def opening_games_callback(widget=None):
     games = G.rep.list_games(G.g.board())
     display_string = " ".join(games)
@@ -296,6 +297,11 @@ def copy_fen_callback(widget=None):
 @entry_callback("clear_arrows")
 @gui_callback
 def clear_arrows_callback(*args):
+    # Remove any arrow NAGs
+    for source, target in G.g.arrows:
+        nag = arrow_nag(source, target, G.g.arrows[(source, target)])
+        G.g.nags.remove(nag)
+    # Clear arrows dict and redraw board
     G.g.arrows.clear()
     G.board_display.queue_draw()
     return True
