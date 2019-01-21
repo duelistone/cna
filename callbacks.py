@@ -18,37 +18,8 @@ from mmrw import *
 from engine import *
 from drawing import *
 from dfs import *
+from decorators import *
 from rep_visitor import rep_visitor
-from pgn_visitor import game_gui_string
-
-# Decorators
-
-def gui_callback(cb):
-    G.handlers[cb.__name__] = cb
-    return cb
-
-# Decorators returning decorators!
-
-def entry_callback(*strings):
-    def result(cb):
-        for s in strings:
-            G.command_callbacks[s] = cb
-        return cb
-    return result
-
-def key_callback(*keys):
-    def result(cb):
-        for k in keys:
-            G.key_binding_map[k] = cb
-        return cb
-    return result
-
-def control_key_callback(*keys):
-    def result(cb):
-        for k in keys:
-            G.control_key_binding_map[k] = cb
-        return cb
-    return result
 
 # GUI callbacks
 
