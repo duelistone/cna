@@ -75,10 +75,10 @@ def is_arrow_nag(nag):
 
 def parse_arrow_nag(nag):
     # Binary format for special NAG's:
-    # 1xxxxxxyyyyyyzz...zz, 
+    # 1xxxxxxyyyyyyzz...zz,
     # where xxxxxx is the starting square of the arrow,
     # yyyyyy is the ending square of the arrow,
-    # and zz...zz (8 * 4 = 32 digits) is the color of the arrow 
+    # and zz...zz (8 * 4 = 32 digits) is the color of the arrow
     # (rgb + transparency out of 256).
     transparency = ((nag & 255) + 1) / 256.0
     nag >>= 8
@@ -102,7 +102,7 @@ def mark_nodes(game):
     # Change special NAG's to arrows
     # Reminder: Root nodes don't have nags, so no arrows of the root node will be saved
     for nag in game.nags:
-        if is_arrow_nag(nag): 
+        if is_arrow_nag(nag):
             # See parse_arrow_nag for details
             start_square, end_square, red, green, blue, transparency = parse_arrow_nag(nag)
             game.arrows[(start_square, end_square)] = (red, green, blue, transparency)
@@ -147,6 +147,16 @@ def save_special_nodes_to_repertoire(game):
     for node in game.variations:
         if node.special:
             save_special_nodes_to_repertoire(node)
+
+def learn_special_node(game):
+    if game.special:
+        G.rep.make_position_learnable(position, G.player)
+
+def learn_special_nodes(game):
+    learn_special_node()
+    for node in game.variations():
+        if node.special:
+            learn_special_nodes(game)
 
 def display_status(s):
     G.status_bar.remove_all(G.status_bar_cid)
@@ -237,7 +247,7 @@ def multiPrompt(parent, messages, callback):
     content_area = dialog.get_content_area()
     labels = []
     entries = []
-    for message in messages: 
+    for message in messages:
         labels.append(gtk.Label(message))
         entries.append(gtk.Entry())
 
@@ -251,7 +261,7 @@ def multiPrompt(parent, messages, callback):
         content_area.add(labels[i])
         content_area.add(entries[i])
     dialog.show_all()
-    
+
 def board_coords_to_square(x, y):
     square_size = get_square_size(G.board_display)
     board_x = x // square_size
@@ -274,7 +284,7 @@ def findFork(game):
     return fork, transitionMove
 
 def load_new_game_from_game(game, player=chess.WHITE, save_file_name="savedGame.pgn"):
-    # Warning: game isn't copied by value, so changing 
+    # Warning: game isn't copied by value, so changing
     # the input game later will also change the G.g game.
     G.games.append(game)
     G.save_file_names.append("savedGame.pgn")
@@ -285,7 +295,7 @@ def load_new_game_from_game(game, player=chess.WHITE, save_file_name="savedGame.
     G.board_display.queue_draw()
     mark_nodes(G.g)
     update_pgn_message()
-    
+
 def load_new_game_from_fen(fen):
     try:
         board = chess.Board(fen)
@@ -352,9 +362,9 @@ def load_new_game_from_piece_list(piece_list_string):
 
     # Determine turn
     turn = parse_side(words[-1])
-    if turn == None: 
+    if turn == None:
         turn = chess.WHITE
-    else: 
+    else:
         words = words[:-1]
 
     # Get pieces
@@ -438,7 +448,7 @@ def update_pgn_textview_tags():
             end = G.pgn_buffer.get_iter_at_offset(end)
             G.pgn_buffer.apply_tag_by_name("comment", start, end)
         update_pgn_textview_move()
-    
+
 def update_pgn_message():
     if G.pgn_textview_enabled:
         # Do updating
@@ -502,37 +512,6 @@ def arrow_nag(start_square, end_square, color_tuple):
         result += int(color_tuple[i] * 255) & 255
     return result
 
-def board_moves(board):
-    '''Returns a string representing the board moves from root node to the given board.'''
-    b = board.copy()
-    move_stack = [] # Put together in reverse order, then reversed.
-    resultList = []
-    while True:
-        try:
-            m = b.pop()
-        except IndexError:
-            # Move stack is empty
-            break
-        move_stack.append(b.san(m))
-    move_stack.reverse()
-    if b.turn == chess.WHITE:
-        # Line starts on white's turn
-        for i, e in enumerate(move_stack):
-            if i % 2 == 0:
-                resultList.append(str(i // 2 + b.fullmove_number) + ". " + e)
-            else:
-                resultList.append(e)
-    else:
-        # Line starts on black's turn
-        for i, e in enumerate(move_stack):
-            if i % 2 == 1:
-                resultList.append(str(i // 2 + b.fullmove_number + 1) + ". " + e)
-            elif i == 0:
-                resultList.append(str(b.fullmove_number) + "... " + e)
-            else:
-                resultList.append(e)
-    return " ".join(resultList)
-
 def ot_move_completed_callback(answer):
     '''This technically isn't a callback function, but rather a function that generates
     the callback function for an answer being given in opening trainer mode.'''
@@ -546,11 +525,33 @@ def ot_move_completed_callback(answer):
         return f
     return lambda x : None
 
-def setup_ot_mode():
+def sr_move_completed_callback(answer):
+    '''Similar to ot_move_completed_callback, except for spaced repetition practice.'''
+    if answer:
+        def f(guess):
+            if guess == answer:
+                # Correct answer
+                # Update learning data
+                G.rep.update_learning_data(G.player, G.g.parent.board(), answer, G.incorrect_answers, time.time() - G.starting_time)
+
+                # Prepare next
+                setup_ot_mode(only_sr=True)
+            elif guess in G.rep.findMoves(G.player, G.g.board()):
+                # Valid alternate, give another try
+                G.handlers["go_back_callback"]()
+                display_status("%s is a valid alternate." % G.g.board().san(guess))
+                G.starting_time = time.time()
+            else:
+                G.incorrect_answers += 1
+                G.handlers["go_back_callback"]()
+        return f
+    return lambda x : None
+
+def setup_ot_mode(only_sr=False):
     '''Sets up opening trainer mode, and starts it or continues it with the next problem).'''
     # Load generator if first time
     if G.ot_gen == None and G.ot_board != None:
-        G.ot_gen = rep_visitor(G.ot_board, G.player)
+        G.ot_gen = rep_visitor(G.ot_board, G.player, only_sr)
 
     # Get next position
     try:
@@ -561,12 +562,17 @@ def setup_ot_mode():
         return False
 
     # Set new answer + callback, and load new board
-    G.move_completed_callback = ot_move_completed_callback(m) # This is a function
+    if only_sr:
+        G.incorrect_answers = 0
+        G.starting_time = time.time()
+        G.move_completed_callback = sr_move_completed_callback(m) # This is a function
+    else:
+        G.move_completed_callback = ot_move_completed_callback(m) # This is a function
     load_new_game_from_board(b)
     display_status(board_moves(b))
 
     return False
-    
+
 def cleanup(showMessage=False):
     '''Cleans up any child processes to quit cleanly.'''
     if G.stockfish != None:

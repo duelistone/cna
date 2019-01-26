@@ -1,7 +1,8 @@
 # mmrw.py
 
-import mmap, os
+import mmap, os, time
 import chess, chess.polyglot, chess.pgn
+from spaced_repetition import *
 from chess_tools import *
 
 class MemoryMappedReaderWriter(chess.polyglot.MemoryMappedReader):
@@ -40,16 +41,24 @@ class MemoryMappedReaderWriter(chess.polyglot.MemoryMappedReader):
                 self.mmap[i:i + 16] = nextEntry
                 nextEntry = nextTempEntry
 
+    def edit_entry(self, index, position, move, new_weight, new_learn):
+        # Make entry and corresponding byte array
+        entry = makeEntry(position, move, new_weight, new_learn)
+        byteArray = entry.key.to_bytes(8, byteorder="big")
+        byteArray += entry.raw_move.to_bytes(2, byteorder="big")
+        byteArray += entry.weight.to_bytes(2, byteorder="big")
+        byteArray += entry.learn.to_bytes(4, byteorder="big")
+
+        # Remember that the input index should be entry index, not byte index
+        self.mmap[16 * index:16 * index + 16] = byteArray
+
     def add_position_and_move(self, p, m, weight=1, learn=0):
         entry = makeEntry(p, m, weight, learn)
         self.add_entry(entry)
 
 class Repertoire(object):
     '''Loads, reads, and modifies a repertoire.
-    The repertoire in the file system should be a directory with two subdirectories 
-    called 'white' and 'black'. Each subdirectory should also contain two files, 
-    titled 'white' and 'black'. The 'white' directory contains moves in a repertoire for white,
-    while the black repertoire contains moves in a repertoire for black. In each directory,
+    The repertoire in the file system should be a directory with two subdirectories called 'white' and 'black'. Each subdirectory should also contain two files, titled 'white' and 'black'. The 'white' directory contains moves in a repertoire for white, while the black repertoire contains moves in a repertoire for black. In each directory,
     the 'white' file contains positions where it is white's move, and the 'black'
     file contains positions where it is black's move.'''
 
@@ -288,3 +297,95 @@ class Repertoire(object):
         games = list(map(lambda x : x.strip(), firstLine.split(',')))
         return games
 
+    def make_position_learnable(self, position, perspective, override=False):
+        weight, learn = export_values(2.5, 0, int(time.time() / 60))
+        mmrw = None
+        if perspective == chess.WHITE and position.turn == chess.WHITE:
+            mmrw = self.ww
+        elif perspective == chess.WHITE and position.turn == chess.BLACK:
+            mmrw = self.wb
+        elif perspective == chess.BLACK and position.turn == chess.WHITE:
+            mmrw = self.bw
+        else:
+            mmrw = self.bb
+        position_hash = chess.polyglot.zobrist_hash(position)
+        index = mmrw.bisect_key_left(position_hash)
+        while index < len(mmrw):
+            entry = mmrw[index]
+            if entry.key != position_hash:
+                break
+            # The line below would be more efficient if it used hash and raw move
+            # The weight and learn should already be in their raw bits format
+            # First we check it hasn't been already set for learning!
+            if entry.learn == 0 or override == True: 
+                mmrw.edit_entry(index, position, entry.move(), weight, learn)
+            index += 1
+
+    # def is_position_due(self, position, perspective):
+    #     mmrw = None
+    #     if perspective == chess.WHITE and position.turn == chess.WHITE:
+    #         mmrw = self.ww
+    #     elif perspective == chess.WHITE and position.turn == chess.BLACK:
+    #         mmrw = self.wb
+    #     elif perspective == chess.BLACK and position.turn == chess.WHITE:
+    #         mmrw = self.bw
+    #     else:
+    #         mmrw = self.bb
+    #     position_hash = chess.polyglot.zobrist_hash(position)
+    #     index = mmrw.bisect_key_left(position_hash)
+    #     while index < len(mmrw):
+    #         entry = mmrw[index]
+    #         if entry.key != position_hash:
+    #             break
+    #         if entry.learn > 0 and entry.learn <= int(time.time() / 60):
+    #             return True
+    #         index += 1
+    #     return False
+
+    def update_learning_data(self, player, position, move, incorrect_answers, time_to_complete):
+        mmrw = None
+        if player == chess.WHITE and position.turn == chess.WHITE:
+            mmrw = self.ww
+        elif player == chess.WHITE and position.turn == chess.BLACK:
+            mmrw = self.wb
+        elif player == chess.BLACK and position.turn == chess.WHITE:
+            mmrw = self.bw
+        else:
+            mmrw = self.bb
+        # Get q value
+        q = 3
+        if incorrect_answers > 2:
+            q = 0
+        elif incorrect_answers == 2:
+            q = 1
+        elif incorrect_answers == 1:
+            q = 2
+        else:
+            if time_to_complete < 30:
+                q = 5
+            elif time_to_complete < 60:
+                q = 4
+
+        # Find node
+        position_hash = chess.polyglot.zobrist_hash(position)
+        index = mmrw.bisect_key_left(position_hash)
+        counter = 0
+        while index < len(mmrw):
+            entry = mmrw[index]
+            if entry.key != position_hash:
+                break
+            if counter > 0:
+                # This shouldn't happen!
+                print("Warning: following board has multiple entries")
+                print(position)
+                print("Board hash: %d" % position_hash)
+                break
+            # The line below would be more efficient if it used hash and raw move
+            # The weight and learn should already be in their raw bits format
+            # First we check it hasn't been already set for learning!
+            e, c, n = read_values((entry.weight << 32) | entry.learn)
+            e, c, n = update_spaced_repetition_values(e, c, n, q)
+            weight, learn = export_values(e, c, n)
+            mmrw.edit_entry(index, position, entry.move(), weight, learn)
+            index += 1
+            counter += 1

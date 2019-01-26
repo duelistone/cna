@@ -237,11 +237,6 @@ def knight_promotion_callback(widget=None):
     return False
 
 @gui_callback
-def reload_callback(widget=None):
-    update_game_info() # Should be replaced by more useful functionality
-    return False
-
-@gui_callback
 def save_file_name_callback(widget=None):
     promptMessage = "Enter path to save file. This does not save the file!"
     prompt(G.window, promptMessage, file_name_entry_callback)
@@ -1100,6 +1095,53 @@ def load_puzzle_callback(*args):
         load_new_game_from_board(chess.Board(puzzles[puzzle_number]))
         display_status(comments[puzzle_number])
         return False
+
+@entry_callback("set_to_learn")
+@key_callback(gdk.KEY_asciitilde)
+def set_to_learn_callback(*args):
+    '''Sets up spaced repetition for the current position with current perspective, as well as any parents.'''
+    if G.rep:
+        # Note the following does nothing if position isn't in repertoire already,
+        # or if it is already learnable
+        G.rep.make_position_learnable(G.g.board(), G.player)
+        G.rep.flush()
+    return False
+
+@entry_callback("set_game_to_learn")
+@control_key_callback(gdk.KEY_asciitilde)
+def set_game_to_learn_callback(*args):
+    '''Sets up spaced repetition for the current position with current perspective, as well as any parents.'''
+    if G.rep:
+        learn_special_nodes(G.g.root())
+        G.rep.flush()
+    return False
+
+
+@entry_callback("reset_learn")
+def reset_learn_callback(*args):
+    '''Resets spaced repetition learning data as new item.'''
+    if G.rep:
+        G.rep.make_position_learnable(G.g.board(), G.player, override=True)
+    return False
+
+@entry_callback("reset_learn_timer")
+@control_key_callback("gdk.KEY_r")
+def reset_learn_timer_callback(*args):
+    '''Resets spaced repetition information (for use when going afk or mouse slipping in session).'''
+    G.starting_time = time.time()
+    G.incorrect_answers = 0
+    display_status("Reset training timer.")
+    return False
+
+@entry_callback("print_schedule")
+def print_schedule_callback(*args):
+    '''Prints schedule of upcoming spaced repetition exercises.'''
+    lines = 100
+    try:
+        lines = int(args[0])
+    except:
+        pass
+    get_learning_schedule(G.g.board(), G.player, max_lines=lines)
 
 @gui_callback
 def textview_mouse_pressed_callback(widget, event):

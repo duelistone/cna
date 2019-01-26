@@ -41,8 +41,14 @@ def main():
         for e in G.engine_settings:
             G.engine_settings[e].update({"SyzygyPath": tablebase_path})
 
-    # Check if should use opening test mode and finish preperations
+    # Check if should use opening test or learn mode and finish preperations
     useOpeningMode = '--ot' in sys.argv
+    useLearningMode = '--sr' in sys.argv # Still needs to have '--ot' as well, for now
+    if useLearningMode:
+        sys.argv.remove('--sr')
+        if not useOpeningMode:
+            print("Incorrect usage. Cannot practice spaced repetition without ot mode.", file=sys.stderr)
+            exit(1)
     if useOpeningMode:
         otIndex = sys.argv.index('--ot')
         fenString = " ".join(sys.argv[otIndex + 1:])
@@ -50,7 +56,7 @@ def main():
         G.ot_board = chess.Board(fen=fenString)
         if G.ot_board == None: raise ValueError("Bad FEN") # Temporary
         preparations(builder)
-        setup_ot_mode()
+        setup_ot_mode(only_sr=useLearningMode)
     else:
         preparations(builder)
 
