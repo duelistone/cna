@@ -41,7 +41,7 @@ class MemoryMappedReaderWriter(chess.polyglot.MemoryMappedReader):
                 nextEntry = nextTempEntry
 
     def add_position_and_move(self, p, m, weight=1, learn=0):
-        entry = makeEntry(p, m)
+        entry = makeEntry(p, m, weight, learn)
         self.add_entry(entry)
 
 class Repertoire(object):
