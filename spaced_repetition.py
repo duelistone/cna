@@ -34,7 +34,7 @@ def update_spaced_repetition_values(e, c, n, q):
     # Update n
     now = time.time() / 60
     if q >= 3 and c >= 2:
-        n = int(now + 1440 * e ** (c - 1))
+        n = int(now + 1440 * e ** (c - 2))
         # Max 1 year interval, so that everything is reviewed at least once per year
         if n > now + 1440 * 365:
             n = int(now + 1440 * 365)

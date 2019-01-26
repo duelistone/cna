@@ -19,7 +19,7 @@ from engine import *
 from drawing import *
 from dfs import *
 from decorators import *
-from rep_visitor import rep_visitor
+from rep_visitor import *
 
 # GUI callbacks
 
