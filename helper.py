@@ -150,13 +150,13 @@ def save_special_nodes_to_repertoire(game):
 
 def learn_special_node(game):
     if game.special:
-        G.rep.make_position_learnable(position, G.player)
+        G.rep.make_position_learnable(game.board(), G.player)
 
 def learn_special_nodes(game):
-    learn_special_node()
-    for node in game.variations():
+    learn_special_node(game)
+    for node in game.variations:
         if node.special:
-            learn_special_nodes(game)
+            learn_special_nodes(node)
 
 def display_status(s):
     G.status_bar.remove_all(G.status_bar_cid)
