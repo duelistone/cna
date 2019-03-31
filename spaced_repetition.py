@@ -21,8 +21,8 @@ def update_spaced_repetition_values(e, c, n, q):
 
     # Update e
     e += 0.1 - (5 - q) * (0.08 + (5 - q) * 0.02)
-    if e < 1: e = 1
-    if e > 3.047: e = 3.047
+    if e < 1.1: e = 1.1
+    if e > 2.5: e = 2.5
 
     # Update c
     if q >= 3:

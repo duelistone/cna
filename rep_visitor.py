@@ -62,3 +62,4 @@ def get_learning_schedule(board, player, max_lines=100):
         print("|", end=" ")
         line = board_moves(b)
         print(line if len(line) > 0 else "(root)")
+    return sorted_entries_and_boards

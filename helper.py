@@ -536,7 +536,7 @@ def sr_move_completed_callback(answer):
 
                 # Prepare next
                 setup_ot_mode(only_sr=True)
-            elif guess in G.rep.findMoves(G.player, G.g.board()):
+            elif guess in G.rep.findMoves(G.player, G.g.parent.board()):
                 # Valid alternate, give another try
                 G.handlers["go_back_callback"]()
                 display_status("%s is a valid alternate." % G.g.board().san(guess))

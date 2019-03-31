@@ -1108,7 +1108,7 @@ def set_to_learn_callback(*args):
     return False
 
 @entry_callback("set_game_to_learn")
-@control_key_callback(gdk.KEY_asciitilde)
+@control_key_callback(gdk.KEY_asciitilde) # TODO: Not working!
 def set_game_to_learn_callback(*args):
     '''Sets up spaced repetition for the current position with current perspective, as well as any parents.'''
     if G.rep:
