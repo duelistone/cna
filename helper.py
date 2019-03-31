@@ -534,6 +534,8 @@ def sr_move_completed_callback(answer):
                 # Update learning data
                 G.rep.update_learning_data(G.player, G.g.parent.board(), answer, G.incorrect_answers, time.time() - G.starting_time)
 
+                print(G.incorrect_answers)
+                print(time.time() - G.starting_time)
                 # Prepare next
                 setup_ot_mode(only_sr=True)
             elif guess in G.rep.findMoves(G.player, G.g.parent.board()):

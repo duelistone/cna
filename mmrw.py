@@ -374,11 +374,16 @@ class Repertoire(object):
             entry = mmrw[index]
             if entry.key != position_hash:
                 break
+            if entry.move() != move:
+                index += 1
+                continue
             if counter > 0:
                 # This shouldn't happen!
-                print("Warning: following board has multiple entries")
+                # To make work, need to compare positions
+                print("Warning: following board/move pair has multiple entries")
                 print(position)
                 print("Board hash: %d" % position_hash)
+                print(move)
                 break
             # The line below would be more efficient if it used hash and raw move
             # The weight and learn should already be in their raw bits format
