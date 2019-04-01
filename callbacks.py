@@ -45,15 +45,28 @@ def go_back_callback(widget=None):
 
 @key_callback(gdk.KEY_Right, gdk.KEY_j)
 @gui_callback
-def go_forward_callback(var_index=0):
-    num_variations = len(G.g.variations)
-    if num_variations > 0:
-        if var_index > num_variations - 1:
-            var_index = num_variations - 1
+def go_forward_callback(widget=None, var_index=0):
+    var_index = min(len(G.g.variations) - 1, var_index)
+    if var_index >= 0:
         G.g = G.g.variation(var_index)
-    update_pgn_textview_move()
-    G.board_display.queue_draw()
+        update_pgn_textview_move()
+        G.board_display.queue_draw()
     return False
+
+@key_callback(gdk.KEY_J)
+@gui_callback
+def go_first_variation_callback(widget=None):
+    return go_forward_callback(widget, 1)
+
+@control_key_callback(gdk.KEY_j)
+@gui_callback
+def go_second_variation_callback(widget=None):
+    return go_forward_callback(widget, 2)
+
+@control_key_callback(gdk.KEY_J)
+@gui_callback
+def go_third_variation_callback(widget=None):
+    return go_forward_callback(widget, 3)
 
 @key_callback(gdk.KEY_g, gdk.KEY_Home)
 @gui_callback
@@ -577,10 +590,10 @@ def board_draw_callback(widget, cr):
     if G.g.book < 2:
         cr.save()
         cr.translate(8 * square_size - centerCoord, 8 * square_size - centerCoord) # Bottom right
-        if G.g.book == 1:
+        if G.g.book >= 1:
             # Still in book
             cr.set_source_rgb(0, 0.7, 0)
-        elif G.g.book == 0:
+        elif G.g.book >= 0:
             # Left book by going against repertoire
             cr.set_source_rgb(1, 0, 0)
         cr.arc(0, 0, radius, 0, 2 * math.pi)
@@ -679,7 +692,7 @@ def board_scroll_event_callback(widget, event):
             var_index = 1
         elif event.state & modifiers == gdk.ModifierType.SHIFT_MASK | gdk.ModifierType.CONTROL_MASK:
             var_index = 3
-        go_forward_callback(var_index)
+        go_forward_callback(var_index=var_index)
     return False
 
 @gui_callback

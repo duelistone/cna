@@ -55,6 +55,7 @@ nodesToRanges = {}
 currentMoveOffset = None
 specialRanges = []
 bookRanges = []
+learnRanges = []
 commentRanges = []
 currentMoveRange = (None, None)
 

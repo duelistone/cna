@@ -71,6 +71,16 @@ class Repertoire(object):
 
         if None in [self.ww.mmap, self.wb.mmap, self.bw.mmap, self.bb.mmap]: return None
 
+    def get_mmrw(self, player, turn_color):
+        if player == chess.WHITE and turn_color == chess.WHITE:
+            return self.ww
+        if player == chess.WHITE and turn_color == chess.BLACK:
+            return self.wb
+        if player == chess.BLACK and turn_color == chess.WHITE:
+            return self.bw
+        if player == chess.BLACK and turn_color == chess.BLACK:
+            return self.bb
+
     def flush(self):
         self.ww.mmap.flush()
         self.wb.mmap.flush()
@@ -95,45 +105,26 @@ class Repertoire(object):
         else:
             self.bb.add_position_and_move(p, m, weight, learn)
 
+    def findMove(self, perspective, p):
+        mmrw = self.get_mmrw(perspective, p.turn)
+        for entry in mmrw.find_all(p):
+            return entry.move()
+
     def findMoveWhite(self, p):
-        if p.turn == chess.WHITE:
-            for entry in self.ww.find_all(p):
-                return entry.move()
-        else:
-            for entry in self.wb.find_all(p):
-                return entry.move()
-        return None
+        return self.findMove(chess.WHITE, p)
 
     def findMoveBlack(self, p):
-        if p.turn == chess.WHITE:
-            for entry in self.bw.find_all(p):
-                return entry.move()
-        else:
-            for entry in self.bb.find_all(p):
-                return entry.move()
-        return None
-
-    def findMove(self, perspective, p):
-        if perspective == chess.WHITE:
-            return self.findMoveWhite(p)
-        return self.findMoveBlack(p)
-
-    def findMovesWhite(self, p):
-        if p.turn == chess.WHITE:
-            return map(lambda e : e.move(), self.ww.find_all(p))
-        else:
-            return map(lambda e : e.move(), self.wb.find_all(p))
-
-    def findMovesBlack(self, p):
-        if p.turn == chess.WHITE:
-            return map(lambda e : e.move(), self.bw.find_all(p))
-        else:
-            return map(lambda e : e.move(), self.bb.find_all(p))
+        return self.findMove(chess.BLACK, p)
 
     def findMoves(self, perspective, p):
-        if perspective == chess.WHITE:
-            return self.findMovesWhite(p)
-        return self.findMovesBlack(p)
+        mmrw = self.get_mmrw(perspective, p.turn)
+        return map(lambda e : e.move(), mmrw.find_all(p))
+
+    def findMovesWhite(self, p):
+        return self.findMoves(chess.WHITE, p)
+
+    def findMovesBlack(self, p):
+        return self.findMoves(chess.BLACK, p)
 
     def hasPositionWhite(self, p):
         for e in self.findMovesWhite(p):
@@ -145,11 +136,10 @@ class Repertoire(object):
             return True
         return False
 
-    def removeWhite(self, p, move=None):
+    def remove(self, perspective, p, move=None):
         zh = zobrist_hash(p)
         deleteIndices = set()
-        mmrw = self.ww
-        if p.turn == chess.BLACK: mmrw = self.wb
+        mmrw = self.get_mmrw(perspective, p.turn)
         index = 16 * mmrw.bisect_key_left(zh)
 
         # Find deletions to make
@@ -173,35 +163,12 @@ class Repertoire(object):
         mmrw.mmap.resize(len(mmrw.mmap) - 16 * len(deleteIndices))
 
         return len(deleteIndices)
+        
+    def removeWhite(self, p, move=None):
+        return self.remove(self, chess.WHITE, p, move)
 
     def removeBlack(self, p, move=None):
-        zh = zobrist_hash(p)
-        deleteIndices = set()
-        mmrw = self.bw
-        if p.turn == chess.BLACK: mmrw = self.bb
-        index = 16 * mmrw.bisect_key_left(zh)
-
-        # Find deletions to make
-        for i in range(index, 16 * len(mmrw), 16):
-            key, mBits, _, _ = chess.polyglot.ENTRY_STRUCT.unpack_from(mmrw.mmap, i)
-            if key != zh:
-                break
-            elif move == None or moveToBits(move) == mBits:
-                deleteIndices.add(i)
-        
-        # Make deletions to mmap
-        if len(deleteIndices) > 0:
-            offset = 0
-            for i in range(index, 16 * len(mmrw), 16):
-                while i + offset in deleteIndices:
-                    offset += 16
-                if i + offset >= 16 * len(mmrw):
-                    break
-                if offset != 0:
-                    mmrw.mmap[i:i + 16] = mmrw.mmap[i + offset:i + offset + 16]
-        mmrw.mmap.resize(len(mmrw.mmap) - 16 * len(deleteIndices))
-
-        return len(deleteIndices)
+        return self.remove(self, chess.BLACK, p, move)
 
     def add_games(self, games=[], filenames=[]):
         # Do nothing case
@@ -343,15 +310,7 @@ class Repertoire(object):
     #     return False
 
     def update_learning_data(self, player, position, move, incorrect_answers, time_to_complete):
-        mmrw = None
-        if player == chess.WHITE and position.turn == chess.WHITE:
-            mmrw = self.ww
-        elif player == chess.WHITE and position.turn == chess.BLACK:
-            mmrw = self.wb
-        elif player == chess.BLACK and position.turn == chess.WHITE:
-            mmrw = self.bw
-        else:
-            mmrw = self.bb
+        mmrw = self.get_mmrw(player, position.turn)
         # Get q value
         q = 3
         if incorrect_answers > 2:

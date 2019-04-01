@@ -24,8 +24,10 @@ def game_gui_string_list(game, offset=0, firstMoveOfVariation=False, firstMoveAf
         G.nodesToRanges[game] = (offset, offset + len(strings[-1]))
         if game.special: 
             G.specialRanges.append((offset, offset + len(strings[-1])))
-        if game.book == 1:
+        if int(game.book) == 1:
             G.bookRanges.append((offset, offset + len(strings[-1])))
+            if game.book % 1 == 0.5:
+                G.learnRanges.append((offset, offset + len(strings[-1])))
         if game == G.g:
             G.currentMoveRange = (offset, offset + len(strings[-1]))
         offset += len(strings[-1])
@@ -84,8 +86,10 @@ def game_gui_string_list(game, offset=0, firstMoveOfVariation=False, firstMoveAf
         G.nodesToRanges[game] = (offset, offset + len(strings[-1]))
         if game.special: 
             G.specialRanges.append((offset, offset + len(strings[-1])))
-        if game.book == 1:
+        if int(game.book) == 1:
             G.bookRanges.append((offset, offset + len(strings[-1])))
+            if game.book % 1 == 0.5:
+                G.learnRanges.append((offset, offset + len(strings[-1])))
         if game == G.g:
             G.currentMoveRange = (offset, offset + len(strings[-1]))
         offset += len(strings[-1])

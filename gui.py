@@ -104,6 +104,7 @@ def preparations(builder):
     G.pgn_buffer.create_tag(tag_name="monospace", family="Monospace")
     G.pgn_buffer.create_tag(tag_name="special", weight=pango.Weight.BOLD)
     G.pgn_buffer.create_tag(tag_name="book", underline=pango.Underline.SINGLE)
+    G.pgn_buffer.create_tag(tag_name="learn", style=pango.Style.ITALIC)
     G.pgn_buffer.create_tag(tag_name="comment", foreground="#009900")
     G.pgn_buffer.create_tag(tag_name="current", background="#9FCCFF")
 

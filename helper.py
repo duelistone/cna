@@ -61,14 +61,36 @@ def mark_if_book(game):
     '''Checks if a game appears in the loaded opening repertoire.'''
     game.book = 0
     if G.rep:
-        # Normal book
-        if game.parent == None: game.book = 1
-        elif G.player == chess.WHITE and G.rep.hasPositionWhite(game.parent.board()) and game.move in G.rep.findMovesWhite(game.parent.board()): game.book = 1
-        elif G.player == chess.BLACK and G.rep.hasPositionBlack(game.parent.board()) and game.move in G.rep.findMovesBlack(game.parent.board()): game.book = 1
-        # The other player deviates first
-        elif G.player == chess.WHITE and game.parent.book == 1 and game.parent.board().turn == chess.BLACK and game.move not in G.rep.findMovesWhite(game.parent.board()): game.book = 2
-        elif G.player == chess.BLACK and game.parent.book == 1 and game.parent.board().turn == chess.WHITE and game.move not in G.rep.findMovesBlack(game.parent.board()): game.book = 2
-        elif game.parent.book == 2: game.book = 2
+        # Root node
+        if game.parent == None:
+            game.book = 1.5 # 1 for repertoire position, 0.5 for set to learn
+
+        else:
+            position = game.parent.board()
+            parent_book = int(game.parent.book)
+            
+            # Normal book
+            if G.player == chess.WHITE and G.rep.hasPositionWhite(position) and game.move in G.rep.findMovesWhite(position): game.book = 1
+            elif G.player == chess.BLACK and G.rep.hasPositionBlack(position) and game.move in G.rep.findMovesBlack(position): game.book = 1
+            # The other player deviates first
+            elif G.player == chess.WHITE and parent_book == 1 and position.turn == chess.BLACK and game.move not in G.rep.findMovesWhite(position): game.book = 2
+            elif G.player == chess.BLACK and parent_book == 1 and position.turn == chess.WHITE and game.move not in G.rep.findMovesBlack(position): game.book = 2
+            elif parent_book == 2: game.book = 2
+            
+            # Check if set to learn
+            zh = chess.polyglot.zobrist_hash(position)
+            mmrw = G.rep.get_mmrw(G.player, position.turn)
+            index = mmrw.bisect_key_left(zh)
+            while index < len(mmrw):
+                entry = mmrw[index]
+                if entry.key != zh:
+                    break
+                if entry.move() != game.move:
+                    index += 1
+                    continue
+                if entry.learn != 0:
+                    game.book += 0.5
+                break
 
 def is_arrow_nag(nag):
     return nag & (1 << (32 + 6 + 6))
@@ -443,6 +465,10 @@ def update_pgn_textview_tags():
             start = G.pgn_buffer.get_iter_at_offset(start)
             end = G.pgn_buffer.get_iter_at_offset(end)
             G.pgn_buffer.apply_tag_by_name("book", start, end)
+        for start, end in G.learnRanges:
+            start = G.pgn_buffer.get_iter_at_offset(start)
+            end = G.pgn_buffer.get_iter_at_offset(end)
+            G.pgn_buffer.apply_tag_by_name("learn", start, end)
         for start, end in G.commentRanges:
             start = G.pgn_buffer.get_iter_at_offset(start)
             end = G.pgn_buffer.get_iter_at_offset(end)
