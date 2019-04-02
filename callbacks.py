@@ -1118,6 +1118,8 @@ def set_to_learn_callback(*args):
         # or if it is already learnable
         G.rep.make_position_learnable(G.g.board(), G.player)
         G.rep.flush()
+        mark_nodes(G.g)
+        update_pgn_message()
     return False
 
 @entry_callback("set_game_to_learn")
@@ -1127,6 +1129,8 @@ def set_game_to_learn_callback(*args):
     if G.rep:
         learn_special_nodes(G.g.root())
         G.rep.flush()
+        mark_nodes(G.g.root())
+        update_pgn_message()
     return False
 
 

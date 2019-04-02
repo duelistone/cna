@@ -12,6 +12,7 @@ def game_gui_string_list(game, offset=0, firstMoveOfVariation=False, firstMoveAf
         G.nodesToRanges = {}
         G.specialRanges = []
         G.bookRanges = []
+        G.learnRanges = []
         G.commentRanges = []
         # Header
         headerString = "%s vs %s, %s, %s, %s, %s\n\n" % (game.headers["White"], game.headers["Black"], game.headers["Event"], game.headers["Site"], game.headers["Date"], game.headers["Result"])

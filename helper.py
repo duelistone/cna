@@ -453,6 +453,7 @@ def update_pgn_textview_tags():
         # Are these necessary to clear the old tags?
         G.pgn_buffer.remove_tag_by_name("special", veryStart, veryEnd)
         G.pgn_buffer.remove_tag_by_name("book", veryStart, veryEnd)
+        G.pgn_buffer.remove_tag_by_name("learn", veryStart, veryEnd)
         G.pgn_buffer.remove_tag_by_name("comment", veryStart, veryEnd)
 
         # Applying tags

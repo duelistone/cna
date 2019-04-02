@@ -165,10 +165,10 @@ class Repertoire(object):
         return len(deleteIndices)
         
     def removeWhite(self, p, move=None):
-        return self.remove(self, chess.WHITE, p, move)
+        return self.remove(chess.WHITE, p, move)
 
     def removeBlack(self, p, move=None):
-        return self.remove(self, chess.BLACK, p, move)
+        return self.remove(chess.BLACK, p, move)
 
     def add_games(self, games=[], filenames=[]):
         # Do nothing case
