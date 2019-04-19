@@ -768,7 +768,7 @@ def save_callback(widget=None, save_file_name=None, showStatus=True, prelude=Non
     game_to_save = G.g.root()
     if G.proper_save_format:
         game_to_save = copy_game(G.g.root(), copy_improper_nags=False)
-    outPgnFile = open(G.save_file_name, 'w')
+    outPgnFile = open(save_file_name, 'w')
     if prelude:
         print(prelude, file=outPgnFile)
     print(game_to_save, file=outPgnFile, end="\n\n")
