@@ -5,10 +5,8 @@ from chess_tools import *
 from mmrw import *
 
 def create_opening_game(filename, repertoire, color, starting_node):
-    findMove = repertoire.findMoveWhite
     findMoves = repertoire.findMovesWhite
     if color == chess.BLACK: 
-        findMove = repertoire.findMoveBlack
         findMoves = repertoire.findMovesBlack
 
     # Visited nodes (to prevent too many paths to the same position)
@@ -25,21 +23,12 @@ def create_opening_game(filename, repertoire, color, starting_node):
         if curr.board().can_claim_threefold_repetition():
             return # To avoid infinite loops, though should not be necessary if using visited nodes
         board = curr.board()
-        turn = board.turn
-        if turn == color:
-            move = findMove(board)
-            if move == None: return
-            curr = curr.add_main_variation(move)
+        for move in findMoves(board):
+            curr = curr.add_variation(move)
             if zobrist_hash(curr.board()) in visited_hashes: return
             visited_hashes.add(zobrist_hash(curr.board()))
             inner_iter(curr)
-        else:
-            for move in findMoves(board):
-                curr = curr.add_variation(move)
-                if zobrist_hash(curr.board()) in visited_hashes: return
-                visited_hashes.add(zobrist_hash(curr.board()))
-                inner_iter(curr)
-                curr = curr.parent
+            curr = curr.parent
 
     inner_iter(curr)
 

@@ -501,6 +501,7 @@ def update_pgn_textview_move():
 def make_report():
     if G.rep:
         create_opening_game("currentTest.pgn", G.rep, G.player, G.g)
+        # TODO: Remove split_game dependence, or add split_game to repository
         splitter = subprocess.Popen(["split_game", "currentTest.pgn", "-o"])
         file_names = ["currentTest.pgn", "currentTest.pgn.split"] + list(map(lambda x : G.rep.directory + os.sep + 'games' + os.sep + x, G.rep.list_games(G.g.board())))
         reportFile = open("currentReport.pgn", 'w')
