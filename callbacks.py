@@ -677,8 +677,24 @@ def board_mouse_up_callback(widget, event):
                 G.g.nags.remove(nag)
                 del G.g.arrows[elem]
             else:
-                G.g.arrows[elem] = tuple(G.arrowRGBA)
-                G.g.nags.add(arrow_nag(G.arrow_source, arrow_target, G.arrowRGBA))
+                modifiers = gtk.accelerator_get_default_mod_mask()
+                # TODO: Different arrow colors
+                if event.state & modifiers == gdk.ModifierType.CONTROL_MASK:
+                    color_hex = G.colors["blue"]
+                    color = gdk.color_parse(color_hex)
+                    colorRGBA = color.red_float, color.green_float, color.blue_float, G.arrowRGBA[3]
+                elif event.state & modifiers == gdk.ModifierType.SHIFT_MASK:
+                    color_hex = G.colors["red"]
+                    color = gdk.color_parse(color_hex)
+                    colorRGBA = color.red_float, color.green_float, color.blue_float, G.arrowRGBA[3]
+                elif event.state & modifiers == gdk.ModifierType.SHIFT_MASK | gdk.ModifierType.CONTROL_MASK:
+                    color_hex = G.colors["yellow"]
+                    color = gdk.color_parse(color_hex)
+                    colorRGBA = color.red_float, color.green_float, color.blue_float, G.arrowRGBA[3]
+                else:
+                    colorRGBA = tuple(G.arrowRGBA)
+                G.g.arrows[elem] = colorRGBA
+                G.g.nags.add(arrow_nag(G.arrow_source, arrow_target, colorRGBA))
 
         G.arrow_source = G.NULL_SQUARE
         G.board_display.queue_draw()
