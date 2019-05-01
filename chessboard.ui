@@ -261,35 +261,6 @@
               </object>
             </child>
             <child>
-              <object class="GtkMenuItem" id="file_menu_item3">
-                <property name="can_focus">False</property>
-                <property name="label">Engine</property>
-                <child type="submenu">
-                  <object class="GtkMenu" id="menu2">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <child>
-                      <object class="GtkMenuItem" id="stockfish_menuitem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Start/stop engine</property>
-                        <signal name="activate" handler="toggle_stockfish_callback" swapped="no"/>
-                        <accelerator key="e" signal="activate" modifiers="GDK_CONTROL_MASK"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="play_move_menuitem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Play engine move</property>
-                        <signal name="activate" handler="play_move_callback" swapped="no"/>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </child>
-            <child>
               <object class="GtkMenuItem" id="file_menu_item5">
                 <property name="can_focus">False</property>
                 <property name="label">Variations</property>
