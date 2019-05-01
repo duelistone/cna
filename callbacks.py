@@ -784,6 +784,7 @@ def save_callback(widget=None, save_file_name=None, showStatus=True, prelude=Non
         display_status("Game saved to %s." % G.save_file_name)
     return False
 
+@control_key_callback(gdk.KEY_p)
 @gui_callback
 def open_pgn_textview_callback(widget=None):
     # Extract modifier keys
@@ -796,6 +797,7 @@ def open_pgn_textview_callback(widget=None):
     update_pgn_message()
     return False
 
+@control_key_callback(gdk.KEY_a)
 @gui_callback
 def analyze_callback(widget=None):
     movePath = []
@@ -1061,6 +1063,7 @@ def puzzle_file_name_callback(*args):
         display_status("No file name given.")
     return False
 
+@control_key_callback(gdk.KEY_s)
 @entry_callback("save_puzzle", "sp")
 def save_puzzle_callback(*args):
     fil = open(G.puzzle_file, 'a')

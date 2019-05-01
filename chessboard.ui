@@ -24,36 +24,6 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkMenuItem" id="save_menu_item">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Save</property>
-                        <property name="use_underline">True</property>
-                        <signal name="activate" handler="save_callback" swapped="no"/>
-                        <accelerator key="s" signal="activate" modifiers="GDK_CONTROL_MASK"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="show_pgn_textview">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Open PGN Window</property>
-                        <property name="use_underline">True</property>
-                        <signal name="activate" handler="open_pgn_textview_callback" swapped="no"/>
-                        <accelerator key="p" signal="activate" modifiers="GDK_CONTROL_MASK"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="analyze_menu_item">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Analyze</property>
-                        <property name="use_underline">True</property>
-                        <signal name="activate" handler="analyze_callback" swapped="no"/>
-                        <accelerator key="a" signal="activate" modifiers="GDK_CONTROL_MASK"/>
-                      </object>
-                    </child>
-                    <child>
                       <object class="GtkMenuItem" id="load_fen_menu_item">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -91,59 +61,6 @@
                         <property name="use_underline">True</property>
                         <signal name="activate" handler="next_game_callback" swapped="no"/>
                         <accelerator key="greater" signal="activate" modifiers="GDK_CONTROL_MASK"/>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </child>
-            <child>
-              <object class="GtkMenuItem" id="file_menu_item1">
-                <property name="can_focus">False</property>
-                <property name="label">Promotion</property>
-                <child type="submenu">
-                  <object class="GtkMenu" id="promotion_menu">
-                    <property name="can_focus">False</property>
-                    <child>
-                      <object class="GtkRadioMenuItem" id="queen_promotion">
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Queen</property>
-                        <property name="active">True</property>
-                        <property name="draw_as_radio">True</property>
-                        <signal name="activate" handler="queen_promotion_callback" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkRadioMenuItem" id="rook_promotion">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Rook</property>
-                        <property name="use_underline">True</property>
-                        <property name="draw_as_radio">True</property>
-                        <property name="group">queen_promotion</property>
-                        <signal name="activate" handler="rook_promotion_callback" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkRadioMenuItem" id="bishop_promotion">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Bishop</property>
-                        <property name="use_underline">True</property>
-                        <property name="draw_as_radio">True</property>
-                        <property name="group">queen_promotion</property>
-                        <signal name="activate" handler="bishop_promotion_callback" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkRadioMenuItem" id="knight_promotion">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Knight</property>
-                        <property name="use_underline">True</property>
-                        <property name="draw_as_radio">True</property>
-                        <property name="group">queen_promotion</property>
-                        <signal name="activate" handler="knight_promotion_callback" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -268,38 +185,6 @@
                   <object class="GtkMenu" id="menu3">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <child>
-                      <object class="GtkMenuItem" id="display_variations">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Display variations</property>
-                        <signal name="activate" handler="display_variations_callback" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="go_to_beginning">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Go to beginning</property>
-                        <signal name="activate" handler="go_to_beginning_callback" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="go_to_end">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Go to end</property>
-                        <signal name="activate" handler="go_to_end_callback" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="flip_board">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Flip board</property>
-                        <signal name="activate" handler="flip_callback" swapped="no"/>
-                      </object>
-                    </child>
                     <child>
                       <object class="GtkMenuItem" id="delete_children">
                         <property name="visible">True</property>
