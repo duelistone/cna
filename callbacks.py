@@ -26,9 +26,14 @@ from rep_visitor import *
 @entry_callback("flip", "f")
 @key_callback(gdk.KEY_f)
 @gui_callback
-def flip_callback(widget=None):
+def flip_callback(*args):
     # Flip board
     G.player = not G.player
+    if len(args) > 0 and type(args[0]) == str:
+        if args[0].lower() in ['w', 'white']:
+            G.player = chess.WHITE
+        elif args[0].lower() in ['b', 'black']:
+            G.player = chess.BLACK
     mark_nodes(G.g.root())
     update_pgn_message()
     G.board_display.queue_draw()
@@ -69,6 +74,7 @@ def go_third_variation_callback(widget=None):
     return go_forward_callback(widget, 3)
 
 @key_callback(gdk.KEY_g, gdk.KEY_Home)
+@entry_callback("go_to_beginning", "gtb")
 @gui_callback
 def go_to_beginning_callback(widget=None):
     G.g = G.g.root()
@@ -77,6 +83,7 @@ def go_to_beginning_callback(widget=None):
     return False
 
 @key_callback(gdk.KEY_G, gdk.KEY_End)
+@entry_callback("go_to_end", "gte")
 @gui_callback
 def go_to_end_callback(widget=None):
     if not G.inMove:
@@ -1213,9 +1220,23 @@ def reset_test_mode_callback(*args):
     setup_ot_mode()
     return False
 
+@entry_callback("rs", "run_script")
+def run_script_callback(*args):
+    try:
+        fil = open(args[0])
+    except:
+        display_status("Could not open file '%s'" % args[0])
+        return False
+    for line in fil:
+        entry_bar_callback(line.strip())
+    return False
+
 @gui_callback
 def entry_bar_callback(widget):
-    text = widget.get_text()
+    if type(widget) == str:
+        text = widget
+    else:
+        text = widget.get_text()
     args = shlex.split(text)
 
     # Save in history
@@ -1234,14 +1255,14 @@ def entry_bar_callback(widget):
             # Legal move given
             make_move(move)
             G.board_display.queue_draw()
-            widget.set_text("")
+            if type(widget) != str: widget.set_text("")
             G.command_index = 0
             del args[0]
         else:
             # Command given
             if args[0] in G.command_callbacks:
                 future_callback = G.command_callbacks[args[0]](*args[1:])
-                widget.set_text("")
+                if type(widget) != str: widget.set_text("")
                 if callable(future_callback):
                     future_callback()
                 G.command_index = 0
