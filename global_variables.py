@@ -80,7 +80,6 @@ repertoire_file_name = "main.rep"
 escapeKeys = [gdk.KEY_Escape, gdk.KEY_semicolon] #, gdk.KEY_Control_L, gdk.KEY_Control_R]
 
 # For key press events
-inMove = None
 currentMove = ""
 key_binding_map = {}
 control_key_binding_map = {}

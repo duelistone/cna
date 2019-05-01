@@ -27,56 +27,81 @@ from rep_visitor import *
 @key_callback(gdk.KEY_f)
 @gui_callback
 def flip_callback(*args):
+    '''Flips or sets board perspective. 
+    If first argument exists, it should specify a specific color.'''
     # Flip board
     G.player = not G.player
+    # Set perspective if necessary
     if len(args) > 0 and type(args[0]) == str:
         if args[0].lower() in ['w', 'white']:
             G.player = chess.WHITE
         elif args[0].lower() in ['b', 'black']:
             G.player = chess.BLACK
+    # Update node properties, PGN text, and board appropriately
     mark_nodes(G.g.root())
     update_pgn_message()
     G.board_display.queue_draw()
     return False
 
+@entry_callback("gb", "go_back")
 @key_callback(gdk.KEY_Left, gdk.KEY_k)
 @gui_callback
 def go_back_callback(widget=None):
+    '''Moves back to parent node.'''
     if G.g.parent:
         G.g = G.g.parent
-    update_pgn_textview_move()
-    G.board_display.queue_draw()
+        update_pgn_textview_move()
+        G.board_display.queue_draw()
     return False
 
+@entry_callback("gf", "go_forward")
 @key_callback(gdk.KEY_Right, gdk.KEY_j)
 @gui_callback
 def go_forward_callback(widget=None, var_index=0):
+    '''Moves forward to a child node. 
+    Default is to go to first child.'''
+    # If first argument is string (entry version), then 
+    # we try to make it var_index.
+    if type(widget) == str:
+        try:
+            var_index = int(widget)
+        except:
+            pass
+    # If var_index is too big, we go down last variation
     var_index = min(len(G.g.variations) - 1, var_index)
+    # Moving and updating
     if var_index >= 0:
         G.g = G.g.variation(var_index)
         update_pgn_textview_move()
         G.board_display.queue_draw()
     return False
 
+# The next three are just for keyboard shortcuts.
+# In the entry bar or scripts, "go_forward var_index" can be used.
+
 @key_callback(gdk.KEY_J)
 @gui_callback
 def go_first_variation_callback(widget=None):
+    '''Moves to first variation after PV.'''
     return go_forward_callback(widget, 1)
 
 @control_key_callback(gdk.KEY_j)
 @gui_callback
 def go_second_variation_callback(widget=None):
+    '''Moves to second variation after PV.'''
     return go_forward_callback(widget, 2)
 
 @control_key_callback(gdk.KEY_J)
 @gui_callback
 def go_third_variation_callback(widget=None):
+    '''Moves to third variation after PV.'''
     return go_forward_callback(widget, 3)
 
 @key_callback(gdk.KEY_g, gdk.KEY_Home)
 @entry_callback("go_to_beginning", "gtb")
 @gui_callback
 def go_to_beginning_callback(widget=None):
+    '''Moves to root node.'''
     G.g = G.g.root()
     update_pgn_textview_move()
     G.board_display.queue_draw()
@@ -86,19 +111,18 @@ def go_to_beginning_callback(widget=None):
 @entry_callback("go_to_end", "gte")
 @gui_callback
 def go_to_end_callback(widget=None):
-    if not G.inMove:
-        while len(G.g.variations) > 0:
-            G.g = G.g.variation(0)
-        update_pgn_textview_move()
-        G.board_display.queue_draw()
+    '''Moves to end of PV (from current node).'''
+    while len(G.g.variations) > 0:
+        G.g = G.g.variation(0)
+    update_pgn_textview_move()
+    G.board_display.queue_draw()
     return False
 
 @key_callback(gdk.KEY_c)
 @entry_callback("ec", "edit_comment")
 @gui_callback
 def add_comment_callback(widget=None):
-    if not G.inMove:
-        commentPrompt(G.window, "Edit comment:", comment_key_press_callback, G.g.comment)
+    commentPrompt(G.window, "Edit comment:", comment_key_press_callback, G.g.comment)
     return False
 
 @entry_callback("c", "comment", "set_comment")
