@@ -122,27 +122,34 @@ def go_to_end_callback(widget=None):
 @entry_callback("ec", "edit_comment")
 @gui_callback
 def add_comment_callback(widget=None):
+    '''Opens a dialog to edit the comment of the current node.'''
     commentPrompt(G.window, "Edit comment:", comment_key_press_callback, G.g.comment)
     return False
 
 @entry_callback("c", "comment", "set_comment")
 def set_comment_callback(*args):
+    '''Sets comment of current node to the given string.'''
     G.g.comment = " ".join(args)
     update_pgn_message()
     return False
 
 @entry_callback("add_last")
 def add_last_callback(*args):
+    '''Sets the default behavior of adding new variations.
+    A new variation will be added as the last variation.'''
     G.new_move_mode = G.ADD_LAST_VARIATION
     return False
 
 @entry_callback("add_first", "add_main")
 def add_main_callback(*args):
+    '''Sets the default behavior of adding new variations.
+    A new variation will be added as the main variation.'''
     G.new_move_mode = G.ADD_MAIN_VARIATION
     return False
 
 @entry_callback("set_hash", "set_ram")
 def set_hash_callback(*args):
+    '''Sets hash size for an engine.'''
     try:
         hash_size = int(args[0])
     except:
@@ -153,6 +160,8 @@ def set_hash_callback(*args):
 
 @entry_callback("set_engine_option")
 def set_engine_option_callback(*args):
+    '''Sets engine settings to specified name/value pairs.
+    Args are in the form: name1 value1 name2 value2 ...'''
     try:
         name = args[0]
         value = args[1]
@@ -164,6 +173,8 @@ def set_engine_option_callback(*args):
 
 @entry_callback("set_engine")
 def set_engine_callback(*args):
+    '''Sets which engine should be used. 
+    This must be done before the main engine is initialized.'''
     if G.stockfish != None:
         display_status("Engine can only be changed before it is first initialized.")
         return False
@@ -176,6 +187,8 @@ def set_engine_callback(*args):
 @gui_callback
 @entry_callback("list_opening_games")
 def opening_games_callback(widget=None):
+    '''Lists available opening games in a position in the repertoire.
+    This feature is experimental and probably won't work too well.'''
     games = G.rep.list_games(G.g.board())
     display_string = " ".join(games)
     display_status(display_string)
@@ -184,6 +197,7 @@ def opening_games_callback(widget=None):
 @entry_callback("save_opening")
 @gui_callback
 def opening_save_callback(widget=None):
+    '''Adds all special nodes in the current game to the repertoire,.'''
     if G.rep:
         save_special_nodes_to_repertoire(G.g.root())
         G.rep.flush()
@@ -197,6 +211,7 @@ def opening_save_callback(widget=None):
 @entry_callback("save_opening_node")
 @gui_callback
 def opening_single_save_callback(widget=None):
+    '''Adds the current node to the repertoire.'''
     if G.rep:
         save_special_node_to_repertoire(G.g)
         G.rep.flush()
@@ -210,6 +225,8 @@ def opening_single_save_callback(widget=None):
 @entry_callback("save_game_to_repertoire")
 @gui_callback
 def opening_save_game_callback(widget=None):
+    '''Adds a game of chess to the repertoire.
+    This does not affect the positions in the repertoire itself.'''
     if G.rep:
         G.rep.add_games([G.g.root()])
     else:
@@ -220,6 +237,7 @@ def opening_save_game_callback(widget=None):
 @entry_callback("o", "display_repertoire_moves")
 @gui_callback
 def display_repertoire_moves_callback(widget=None):
+    '''Displays the moves given in the repertoire for the current position.'''
     if G.rep:
         words = ["Repertoire moves:"]
         board = G.g.board()
@@ -234,6 +252,8 @@ def display_repertoire_moves_callback(widget=None):
 @entry_callback("v", "display_variations")
 @gui_callback
 def display_variations_callback(widget=None):
+    '''Displays a list of the variations in the current game
+    for the current position.'''
     words = ["Variations:"]
     for child in G.g.variations:
         words.append(G.g.board().san(child.move))
@@ -244,6 +264,7 @@ def display_variations_callback(widget=None):
 @entry_callback("set_queen_promotion")
 @key_callback(gdk.KEY_Q)
 def queen_promotion_callback(widget=None):
+    '''Sets promotion piece to queen.'''
     if widget == None:
         G.queen_promotion_item.set_active(True)
     else:
@@ -254,6 +275,7 @@ def queen_promotion_callback(widget=None):
 @entry_callback("set_rook_promotion")
 @key_callback(gdk.KEY_R)
 def rook_promotion_callback(widget=None):
+    '''Sets promotion piece to rook.'''
     if widget == None:
         G.promotion_piece = chess.ROOK
     else:
@@ -264,6 +286,7 @@ def rook_promotion_callback(widget=None):
 @entry_callback("set_bishop_promotion")
 @key_callback(gdk.KEY_B)
 def bishop_promotion_callback(widget=None):
+    '''Sets promotion piece to bishop.'''
     if widget == None:
         G.promotion_piece = chess.BISHOP
     else:
@@ -274,6 +297,7 @@ def bishop_promotion_callback(widget=None):
 @entry_callback("set_knight_promotion")
 @key_callback(gdk.KEY_N)
 def knight_promotion_callback(widget=None):
+    '''Sets promotion piece to knight.'''
     if widget == None:
         G.knight_promotion_item.set_active(True)
     else:
@@ -282,6 +306,7 @@ def knight_promotion_callback(widget=None):
 
 @gui_callback
 def save_file_name_callback(widget=None):
+    '''Open a prompt to set a new save file name for the current game.'''
     promptMessage = "Enter path to save file. This does not save the file!"
     prompt(G.window, promptMessage, file_name_entry_callback)
     return False
@@ -289,6 +314,7 @@ def save_file_name_callback(widget=None):
 @entry_callback("save_file_name")
 @gui_callback
 def file_name_entry_callback(widget, dialog=None):
+    '''Sets the save file name for the current game.'''
     G.save_file_name = widget.get_text() if type(widget) != str else widget
     G.save_file_names[G.currentGame] = G.save_file_name
     if dialog != None: dialog.destroy()
@@ -297,6 +323,9 @@ def file_name_entry_callback(widget, dialog=None):
 @entry_callback("load", "l")
 @gui_callback
 def load_fen_entry_callback(widget, dialog=None):
+    '''Loads the given PGN, FEN, piece list, or PGN string into a new game.
+    The order above is the order in which the program tries to interpret
+    the type of the input.'''
     if type(widget) != str:
         # widget is actually a widget
         fen_string = widget.get_text()
@@ -314,6 +343,9 @@ def load_fen_entry_callback(widget, dialog=None):
 @key_callback(gdk.KEY_p)
 @control_key_callback(gdk.KEY_v)
 def paste_callback(*args):
+    '''Sets the entry bar text to loading the current clipboard text.
+    It does not actually execute the command, to leave the user a chance to 
+    check that the text is as intended.'''
     text = G.clipboard.wait_for_text()
     def result():
         G.entry_bar.set_text("l \"%s\"" % text)
@@ -328,6 +360,7 @@ def paste_callback(*args):
 @gui_callback
 @control_key_callback(gdk.KEY_c)
 def copy_fen_callback(widget=None):
+    '''Copies the FEN of the current position to the clipboard.'''
     if G.board_display.is_focus():
         G.clipboard.set_text(G.g.board().fen(), -1)
     return False
@@ -335,6 +368,7 @@ def copy_fen_callback(widget=None):
 @entry_callback("clear_arrows")
 @gui_callback
 def clear_arrows_callback(*args):
+    '''Clears all arrows from the current position.'''
     # Remove any arrow NAGs
     for source, target in G.g.arrows:
         nag = arrow_nag(source, target, G.g.arrows[(source, target)])
