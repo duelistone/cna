@@ -161,7 +161,7 @@ def set_hash_callback(*args):
 @entry_callback("set_engine_option")
 def set_engine_option_callback(*args):
     '''Sets engine settings to specified name/value pairs.
-    Args are in the form: name1 value1 name2 value2 ...'''
+    Args: name1 value1 [name2 value2] ...'''
     try:
         name = args[0]
         value = args[1]
@@ -380,6 +380,11 @@ def clear_arrows_callback(*args):
 
 @entry_callback("arrow_color")
 def arrow_color_callback(*args):
+    '''Set main arrow color callback. 
+    Arg is color name or RGB[A] float values.
+    Transparency field is optional.
+    Currently the other arrow colors cannot be changed.'''
+    # TODO: Add ability to change alternate arrow colors
     if len(args) >= 3:
         try:
             # Change as many fields as given correctly
@@ -411,6 +416,8 @@ def arrow_color_callback(*args):
 
 @entry_callback("arrow_transparency")
 def arrow_transparency_callback(*args):
+    '''Just set the main arrow transparency.
+    This should be in the form of a float in [0, 1].'''
     try:
         transparency = float(args[3])
         assert(transparency >= 0 and transparency <= 1)
@@ -421,6 +428,9 @@ def arrow_transparency_callback(*args):
 
 @entry_callback("sh", "header", "set_header")
 def set_header_callback(*args):
+    '''Set PGN headers.
+    Args: name1 value1 [name2 value2] ...
+    Does not remove existing headers, but can replace their value.'''
     if len(args) < 2:
         update_pgn_message()
         return False
@@ -429,12 +439,17 @@ def set_header_callback(*args):
 
 @entry_callback("clear_headers")
 def clear_headers_callback(*args):
+    '''Remove headers from PGN,
+    and adds the 7 default (supposedly mandatory) headers.'''
     G.g.root().headers = chess.pgn.Game().headers.copy()
     update_pgn_message()
     return False
 
 @entry_callback("nag", "add_nag", "set_nag")
 def set_nag_callback(*args):
+    '''Adds a NAG to a node.
+    It can be specified by the NAG index,
+    or by a corresponding name described in global_variables.py.'''
     errors = []
     for s in args:
         nag_number = None
@@ -455,6 +470,7 @@ def set_nag_callback(*args):
 
 @entry_callback("remove_nags")
 def remove_nags_callback():
+    '''Removes all NAGs from a node.'''
     if len(G.g.nags) > 0:
         G.g.nags.clear()
         update_pgn_message()
@@ -462,6 +478,8 @@ def remove_nags_callback():
 
 @gui_callback
 def header_entry_callback(widget, dialog, entries):
+    '''Callback for header_set_callback dialog.
+    Not intended for other uses.'''
     if len(entries) < 2:
         # Error...incorrect number of entries
         # Ignore for now
@@ -474,12 +492,15 @@ def header_entry_callback(widget, dialog, entries):
 
 @gui_callback
 def header_set_callback(widget=None):
+    '''Creates a graphical dialog to add header tags.'''
     messages = ["Tag name (defaults: Event, Site, Date, Round, White, Black, Result)", "Value"]
     multiPrompt(G.window, messages, header_entry_callback)
     return False
 
 @gui_callback
 def previous_game_callback(widget=None):
+    '''Moves to previous game in game list.'''
+    # TODO: Test previous/next game functionality and fix bugs
     if G.currentGame > 0:
         G.currentGame -= 1
         G.g = G.games[G.currentGame]
@@ -491,6 +512,9 @@ def previous_game_callback(widget=None):
 
 @gui_callback
 def next_game_callback(widget=None):
+    '''Moves to next game in game list.
+    If no such game exists and the current game was retrieved from a PGN file, 
+    we look for a next game to read from the file.'''
     if G.currentGame < len(G.games) - 1:
         G.currentGame += 1
         G.g = G.games[G.currentGame]
@@ -509,6 +533,7 @@ def next_game_callback(widget=None):
 @key_callback(gdk.KEY_Down)
 @gui_callback
 def demote_callback(widget=None):
+    '''Demote a variation.'''
     if G.g.parent != None:
         fork, transitionMove = findFork(G.g)
         fork.demote(transitionMove)
@@ -519,6 +544,7 @@ def demote_callback(widget=None):
 @key_callback(gdk.KEY_Up)
 @gui_callback
 def promote_callback(widget=None):
+    '''Promote a variation.'''
     if G.g.parent != None:
         fork, transitionMove = findFork(G.g)
         fork.promote(transitionMove)
@@ -528,6 +554,7 @@ def promote_callback(widget=None):
 
 @gui_callback
 def promote_to_main_callback(widget=None):
+    '''Promote a variation to main variation.'''
     if G.g.parent != None:
         fork, transitionMove = findFork(G.g)
         fork.promote_to_main(transitionMove)
@@ -537,6 +564,7 @@ def promote_to_main_callback(widget=None):
 
 @gui_callback
 def demote_to_last_callback(widget=None):
+    '''Demote a variation to last variation.'''
     # Is this even necessary?
     if G.g.parent != None:
         fork, transitionMove = findFork(G.g)
@@ -550,6 +578,10 @@ def demote_to_last_callback(widget=None):
 @entry_callback("delete_children")
 @gui_callback
 def delete_children_callback(widget=None):
+    '''Callback to delete nodes in current game.
+    First tries to deletes the children of a node.
+    If no children exist, then it deletes the current node.'''
+    # TODO: Undo functionality???
     # If there are children, delete those
     if len(G.g.variations) > 0:
         for var in G.g.variations:
@@ -567,6 +599,10 @@ def delete_children_callback(widget=None):
 @entry_callback("delete_nonspecial_nodes")
 @gui_callback
 def delete_nonspecial_nodes_callback(widget=None):
+    '''Creates and opens a copy of the current game,
+    but only with only its special nodes.
+    The original game stays intact, and can be reopened by 
+    jumping to the previous game.'''
     # Opens new game with just special nodes
     game = copy_game(G.g.root(), lambda node : node.special)
     load_new_game_from_game(game)
@@ -574,6 +610,9 @@ def delete_nonspecial_nodes_callback(widget=None):
 
 @gui_callback
 def opening_test_callback(widget=None):
+    '''Opens an opening test to test the descendents of the current node
+    (in the repertoire, not the current game), from the same point of 
+    view as currently being used.'''
     if G.rep:
         # Old method commented out
         # create_opening_game("currentTest.pgn", G.rep, G.player, G.g)
@@ -588,7 +627,8 @@ def opening_test_callback(widget=None):
 
 @gui_callback
 def board_draw_callback(widget, cr):
-    '''Main drawing callback function.'''
+    '''Main drawing callback function.
+    Used to update the board drawing.'''
     # Following original C chessboard implementation very closely
     square_size = get_square_size(widget)
     leftover_space = widget.get_allocated_width() - square_size * 8;
@@ -677,6 +717,7 @@ def board_draw_callback(widget, cr):
 
 @gui_callback
 def board_mouse_down_callback(widget, event):
+    '''Keeps track of necessary data on mouse down events on the board.'''
     if event.button not in [1, 3]:
         return False
 
@@ -697,6 +738,8 @@ def board_mouse_down_callback(widget, event):
 
 @gui_callback
 def board_mouse_up_callback(widget, event):
+    '''Board mouse up callback.
+    Used for events such as completing a move or arrow.'''
     if event.button == 3:
         # Right click lifted
         if G.arrow_source == G.NULL_SQUARE:
@@ -712,7 +755,6 @@ def board_mouse_up_callback(widget, event):
                 del G.g.arrows[elem]
             else:
                 modifiers = gtk.accelerator_get_default_mod_mask()
-                # TODO: Different arrow colors
                 if event.state & modifiers == gdk.ModifierType.CONTROL_MASK:
                     color_hex = G.colors["blue"]
                     color = gdk.color_parse(color_hex)
@@ -753,6 +795,8 @@ def board_mouse_up_callback(widget, event):
 
 @gui_callback
 def board_mouse_move_callback(widget, event):
+    '''Board mouse move callback.
+    Used for drag and drop functionality.'''
     if G.drag_source != G.NULL_SQUARE:
         wx, wy = G.board_display.translate_coordinates(G.board_display.get_toplevel(), 0, 0)
         G.mouse_x = event.x + wx
@@ -762,6 +806,7 @@ def board_mouse_move_callback(widget, event):
 
 @gui_callback
 def board_scroll_event_callback(widget, event):
+    '''Board scroll callback, used to run through game by scrolling.'''
     if event.direction == gdk.ScrollDirection.UP:
         go_back_callback()
     elif event.direction == gdk.ScrollDirection.DOWN:
@@ -778,6 +823,8 @@ def board_scroll_event_callback(widget, event):
 
 @gui_callback
 def repertoire_name_entry_callback(widget, dialog):
+    '''Set repertoire folder to use. Default (at the start of the program)
+    is 'main.rep' in the application's directory.'''
     G.repertoire_file_name = widget.get_text()
     try:
         rep2 = Repertoire(G.repertoire_file_name)
@@ -794,11 +841,14 @@ def repertoire_name_entry_callback(widget, dialog):
 
 @gui_callback
 def load_repertoire_callback(widget=None):
+    '''Graphical way to set repertoire to use.'''
     prompt(G.window, "Enter repertoire name:", repertoire_name_entry_callback)
     return False
 
 @gui_callback
 def opening_size_callback(widget=None):
+    '''Displays number of positions that would appear in an opening test
+    using the current position (see opening_test_callback) .'''
     if G.rep:
         opening_game = create_opening_game('currentTest.pgn', G.rep, G.player, G.g)
         count = countNodes(opening_game, color=G.player)
@@ -810,6 +860,7 @@ def opening_size_callback(widget=None):
 
 @gui_callback
 def delete_opening_node_callback(widget=None):
+    '''Deletes the current node from the repertoire.'''
     if G.rep:
         if G.player == chess.WHITE:
             delete_opening_node(chess.WHITE, G.g)
@@ -824,17 +875,25 @@ def delete_opening_node_callback(widget=None):
 
 @entry_callback("set_proper_save_format")
 def set_proper_save_format_callback(*args):
+    '''Sets save format to not use extended NAG format.
+    (This program can save arrows in PGN files,
+    but only by using an extended NAG format that isn't standard.)'''
     G.proper_save_format = True
     return False
 
 @entry_callback("set_extended_save_format", "set_arrow_save_format")
 def set_extended_save_format_callback(*args):
+    '''Sets save format to use extended NAG format.
+    (This program can save arrows in PGN files,
+    but only by using an extended NAG format that isn't standard.)'''
     G.proper_save_format = False
     return False
 
 @entry_callback("save")
 @gui_callback
 def save_callback(widget=None, save_file_name=None, showStatus=True, prelude=None):
+    '''Saves current game to specified file, 
+    or to preset save file name if none is specified.'''
     if type(widget) == str:
         # Allows first argument to also set save file name (for entry save command)
         G.save_file_name = widget
@@ -861,6 +920,7 @@ def save_callback(widget=None, save_file_name=None, showStatus=True, prelude=Non
 @control_key_callback(gdk.KEY_p)
 @gui_callback
 def open_pgn_textview_callback(widget=None):
+    '''Toggles appearance of textview that displays game PGN.'''
     # Extract modifier keys
     if G.pgn_textview_enabled:
         G.board_h_box.remove(G.scrolled_window)
@@ -874,6 +934,9 @@ def open_pgn_textview_callback(widget=None):
 @control_key_callback(gdk.KEY_a)
 @gui_callback
 def analyze_callback(widget=None):
+    '''Opens a separate instance of the program to analyze current game.
+    For now, this ignores useful command line args of the original instance
+    such as tablebase path, so use cautiously.'''
     movePath = []
     node = G.g
     while node.parent != None:
@@ -890,6 +953,13 @@ def analyze_callback(widget=None):
 
 @entry_callback("add_pieces")
 def add_pieces_callback(*args):
+    '''Opens a new game starting from the current position 
+    with the specified piece additions.
+    Args: [w] [white_piece_addition1] ... [b] [black_piece_addition1] ...
+    The piece additions above are just the square name for pawns, 
+    and the piece letter followed by the square name for pieces.
+    All entries up to the 'b' (or some other accepted specifier of black) will
+    be assumed to be for the white side.'''
     board = G.g.board()
     color = chess.WHITE
     additions = {} # Saving changes to dictionary before implementing in case of error
@@ -920,6 +990,10 @@ def add_pieces_callback(*args):
 
 @entry_callback("remove_pieces")
 def remove_pieces_callback(*args):
+    '''Creates new game starting at current position, 
+    but with removed pieces at the specified squares.
+    Empty squares are ignored without error, 
+    but a single syntax error on a square name prevents any changes.'''
     board = G.g.board()
     errors = []
     for square_string in args:
@@ -939,6 +1013,8 @@ def remove_pieces_callback(*args):
 
 @entry_callback("set_castling")
 def set_castling_callback(*args):
+    '''Creates new game starting at current position,
+    but with exactly the newly specified castling rights.'''
     board = G.g.board()
     if len(args) != 1:
         display_status("Too many or too few arguments. Try again.")
@@ -956,6 +1032,8 @@ def set_castling_callback(*args):
 
 @entry_callback("set_en_passant", "set_ep_square")
 def set_en_passant_callback(*args):
+    '''Creates new game starting at current position,
+    but with exactly the newly specified en_passant square.'''
     board = G.g.board()
     if len(args) != 1:
         display_status("Too many or too few arguments. Try again.")
@@ -970,6 +1048,9 @@ def set_en_passant_callback(*args):
 
 @entry_callback("flip_turn")
 def flip_turn_callback(*args):
+    '''Flips the current board perspective.
+    This change is more than just cosmetic, as it affects
+    which nodes are special or included in the repertoire.'''
     board = G.g.board()
     if len(args) >= 1:
         side = parse_side(args[0])
@@ -989,6 +1070,7 @@ def flip_turn_callback(*args):
 @key_callback(gdk.KEY_e)
 @gui_callback
 def toggle_stockfish_callback(widget=None):
+    '''Toggles the main engine.'''
     if G.stockfish == None:
         # Start up stockfish
         G.stockfish = engine_init()
@@ -1019,30 +1101,35 @@ def toggle_stockfish_callback(widget=None):
 @gui_callback
 @control_key_callback(gdk.KEY_1)
 def set_multipv_1_callback(widget=None):
+    '''Sets engine multiPV to 1.'''
     change_multipv(1)
     return False
 
 @gui_callback
 @control_key_callback(gdk.KEY_2)
 def set_multipv_2_callback(widget=None):
+    '''Sets engine multiPV to 2.'''
     change_multipv(2)
     return False
 
 @gui_callback
 @control_key_callback(gdk.KEY_3)
 def set_multipv_3_callback(widget=None):
+    '''Sets engine multiPV to 3.'''
     change_multipv(3)
     return False
 
 @gui_callback
 @control_key_callback(gdk.KEY_4)
 def set_multipv_4_callback(widget=None):
+    '''Sets engine multiPV to 4.'''
     change_multipv(4)
     return False
 
 @gui_callback
 @control_key_callback(gdk.KEY_5)
 def set_multipv_5_callback(widget=None):
+    '''Sets engine multiPV to 5.'''
     change_multipv(5)
     return False
 
@@ -1119,6 +1206,7 @@ def play_training_move_callback(*args):
 
 @gui_callback
 def load_fen_callback(widget=None):
+    '''Graphical way to load FEN or PGN file.'''
     promptMessage = "Enter FEN or path to PGN file"
     prompt(G.window, promptMessage, load_fen_entry_callback)
     return False
@@ -1126,6 +1214,8 @@ def load_fen_callback(widget=None):
 @gui_callback
 @entry_callback("make_report")
 def make_report_callback(widget=None):
+    '''Makes opening repertoire based on current position, 
+    perspective, and repertoire.'''
     make_report()
     return False
 
