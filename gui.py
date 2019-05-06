@@ -23,6 +23,11 @@ def main():
     builder.add_from_file("chessboard.ui")
     builder.connect_signals(G.handlers)
 
+    # Help?
+    if '-h' in sys.argv:
+        print(full_help_report())
+        exit(0)
+
     # Determine player color
     if '-b' in sys.argv:
         G.player = chess.BLACK

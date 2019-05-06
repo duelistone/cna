@@ -633,4 +633,4 @@ def full_help_report():
     reports = []
     for cb in G.documented_functions:
         reports.append(help_report(cb))
-    return "\n\n".join(reports)
+    return "\n\n\n".join(reports)
