@@ -146,3 +146,6 @@ colors = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
 for c in set(colors):
     if len(c) == 1:
         del colors[c]
+
+# Set of documented functions
+documented_functions = set()

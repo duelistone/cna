@@ -609,3 +609,28 @@ def cleanup(showMessage=False):
     if showMessage:
         print('Exiting gracefully.')
 
+def help_report(callback):
+    # Extract info on how to invoke callback
+    commands = []
+    keys = []
+    for s in G.command_callbacks:
+        if G.command_callbacks[s] == callback:
+            commands.append(s)
+    for k in G.key_binding_map:
+        if G.key_binding_map[k] == callback:
+            keys.append(gdk.keyval_name(k))
+    for k in G.control_key_binding_map:
+        if G.control_key_binding_map[k] == callback:
+            keys.append("Ctrl+%s" % gdk.keyval_name(k))
+
+    # Build report
+    entry_piece = "Entry commands: %s" % ", ".join(commands)
+    shortcuts_piece = "Keyboard shortcuts: %s" % ", ".join(keys)
+    docstring = callback.__doc__
+    return "%s\n%s\n%s" % (entry_piece, shortcuts_piece, docstring)
+    
+def full_help_report():
+    reports = []
+    for cb in G.documented_functions:
+        reports.append(help_report(cb))
+    return "\n\n".join(reports)

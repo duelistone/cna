@@ -1316,7 +1316,7 @@ def reset_learn_callback(*args):
     return False
 
 @entry_callback("reset_learn_timer")
-@control_key_callback("gdk.KEY_r")
+@control_key_callback(gdk.KEY_r)
 def reset_learn_timer_callback(*args):
     '''Resets spaced repetition information (for use when going afk or mouse slipping in session).'''
     G.starting_time = time.time()
