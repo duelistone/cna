@@ -626,11 +626,13 @@ def help_report(callback):
     # Build report
     entry_piece = "Entry commands: %s" % ", ".join(commands)
     shortcuts_piece = "Keyboard shortcuts: %s" % ", ".join(keys)
-    docstring = callback.__doc__
-    return "%s\n%s\n%s" % (entry_piece, shortcuts_piece, docstring)
+    docstring = callback.__doc__ 
+    if not docstring: docstring = "(No description available.)"
+    return "%s\n%s\n%s\n%s" % (callback.__name__, entry_piece, shortcuts_piece, docstring)
     
 def full_help_report():
     reports = []
-    for cb in G.documented_functions:
+    callbacks = sorted(G.documented_functions, key=lambda x : x.__name__)
+    for cb in callbacks:
         reports.append(help_report(cb))
     return "\n\n\n".join(reports)

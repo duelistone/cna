@@ -1392,11 +1392,19 @@ def pgn_textview_key_press_callback(widget, event):
 
 @entry_callback("enter_analysis_mode")
 def enter_analysis_mode_callback(*args):
+    '''Starts the (default) analysis mode.
+
+    Intended to be used to switch back to analysis mode from opening test mode.
+    This switch also happens automatically when an opening test is completed.'''
     G.move_completed_callback = lambda x : None
     return False
 
 @entry_callback("enter_test_mode")
 def enter_opening_test_mode_callback(*args):
+    '''Starts test mode using current position (from current perspective) as start.
+    
+    Unlike opening_test_callback, this does not start a new subprocess.
+    To get back to analysis mode, see enter_analysis_mode_callback.'''
     if G.ot_board == None:
         G.ot_board = chess.Board(G.g.board().fen()) # To strip board history
         G.ot_gen = None
@@ -1405,6 +1413,10 @@ def enter_opening_test_mode_callback(*args):
 
 @entry_callback("reset_test_mode")
 def reset_test_mode_callback(*args):
+    '''Restarts an opening test mode from the start.
+    
+    This does not necessarily produce the exact same test again.
+    (For example, when using learn mode.)'''
     G.ot_board = G.g.board()
     G.ot_gen = None
     setup_ot_mode()
@@ -1412,6 +1424,11 @@ def reset_test_mode_callback(*args):
 
 @entry_callback("rs", "run_script")
 def run_script_callback(*args):
+    '''Runs a script.
+
+    A script here is a file with a list of commands that could be input
+    in the entry bar.'''
+    # TODO: Create scripting language to allow arguments, loops, etc
     try:
         fil = open(args[0])
     except:
