@@ -4,6 +4,7 @@ import chess, chess.polyglot, chess.pgn
 from chess_tools import *
 from mmrw import *
 
+# TODO: Change argument order, and give filename default None at the end
 def create_opening_game(filename, repertoire, color, starting_node):
     findMoves = repertoire.findMovesWhite
     if color == chess.BLACK: 
@@ -38,7 +39,10 @@ def create_opening_game(filename, repertoire, color, starting_node):
     else:
         result.root().headers["Black"] = str(starting_node.board().fullmove_number - 1)
 
-    create_opening_pgn(filename, color, result.root())
+    # Save to file if given filename
+    if filename:
+        create_opening_pgn(filename, color, result.root())
+
     return result.root()
 
 def create_opening_pgn(filename, color, game, start=1):

@@ -869,7 +869,7 @@ def opening_size_callback(widget=None):
     
     (See opening_test_callback).'''
     if G.rep:
-        opening_game = create_opening_game('currentTest.pgn', G.rep, G.player, G.g)
+        opening_game = create_opening_game(None, G.rep, G.player, G.g)
         count = countNodes(opening_game, color=G.player)
         count -= G.g.board().fullmove_number - 1
         display_status("Opening size: %d" % count)
@@ -1345,6 +1345,23 @@ def reset_learn_timer_callback(*args):
     G.starting_time = time.time()
     G.incorrect_answers = 0
     display_status("Reset training timer.")
+    return False
+
+@entry_callback("show_learn_info")
+def show_learn_info_callback(*args):
+    '''Shows learning information stored for a position.
+    
+    Not implemented yet.'''
+    # Select current position, or a position specified by given FEN
+    board = G.g.board()
+    if len(args) > 0 and type(args[0]) == str:
+        try:
+            board = chess.Board(fen=args[0])
+        except:
+            display_status("Invalid FEN given")
+            return False
+    # TODO: Find position in repertoire, and give stored easiness, number of consecutive
+    # correct answers, and the next time to train it
     return False
 
 @entry_callback("print_schedule")
