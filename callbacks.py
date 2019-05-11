@@ -371,7 +371,7 @@ def paste_callback(*args):
 def copy_fen_callback(widget=None):
     '''Copies the FEN of the current position to the clipboard.
 
-    Note that this disables the standard Ctrl-C copy text shortcut.'''
+    Note that this disables the standard Ctrl-C copy text shortcut sometimes.'''
     if G.board_display.is_focus():
         G.clipboard.set_text(G.g.board().fen(), -1)
     return False
