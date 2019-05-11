@@ -92,6 +92,10 @@ def preparations(builder):
     # Extra definitions
     G.status_bar_cid = G.status_bar.get_context_id("")
 
+    # Make status bar selectable 
+    for elem in G.status_bar.get_message_area():
+        elem.set_selectable(True)
+
     # Signal connections
     G.window.connect("destroy", destroy_main_window_callback)
     G.window.connect("key_press_event", key_press_callback)
