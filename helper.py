@@ -9,7 +9,7 @@ from gi.repository import Gdk as gdk
 from gi.repository import Pango as pango
 from gi.repository import GLib
 import global_variables as G
-import signal, math, subprocess, sys, os, os.path, shutil, chess, chess.pgn, shlex
+import signal, math, subprocess, sys, os, os.path, shutil, chess, chess.pgn, shlex, io
 from functools import reduce
 from opening_pgn import *
 from mmrw import *
