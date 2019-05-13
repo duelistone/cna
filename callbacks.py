@@ -270,45 +270,33 @@ def display_variations_callback(widget=None):
 @gui_callback
 @entry_callback("set_queen_promotion")
 @key_callback(gdk.KEY_Q)
-def queen_promotion_callback(widget=None):
+def queen_promotion_callback(*args):
     '''Sets promotion piece to queen.'''
-    if widget == None:
-        G.queen_promotion_item.set_active(True)
-    else:
-        G.promotion_piece = chess.QUEEN
+    G.promotion_piece = chess.QUEEN
     return False
 
 @gui_callback
 @entry_callback("set_rook_promotion")
 @key_callback(gdk.KEY_R)
-def rook_promotion_callback(widget=None):
+def rook_promotion_callback(*args):
     '''Sets promotion piece to rook.'''
-    if widget == None:
-        G.promotion_piece = chess.ROOK
-    else:
-        G.rook_promotion_item.set_active(True)
+    G.promotion_piece = chess.ROOK
     return False
 
 @gui_callback
 @entry_callback("set_bishop_promotion")
 @key_callback(gdk.KEY_B)
-def bishop_promotion_callback(widget=None):
+def bishop_promotion_callback(*args):
     '''Sets promotion piece to bishop.'''
-    if widget == None:
-        G.promotion_piece = chess.BISHOP
-    else:
-        G.bishop_promotion_item.set_active(True)
+    G.promotion_piece = chess.BISHOP
     return False
 
 @gui_callback
 @entry_callback("set_knight_promotion")
 @key_callback(gdk.KEY_N)
-def knight_promotion_callback(widget=None):
+def knight_promotion_callback(*args):
     '''Sets promotion piece to knight.'''
-    if widget == None:
-        G.knight_promotion_item.set_active(True)
-    else:
-        G.promotion_piece = chess.KNIGHT
+    G.promotion_piece = chess.KNIGHT
     return False
 
 @gui_callback
@@ -913,6 +901,7 @@ def set_extended_save_format_callback(*args):
     return False
 
 @entry_callback("save")
+@control_key_callback(gdk.KEY_s)
 @gui_callback
 def save_callback(widget=None, save_file_name=None, showStatus=True, prelude=None):
     '''Saves current game to specified file.
@@ -1252,7 +1241,6 @@ def puzzle_file_name_callback(*args):
         display_status("No file name given.")
     return False
 
-@control_key_callback(gdk.KEY_s)
 @entry_callback("save_puzzle", "sp")
 def save_puzzle_callback(*args):
     fil = open(G.puzzle_file, 'a')
