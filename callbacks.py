@@ -245,7 +245,8 @@ def opening_save_game_callback(widget=None):
 @entry_callback("o", "display_repertoire_moves")
 @gui_callback
 def display_repertoire_moves_callback(widget=None):
-    '''Displays the moves given in the repertoire for the current position.'''
+    '''Displays the moves given in the repertoire, and optionally in the
+    lichess opening explorere as well, for the current position.'''
     if G.rep or G.use_lichess:
         words = []
         board = G.g.board()
