@@ -149,3 +149,7 @@ for c in set(colors):
 
 # Set of documented functions
 documented_functions = set()
+
+# Lichess support
+use_lichess = False # Set to true to use lichess in listing opening moves
+cached_lichess_responses = {} # Dictionary to keep JSON responses for opening positions

@@ -246,15 +246,32 @@ def opening_save_game_callback(widget=None):
 @gui_callback
 def display_repertoire_moves_callback(widget=None):
     '''Displays the moves given in the repertoire for the current position.'''
-    if G.rep:
-        words = ["Repertoire moves:"]
+    if G.rep or G.use_lichess:
+        words = []
         board = G.g.board()
-        for move in G.rep.findMoves(G.player, board):
-            words.append(board.san(move))
+        if G.rep:
+            words.append("Repertoire moves:")
+            for move in G.rep.findMoves(G.player, board):
+                words.append(board.san(move))
+        if G.use_lichess:
+            words.append("Lichess moves:")
+            moves = lichess_opening_moves(board)
+            if moves != None:
+                words.extend(moves)
         display_status(" ".join(words))
     else:
-        display_status("No repertoire loaded.")
-    return True
+        display_status("No repertoire loaded, and lichess turned off.")
+    return False
+
+@control_key_callback(gdk.KEY_d)
+@entry_callback("toggle_lichess", "tl")
+def toggle_lichess_callback(*args):
+    G.use_lichess = not G.use_lichess
+    if G.use_lichess:
+        display_status("Lichess opening support turned on.")
+    else:
+        display_status("Lichess opening support turned off.")
+    return False
 
 @key_callback(gdk.KEY_v)
 @entry_callback("v", "display_variations")

@@ -9,7 +9,7 @@ from gi.repository import Gdk as gdk
 from gi.repository import Pango as pango
 from gi.repository import GLib
 import global_variables as G
-import signal, math, subprocess, sys, os, os.path, shutil, chess, chess.pgn, shlex, io
+import signal, math, subprocess, sys, os, os.path, shutil, chess, chess.pgn, shlex, io, requests
 from functools import reduce
 from opening_pgn import *
 from mmrw import *
@@ -636,3 +636,27 @@ def full_help_report():
     for cb in callbacks:
         reports.append(help_report(cb))
     return "\n\n\n".join(reports)
+
+def lichess_opening_moves(position):
+    '''Returns opening moves appearing in lichess master database.
+    Input could be a board object or fen string.
+    Returns None if an error is encountered.'''
+    board_fen = position.fen() if type(position) != str else position
+    if board_fen in G.cached_lichess_responses:
+        json_response = G.cached_lichess_responses[board_fen]
+    else:
+        http_board_fen = board_fen.replace(" ", "%20")
+        url = "https://explorer.lichess.ovh/master?fen=" + http_board_fen
+        try:
+            # TODO: Make this asynchronous
+            request = requests.get(url, timeout=(0.5, 4))
+            request.raise_for_status()
+            json_response = request.json()
+        except:
+            return
+        G.cached_lichess_responses[board_fen] = json_response
+    result = []
+    for i in range(len(json_response["moves"])):
+        result.append(json_response["moves"][i]["san"])
+    return result
+
