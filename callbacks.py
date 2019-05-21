@@ -243,7 +243,6 @@ def opening_save_game_callback(widget=None):
 
 @key_callback(gdk.KEY_o)
 @entry_callback("o", "display_repertoire_moves")
-@gui_callback
 def display_repertoire_moves_callback(widget=None):
     '''Displays the moves given in the repertoire, and optionally in the
     lichess opening explorere as well, for the current position.'''
@@ -254,15 +253,75 @@ def display_repertoire_moves_callback(widget=None):
             words.append("Repertoire moves:")
             for move in G.rep.findMoves(G.player, board):
                 words.append(board.san(move))
+            display_status(" ".join(words)) # In case worker thread takes too long
         if G.use_lichess:
-            words.append("Lichess moves:")
-            moves = lichess_opening_moves(board)
-            if moves != None:
-                words.extend(moves)
-        display_status(" ".join(words))
+            def load_lichess_moves(words):
+                words.append("Lichess moves:")
+                moves = lichess_opening_moves(board)
+                if moves != None:
+                    words.extend(moves)
+                GLib.idle_add(lambda: display_status(" ".join(words)))
+                
+            thread = threading.Thread(target=load_lichess_moves, args=(words,), daemon=True)
+            thread.start()
     else:
         display_status("No repertoire loaded, and lichess turned off.")
     return False
+
+@control_key_callback(gdk.KEY_t)
+@entry_callback("lichess_top_games", "ltg")
+def lichess_top_games_callback(*args):
+    def load_lichess_top_games():
+        info_list, G.top_game_ids = lichess_top_games(G.g.board())
+        GLib.idle_add(lambda: display_status(", ".join(info_list)))
+    
+    thread = threading.Thread(target=load_lichess_top_games, daemon=True)
+    thread.start()
+    return False
+
+@entry_callback("load_lichess_game", "llg")
+def load_lichess_game_callback(*args):
+    if len(args) < 1:
+        display_status("No game specified.")
+        return False
+
+    # First argument could be game id or index of game id from top game list
+    try:
+        game_id = G.top_game_ids[int(args[0])]
+    except IndexError:
+        display_status("No top game #%d stored. Try running lichess_top_games again." % int(args[0]))
+        return False
+    except:
+        game_id = args[0]
+
+    print(game_id)
+    def load_lichess_game(game_id):
+        game = lichess_game(game_id)
+        if game != None:
+            # TODO: Add behavior to merge with current game, and probably make that default
+            GLib.idle_add(lambda : load_new_game_from_game(game))
+        else:
+            GLib.idle_add(lambda : display_status("An error occurred fetching or parsing the game."))
+
+    thread = threading.Thread(target=load_lichess_game, args=(game_id,), daemon=True)
+    thread.start()
+    return False
+
+@control_key_callback(gdk.KEY_1)
+def load_lichess_game_1_callback(*args):
+    return load_lichess_game_callback(1)
+
+@control_key_callback(gdk.KEY_2)
+def load_lichess_game_2_callback(*args):
+    return load_lichess_game_callback(2)
+
+@control_key_callback(gdk.KEY_3)
+def load_lichess_game_3_callback(*args):
+    return load_lichess_game_callback(3)
+
+@control_key_callback(gdk.KEY_4)
+def load_lichess_game_4_callback(*args):
+    return load_lichess_game_callback(4)
 
 @control_key_callback(gdk.KEY_d)
 @entry_callback("toggle_lichess", "tl")
@@ -1132,35 +1191,35 @@ def toggle_stockfish_callback(widget=None):
     return False
 
 @gui_callback
-@control_key_callback(gdk.KEY_1)
+@key_callback(gdk.KEY_1)
 def set_multipv_1_callback(widget=None):
     '''Sets engine multiPV to 1.'''
     change_multipv(1)
     return False
 
 @gui_callback
-@control_key_callback(gdk.KEY_2)
+@key_callback(gdk.KEY_2)
 def set_multipv_2_callback(widget=None):
     '''Sets engine multiPV to 2.'''
     change_multipv(2)
     return False
 
 @gui_callback
-@control_key_callback(gdk.KEY_3)
+@key_callback(gdk.KEY_3)
 def set_multipv_3_callback(widget=None):
     '''Sets engine multiPV to 3.'''
     change_multipv(3)
     return False
 
 @gui_callback
-@control_key_callback(gdk.KEY_4)
+@key_callback(gdk.KEY_4)
 def set_multipv_4_callback(widget=None):
     '''Sets engine multiPV to 4.'''
     change_multipv(4)
     return False
 
 @gui_callback
-@control_key_callback(gdk.KEY_5)
+@key_callback(gdk.KEY_5)
 def set_multipv_5_callback(widget=None):
     '''Sets engine multiPV to 5.'''
     change_multipv(5)
