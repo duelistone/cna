@@ -296,7 +296,6 @@ def load_lichess_game_callback(*args):
     except:
         game_id = args[0]
 
-    print(game_id)
     def load_lichess_game(game_id):
         game = lichess_game(game_id)
         if game != None:
