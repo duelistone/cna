@@ -3,7 +3,7 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
 from gi.repository import Gdk as gdk
 from gi.repository import GLib
-import chess, chess.pgn, chess.polyglot, sys, subprocess, time, os, os.path, random, re, signal, threading, unicodedata, cairo
+import chess, chess.pgn, chess.polyglot, sys, subprocess, time, os, os.path, random, re, signal, threading, unicodedata, cairo, threading
 import global_variables as G
 from chess_tools import *
 from opening_pgn import *
@@ -11,6 +11,8 @@ from mmrw import *
 from dfs import *
 from drawing import *
 from callbacks import *
+from lichess_helpers import *
+from help_helpers import *
 
 def main():
     # Change directory to application directory
@@ -68,6 +70,10 @@ def main():
     # Show elements
     G.window.show_all()
     G.stockfish_textview.hide()
+
+    # Autosave thread
+    autosave_thread = threading.Thread(target=autosave, daemon=True)
+    autosave_thread.start()
 
     # Start main loop
     G.glib_mainloop.run()

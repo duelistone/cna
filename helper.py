@@ -16,6 +16,8 @@ from mmrw import *
 from engine import *
 from drawing import *
 from dfs import *
+from lichess_helpers import *
+from help_helpers import *
 from rep_visitor import rep_visitor
 from pgn_visitor import game_gui_string
 
@@ -310,7 +312,6 @@ def load_new_game_from_game(game, player=chess.WHITE, save_file_name="savedGame.
     # the input game later will also change the G.g game.
     G.games.append(game)
     G.save_file_names.append("savedGame.pgn")
-    G.save_file_name = save_file_name
     G.currentGame += 1
     G.g = game
     G.player = player
@@ -367,11 +368,13 @@ def load_new_game_from_pgn_file(file_name):
         except:
             pass
     G.games.append(new_game)
-    G.save_file_names.append(file_name if type(file_name) == str else file_name.name)
+    # Line below changed to avoid rewriting over files accidentally,
+    # especially when they have more than one game in them.
+    # G.save_file_names.append(file_name if type(file_name) == str else file_name.name)
+    G.save_file_names.append("savedGame.pgn")
     G.pgnFile = pgnFile
     G.currentGame += 1
     G.g = new_game
-    G.save_file_name = G.save_file_names[-1]
     G.player = G.g.board().turn
     update_pgn_message()
     update_game_info()
@@ -609,104 +612,33 @@ def cleanup(showMessage=False):
     if showMessage:
         print('Exiting gracefully.')
 
-def help_report(callback):
-    # Extract info on how to invoke callback
-    commands = []
-    keys = []
-    for s in G.command_callbacks:
-        if G.command_callbacks[s] == callback:
-            commands.append(s)
-    for k in G.key_binding_map:
-        if G.key_binding_map[k] == callback:
-            keys.append(gdk.keyval_name(k))
-    for k in G.control_key_binding_map:
-        if G.control_key_binding_map[k] == callback:
-            keys.append("Ctrl+%s" % gdk.keyval_name(k))
-
-    # Build report
-    entry_piece = "Entry commands: %s" % ", ".join(commands)
-    shortcuts_piece = "Keyboard shortcuts: %s" % ", ".join(keys)
-    docstring = callback.__doc__ 
-    if not docstring: docstring = "(No description available.)"
-    return "%s\n%s\n%s\n%s" % (callback.__name__, entry_piece, shortcuts_piece, docstring)
+def save_current_pgn(save_file_name, show_status=False, prelude=None, set_global_save_file=False, proper_format=False):
+    '''Saves current game to specified file.
     
-def full_help_report():
-    reports = []
-    callbacks = sorted(G.documented_functions, key=lambda x : x.__name__)
-    for cb in callbacks:
-        reports.append(help_report(cb))
-    return "\n\n\n".join(reports)
+    Uses preset save file name if none is specified.'''
+    game_to_save = G.g.root()
+    if proper_format:
+        game_to_save = copy_game(G.g.root(), copy_improper_nags=False)
+    outPgnFile = open(save_file_name, 'w')
+    if prelude:
+        print(prelude, file=outPgnFile)
+    print(game_to_save, file=outPgnFile, end="\n\n")
+    outPgnFile.close()
+    if show_status:
+        display_status("Game saved to %s." % save_file_name)
+    return False
 
-def lichess_opening_response(position):
-    '''Returns (possibly cached) lichess opening explorer response.
+def autosave():
+    '''Automatically saves current game every G.autosave_interval seconds.'''
+    while True:
+        time.sleep(G.autosave_interval)
+        save_file_name = G.autosave_dir + str(int(time.time() * 100))
+        string_exporter = chess.pgn.StringExporter()
+        pgn_string = G.g.root().accept(string_exporter)
+        if pgn_string == G.last_autosave_pgn_string:
+            continue
+        else:
+            G.last_autosave_pgn_string = pgn_string
+            with open(save_file_name, 'w') as autosave_file:
+                print(pgn_string, file=autosave_file)
 
-    See https://github.com/niklasf/lila-openingexplorer for formatting.'''
-    board_fen = position.fen() if type(position) != str else position
-    if board_fen in G.cached_lichess_responses:
-        return G.cached_lichess_responses[board_fen]
-    else:
-        http_board_fen = board_fen.replace(" ", "%20")
-        url = "https://explorer.lichess.ovh/master?fen=" + http_board_fen
-        try:
-            request = requests.get(url, timeout=(0.5, 4))
-            request.raise_for_status()
-            json_response = request.json()
-        except:
-            return
-        G.cached_lichess_responses[board_fen] = json_response
-        return json_response
-
-def lichess_game_response(game_id):
-    '''Requests the lichess game with given game id from lichess.
-
-    The response is a PGN string.'''
-    # Note that no cache is used here intentionally, in case it affects
-    # future live game functionality or something similar.
-    url = "https://explorer.lichess.ovh/master/pgn/" + game_id
-    try:
-        request = requests.get(url, timeout=(0.5, 8))
-        request.raise_for_status()
-        return request.text
-    except:
-        return
-
-def lichess_opening_moves(position):
-    '''Returns opening moves appearing in lichess master database.
-    Input could be a board object or fen string.
-    Returns None if an error is encountered.'''
-    json_response = lichess_opening_response(position)
-    result = []
-    for i in range(len(json_response["moves"])):
-        result.append(json_response["moves"][i]["san"])
-        total = json_response["moves"][i]["white"] + json_response["moves"][i]["draws"] + json_response["moves"][i]["black"]
-        score = (json_response["moves"][i]["white"] + 0.5 * json_response["moves"][i]["draws"]) / total
-        result.append("(%d, %d%%)" % (total, int(100 * score)))
-    return result
-
-def lichess_top_games(position):
-    '''Returns top games appearing in the lichess master database
-    from an opening position.'''
-    json_response = lichess_opening_response(position)
-    info_list = []
-    id_list = []
-    for i in range(len(json_response["topGames"])):
-        result = "1/2-1/2" 
-        if json_response["topGames"][i]["winner"] == "white":
-            result = "1-0"
-        elif json_response["topGames"][i]["winner"] == "black":
-            result = "0-1"
-        info = "%s (%d) v %s (%d) %s" % (
-            json_response["topGames"][i]["white"]["name"], 
-            json_response["topGames"][i]["white"]["rating"], 
-            json_response["topGames"][i]["black"]["name"], 
-            json_response["topGames"][i]["black"]["rating"], 
-            result)
-        info_list.append(info)
-        id_list.append(json_response["topGames"][i]["id"])
-    return info_list, id_list
-
-def lichess_game(game_id):
-    '''Returns lichess game given game id, or None if an error occurs.'''
-    pgn_string = lichess_game_response(game_id)
-    pgn_file = io.StringIO(pgn_string)
-    return chess.pgn.read_game(pgn_file)

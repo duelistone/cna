@@ -20,6 +20,8 @@ from drawing import *
 from dfs import *
 from decorators import *
 from rep_visitor import *
+from lichess_helpers import *
+from help_helpers import *
 
 # GUI callbacks
 
@@ -245,7 +247,7 @@ def opening_save_game_callback(widget=None):
 @entry_callback("o", "display_repertoire_moves")
 def display_repertoire_moves_callback(widget=None):
     '''Displays the moves given in the repertoire, and optionally in the
-    lichess opening explorere as well, for the current position.'''
+    lichess opening explorer as well, for the current position.'''
     if G.rep or G.use_lichess:
         words = []
         board = G.g.board()
@@ -299,7 +301,10 @@ def load_lichess_game_callback(*args):
         game = lichess_game(game_id)
         if game != None:
             # TODO: Add behavior to merge with current game, and probably make that default
-            GLib.idle_add(lambda : load_new_game_from_game(game))
+            def load_and_give_info():
+                load_new_game_from_game(game, player=G.player)
+                update_game_info()
+            GLib.idle_add(load_and_give_info)
         else:
             GLib.idle_add(lambda : display_status("An error occurred fetching or parsing the game."))
 
@@ -387,8 +392,7 @@ def save_file_name_callback(widget=None):
 @gui_callback
 def file_name_entry_callback(widget, dialog=None):
     '''Sets the save file name for the current game.'''
-    G.save_file_name = widget.get_text() if type(widget) != str else widget
-    G.save_file_names[G.currentGame] = G.save_file_name
+    G.save_file_names[G.currentGame] = widget.get_text() if type(widget) != str else widget
     if dialog != None: dialog.destroy()
     return False
 
@@ -583,7 +587,6 @@ def previous_game_callback(widget=None):
     if G.currentGame > 0:
         G.currentGame -= 1
         G.g = G.games[G.currentGame]
-        G.save_file_name = G.save_file_names[G.currentGame]
         G.board_display.queue_draw()
         update_pgn_message()
         update_game_info()
@@ -598,7 +601,6 @@ def next_game_callback(widget=None):
     if G.currentGame < len(G.games) - 1:
         G.currentGame += 1
         G.g = G.games[G.currentGame]
-        G.save_file_name = G.save_file_names[G.currentGame]
         G.board_display.queue_draw()
         update_pgn_message()
         update_game_info()
@@ -980,31 +982,15 @@ def set_extended_save_format_callback(*args):
 @entry_callback("save")
 @control_key_callback(gdk.KEY_s)
 @gui_callback
-def save_callback(widget=None, save_file_name=None, showStatus=True, prelude=None):
+def save_callback(*args):
     '''Saves current game to specified file.
     
     Uses preset save file name if none is specified.'''
-    if type(widget) == str:
-        # Allows first argument to also set save file name (for entry save command)
-        G.save_file_name = widget
-        G.save_file_names[G.currentGame] = G.save_file_name
-        save_file_name = G.save_file_name
-        # Ignore more than one argument in entry
-        showStatus = True
-        prelude = None
-    elif save_file_name == None:
-        # Do not set global save_file_name if keyword arg is used
-        save_file_name = G.save_file_name
-    game_to_save = G.g.root()
-    if G.proper_save_format:
-        game_to_save = copy_game(G.g.root(), copy_improper_nags=False)
-    outPgnFile = open(save_file_name, 'w')
-    if prelude:
-        print(prelude, file=outPgnFile)
-    print(game_to_save, file=outPgnFile, end="\n\n")
-    outPgnFile.close()
-    if showStatus:
-        display_status("Game saved to %s." % G.save_file_name)
+    if len(args) > 0:
+        save_file_name = args[0]
+    else:
+        save_file_name = G.save_file_names[G.currentGame]
+    save_current_pgn(save_file_name, show_status=True, prelude=None, set_global_save_file=True, proper_format=G.proper_save_format)
     return False
 
 @control_key_callback(gdk.KEY_p)
@@ -1035,7 +1021,7 @@ def analyze_callback(widget=None):
         node = node.parent
     movePath.reverse()
     prelude = '%' + " ".join(map(str, movePath))
-    save_callback(G.g.root(), save_file_name="game.temp", showStatus=False, prelude=prelude)
+    save_current_pgn(save_file_name="game.temp", show_status=False, prelude=prelude)
     # TODO: Should eventually replace with 'at' script or with memorized command line arguments
     # Issue currently is that this does not keep current command line arguments like a tablebases folder
     # OR, perhaps better, keep the command line arguments saved.

@@ -154,3 +154,9 @@ documented_functions = set()
 use_lichess = False # Set to true to use lichess in listing opening moves
 cached_lichess_responses = {} # Dictionary to keep JSON responses for opening positions
 top_game_ids = []
+
+# Autosave interval
+autosave = True # Set to False to turn off autosave
+autosave_dir = ".autosave/"
+autosave_interval = 60 # In seconds
+last_autosave_pgn_string = None # Stores last autosaved PGN string, to avoid repeatedly saving same file
