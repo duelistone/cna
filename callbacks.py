@@ -47,7 +47,7 @@ def flip_callback(*args):
     return False
 
 @entry_callback("gb", "go_back")
-@key_callback(gdk.KEY_Left, gdk.KEY_k)
+@key_callback(gdk.KEY_Left, gdk.KEY_h, gdk.KEY_a)
 @gui_callback
 def go_back_callback(widget=None):
     '''Moves back to parent node.'''
@@ -58,7 +58,7 @@ def go_back_callback(widget=None):
     return False
 
 @entry_callback("gf", "go_forward")
-@key_callback(gdk.KEY_Right, gdk.KEY_j)
+@key_callback(gdk.KEY_Right, gdk.KEY_l, gdk.KEY_d)
 @gui_callback
 def go_forward_callback(widget=None, var_index=0):
     '''Moves forward to a child node. 
@@ -80,22 +80,24 @@ def go_forward_callback(widget=None, var_index=0):
         G.board_display.queue_draw()
     return False
 
+# TODO: Jump up/down variations with k and j (or w and s)
+
 # The next three are just for keyboard shortcuts.
 # In the entry bar or scripts, "go_forward var_index" can be used.
 
-@key_callback(gdk.KEY_J)
+@key_callback(gdk.KEY_L, gdk.KEY_D)
 @gui_callback
 def go_first_variation_callback(widget=None):
     '''Moves to first variation after PV.'''
     return go_forward_callback(widget, 1)
 
-@control_key_callback(gdk.KEY_j)
+@control_key_callback(gdk.KEY_l, gdk.KEY_d)
 @gui_callback
 def go_second_variation_callback(widget=None):
     '''Moves to second variation after PV.'''
     return go_forward_callback(widget, 2)
 
-@control_key_callback(gdk.KEY_J)
+@control_key_callback(gdk.KEY_L, gdk.KEY_D)
 @gui_callback
 def go_third_variation_callback(widget=None):
     '''Moves to third variation after PV.'''
@@ -611,7 +613,7 @@ def next_game_callback(widget=None):
 
     return False
 
-@key_callback(gdk.KEY_Down)
+@key_callback(gdk.KEY_Down, gdk.KEY_J)
 @gui_callback
 def demote_callback(widget=None):
     '''Demote a variation.'''
@@ -622,7 +624,7 @@ def demote_callback(widget=None):
         update_pgn_message()
     return False
 
-@key_callback(gdk.KEY_Up)
+@key_callback(gdk.KEY_Up, gdk.KEY_K)
 @gui_callback
 def promote_callback(widget=None):
     '''Promote a variation.'''
