@@ -1374,7 +1374,7 @@ def set_to_learn_callback(*args):
     return False
 
 @entry_callback("set_game_to_learn")
-@control_key_callback(gdk.KEY_asciitilde) # TODO: Not working!
+@control_key_callback(gdk.KEY_asciitilde)
 def set_game_to_learn_callback(*args):
     '''Sets up spaced repetition for all special and book nodes in current game.'''
     if G.rep:
@@ -1633,7 +1633,7 @@ def key_press_callback(widget, event):
 
     # Check if control is pressed
     modifiers = gtk.accelerator_get_default_mod_mask()
-    if event.state & modifiers == gdk.ModifierType.CONTROL_MASK:
+    if event.state & modifiers & gdk.ModifierType.CONTROL_MASK:
         controlPressed = True
     else:
         controlPressed = False
