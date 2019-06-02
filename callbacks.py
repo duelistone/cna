@@ -49,6 +49,7 @@ def flip_callback(*args):
 
 @entry_callback("gb", "go_back")
 @key_callback(gdk.KEY_Left, gdk.KEY_h, gdk.KEY_a)
+@gui_callback # Used for namespace issue in helper.py (TODO: Fix this.)
 def go_back_callback(widget=None):
     '''Moves back to parent node.'''
     if G.g.parent:
