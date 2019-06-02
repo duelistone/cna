@@ -19,16 +19,20 @@ def main():
     if G.base_directory != "": 
         os.chdir(G.base_directory)
 
-    # Load images and GUI elements
-    load_svgs("pieces/merida/")
-    builder = gtk.Builder()
-    builder.add_from_file("chessboard.ui")
-    builder.connect_signals(G.handlers)
+    # Check for configuration file
+    # TODO: Allow command line arg for different location
+    process_configuration_file("settings")
 
     # Help?
     if '-h' in sys.argv:
         print(full_help_report())
         exit(0)
+
+    # Load images and GUI elements
+    load_svgs("pieces/merida/")
+    builder = gtk.Builder()
+    builder.add_from_file("chessboard.ui")
+    builder.connect_signals(G.handlers)
 
     # Determine player color
     if '-b' in sys.argv:
@@ -112,8 +116,6 @@ def preparations(builder):
     G.board_display.connect("motion-notify-event", board_mouse_move_callback)
     G.board_display.connect("scroll-event", board_scroll_event_callback)
     G.pgn_textview.connect("key-press-event", pgn_textview_key_press_callback)
-
-    G.key_binding_map[gdk.KEY_i] = G.entry_bar.grab_focus
 
     # PGN textview tags
     G.pgn_buffer.create_tag(tag_name="monospace", family="Monospace")

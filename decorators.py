@@ -1,6 +1,9 @@
 '''Module for decorators used. These are used frequently in callbacks.py.'''
 
 import global_variables as G
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gdk as gdk
 
 # Decorators
 
@@ -22,19 +25,19 @@ def entry_callback(*strings):
         return cb
     return result
 
-def key_callback(*keys):
+def press_callback(mask, *keys):
     def result(cb):
         G.documented_functions.add(cb)
+        if mask not in G.key_binding_maps:
+            G.key_binding_maps[mask] = {}
         for k in keys:
-            G.key_binding_map[k] = cb
+            G.key_binding_maps[mask][k] = cb
         return cb
     return result
 
+def key_callback(*keys):
+    return press_callback(0, *keys)
+
 def control_key_callback(*keys):
-    def result(cb):
-        G.documented_functions.add(cb)
-        for k in keys:
-            G.control_key_binding_map[k] = cb
-        return cb
-    return result
+    return press_callback(gdk.ModifierType.CONTROL_MASK, *keys)
 

@@ -17,12 +17,17 @@ def help_report(callback):
     for s in G.command_callbacks:
         if G.command_callbacks[s] == callback:
             commands.append(s)
-    for k in G.key_binding_map:
-        if G.key_binding_map[k] == callback:
-            keys.append(gdk.keyval_name(k))
-    for k in G.control_key_binding_map:
-        if G.control_key_binding_map[k] == callback:
-            keys.append("Ctrl+%s" % gdk.keyval_name(k))
+    for mask in G.key_binding_maps:
+        for k in G.key_binding_maps[mask]:
+            if G.key_binding_maps[mask][k] == callback:
+                bits = mask
+                mask_parts = []
+                while bits:
+                    bit = bits & -bits
+                    mask_parts.append(G.modifier_names[bit] + '+')
+                    bits &= ~bit
+                mask_part = ''.join(mask_parts)
+                keys.append(mask_part + gdk.keyval_name(k))
 
     # Build report
     entry_piece = "Entry commands: %s" % ", ".join(commands)

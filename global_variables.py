@@ -77,12 +77,23 @@ pgnFile = None
 save_file_name = "savedGame.pgn"
 save_file_names = ["savedGame.pgn"]
 repertoire_file_name = "main.rep"
-escapeKeys = [gdk.KEY_Escape, gdk.KEY_semicolon] #, gdk.KEY_Control_L, gdk.KEY_Control_R]
+
+currentMove = ""
 
 # For key press events
-currentMove = ""
-key_binding_map = {}
-control_key_binding_map = {}
+escapeKeys = [gdk.KEY_Escape, gdk.KEY_semicolon] #, gdk.KEY_Control_L, gdk.KEY_Control_R]
+modifier_mask = gtk.accelerator_get_default_mod_mask() & ~gdk.ModifierType.SHIFT_MASK
+modifier_names = {gdk.ModifierType.CONTROL_MASK: "Ctrl",
+    gdk.ModifierType.MOD1_MASK: "Alt",
+    gdk.ModifierType.MOD2_MASK: "Mod2",
+    gdk.ModifierType.MOD3_MASK: "Mod3",
+    gdk.ModifierType.MOD4_MASK: "Mod4",
+    gdk.ModifierType.MOD5_MASK: "Mod5",
+    gdk.ModifierType.SUPER_MASK: "Super",
+    gdk.ModifierType.META_MASK: "Meta",
+    gdk.ModifierType.HYPER_MASK: "Hyper"}
+modifier_bit_values = {modifier_names[k]:k for k in modifier_names}
+key_binding_maps = {}
 
 # For entry_bar commands
 command_callbacks = {}

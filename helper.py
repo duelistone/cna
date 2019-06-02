@@ -642,3 +642,28 @@ def autosave():
             with open(save_file_name, 'w') as autosave_file:
                 print(pgn_string, file=autosave_file)
 
+def process_configuration_file(filename):
+    try:
+        with open(filename, 'r') as fil:
+            # Form dictionary of relevant callbacks
+            callbacks = {x.__name__:x for x in G.documented_functions}
+            # Parse each configuration line, ignoring errors in any bad ones
+            for line in fil:
+                words = line.strip().split()
+                mask = 0
+                try:
+                    callback = callbacks[words[0]]
+                    for word in words[1:]:
+                        if word in G.modifier_bit_values:
+                            mask |= G.modifier_bit_values[word]
+                        else:
+                            gdk_symbol = gdk.keyval_from_name(word)
+                            if gdk_symbol != gdk.KEY_VoidSymbol:
+                                if mask not in G.key_binding_maps:
+                                    G.key_binding_maps[mask] = {}
+                                    G.key_binding_maps[mask][gdk_symbol] = callback
+                            break
+                except:
+                    pass
+    except:
+        pass

@@ -27,11 +27,12 @@ from help_helpers import *
 
 @entry_callback("flip", "f")
 @key_callback(gdk.KEY_f)
-@gui_callback
 def flip_callback(*args):
     '''Flips or sets board perspective. 
 
-    If first argument exists, it should specify a specific color.'''
+    If first argument exists, it should specify a specific color.
+    This change is more than just cosmetic, as it affects
+    which nodes are special or included in the repertoire.'''
     # Flip board
     G.player = not G.player
     # Set perspective if necessary
@@ -48,7 +49,6 @@ def flip_callback(*args):
 
 @entry_callback("gb", "go_back")
 @key_callback(gdk.KEY_Left, gdk.KEY_h, gdk.KEY_a)
-@gui_callback
 def go_back_callback(widget=None):
     '''Moves back to parent node.'''
     if G.g.parent:
@@ -59,18 +59,16 @@ def go_back_callback(widget=None):
 
 @entry_callback("gf", "go_forward")
 @key_callback(gdk.KEY_Right, gdk.KEY_l, gdk.KEY_d)
-@gui_callback
-def go_forward_callback(widget=None, var_index=0):
+def go_forward_callback(var_index=0, *args):
     '''Moves forward to a child node. 
 
     Default is to go to first child.'''
     # If first argument is string (entry version), then 
     # we try to make it var_index.
-    if type(widget) == str:
-        try:
-            var_index = int(widget)
-        except:
-            pass
+    try:
+        var_index = int(widget)
+    except:
+        pass
     # If var_index is too big, we go down last variation
     var_index = min(len(G.g.variations) - 1, var_index)
     # Moving and updating
@@ -86,27 +84,23 @@ def go_forward_callback(widget=None, var_index=0):
 # In the entry bar or scripts, "go_forward var_index" can be used.
 
 @key_callback(gdk.KEY_L, gdk.KEY_D)
-@gui_callback
-def go_first_variation_callback(widget=None):
+def go_first_variation_callback():
     '''Moves to first variation after PV.'''
-    return go_forward_callback(widget, 1)
+    return go_forward_callback(1)
 
 @control_key_callback(gdk.KEY_l, gdk.KEY_d)
-@gui_callback
-def go_second_variation_callback(widget=None):
+def go_second_variation_callback():
     '''Moves to second variation after PV.'''
-    return go_forward_callback(widget, 2)
+    return go_forward_callback(2)
 
 @control_key_callback(gdk.KEY_L, gdk.KEY_D)
-@gui_callback
-def go_third_variation_callback(widget=None):
+def go_third_variation_callback():
     '''Moves to third variation after PV.'''
-    return go_forward_callback(widget, 3)
+    return go_forward_callback(3)
 
 @key_callback(gdk.KEY_g, gdk.KEY_Home)
 @entry_callback("go_to_beginning", "gtb")
-@gui_callback
-def go_to_beginning_callback(widget=None):
+def go_to_beginning_callback(*args):
     '''Moves to root node.'''
     G.g = G.g.root()
     update_pgn_textview_move()
@@ -115,8 +109,7 @@ def go_to_beginning_callback(widget=None):
 
 @key_callback(gdk.KEY_G, gdk.KEY_End)
 @entry_callback("go_to_end", "gte")
-@gui_callback
-def go_to_end_callback(widget=None):
+def go_to_end_callback(*args):
     '''Moves to end of PV (from current node).'''
     while len(G.g.variations) > 0:
         G.g = G.g.variation(0)
@@ -329,7 +322,7 @@ def load_lichess_game_3_callback(*args):
 def load_lichess_game_4_callback(*args):
     return load_lichess_game_callback(4)
 
-@control_key_callback(gdk.KEY_d)
+@key_callback(gdk.KEY_r)
 @entry_callback("toggle_lichess", "tl")
 def toggle_lichess_callback(*args):
     G.use_lichess = not G.use_lichess
@@ -1126,10 +1119,7 @@ def set_en_passant_callback(*args):
 
 @entry_callback("flip_turn")
 def flip_turn_callback(*args):
-    '''Flips the current board perspective.
-
-    This change is more than just cosmetic, as it affects
-    which nodes are special or included in the repertoire.'''
+    '''Loads new game with current position but opposite (or specified) side to move.'''
     board = G.g.board()
     if len(args) >= 1:
         side = parse_side(args[0])
@@ -1509,6 +1499,11 @@ def run_script_callback(*args):
         entry_bar_callback(line.strip())
     return False
 
+@key_callback(gdk.KEY_i)
+def insert_mode_callback(*args):
+    G.entry_bar.grab_focus()
+    return False
+
 @gui_callback
 def entry_bar_callback(widget):
     if type(widget) == str:
@@ -1626,20 +1621,23 @@ def key_press_callback(widget, event):
     if event.keyval in G.escapeKeys:
         G.board_display.grab_focus()
         return False
-
+    
     # Check if focus is on entry bar
-    if G.entry_bar.is_focus():
+    # Shortcuts with modifiers should be handled regardless, 
+    # except Ctrl-C and Ctrl-V
+    if G.entry_bar.is_focus() and (event.state & G.modifier_mask == 0 or (event.state & G.modifier_mask == gdk.ModifierType.CONTROL_MASK and event.keyval in [gdk.KEY_c, gdk.KEY_v])):
         return False
 
-    # Check if control is pressed
-    modifiers = gtk.accelerator_get_default_mod_mask()
-    if event.state & modifiers & gdk.ModifierType.CONTROL_MASK:
-        controlPressed = True
-    else:
-        controlPressed = False
+    # Select dictionary for current modifiers
+    # TODO: Add support for Shift + F?, which currently is unsupported
+    # as G.modifier_mask does not include Shift (to avoid conflicts
+    # with letter being pressed using shift or not).
+    try:
+        binding_map = G.key_binding_maps[event.state & G.modifier_mask]
+    except:
+        return False
 
-    # Organized callbacks
-    binding_map = G.control_key_binding_map if controlPressed else G.key_binding_map
+    # Run callback
     if event.keyval in binding_map:
         value = binding_map[event.keyval]
         # This is for compatability with delayed entry bar callbacks
