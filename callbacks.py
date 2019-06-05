@@ -902,32 +902,27 @@ def board_scroll_event_callback(widget, event):
         go_forward_callback(var_index=var_index)
     return False
 
-@gui_callback
-def repertoire_name_entry_callback(widget, dialog):
-    '''Set repertoire folder to use. 
-    
-    Default (at the start of the program) is 'main.rep' in the application's directory.'''
-    G.repertoire_file_name = widget.get_text()
+@entry_callback("load_repertoire", "lr")
+def load_repertoire_callback(*args):
+    try:
+        G.repertoire_file_name = args[0]
+    except:
+        display_status("No repertoire file given.")
+        return False
     try:
         rep2 = Repertoire(G.repertoire_file_name)
         if G.rep:
             G.rep.flush()
             G.rep.close()
         G.rep = rep2
-        dialog.destroy()
     except:
         display_status("Error loading repertoire '%s'." % G.repertoire_file_name)
     mark_nodes(G.g.root())
     update_pgn_message()
     return False
 
-@gui_callback
-def load_repertoire_callback(widget=None):
-    '''Graphical way to set repertoire to use.'''
-    prompt(G.window, "Enter repertoire name:", repertoire_name_entry_callback)
-    return False
-
-@gui_callback
+@control_key_callback(gdk.KEY_n)
+@entry_callback("opening_size")
 def opening_size_callback(widget=None):
     '''Displays number of positions that would appear in an opening test using the current position.
     

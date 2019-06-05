@@ -144,26 +144,6 @@
                         <accelerator key="Delete" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
                     </child>
-                    <child>
-                      <object class="GtkMenuItem" id="load_repertoire">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Load repertoire</property>
-                        <property name="use_underline">True</property>
-                        <signal name="activate" handler="load_repertoire_callback" swapped="no"/>
-                        <accelerator key="F12" signal="activate" modifiers="GDK_CONTROL_MASK"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="opening_size">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Show opening size</property>
-                        <property name="use_underline">True</property>
-                        <signal name="activate" handler="opening_size_callback" swapped="no"/>
-                        <accelerator key="n" signal="activate" modifiers="GDK_CONTROL_MASK"/>
-                      </object>
-                    </child>
                   </object>
                 </child>
               </object>
