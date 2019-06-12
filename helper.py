@@ -487,6 +487,11 @@ def update_pgn_message():
         # Update text tags
         update_pgn_textview_tags()
         G.pgn_textview.queue_draw()
+        # Scrolling will occur after drawing since 
+        # the draw event has higher priority.
+        # Would be nice to prevent unscrolling in first place when possible.
+        # Running update_pgn_textview_move before queue_draw did not work.
+        GLib.idle_add(update_pgn_textview_move) 
 
 def update_pgn_textview_move():
     if G.pgn_textview_enabled:

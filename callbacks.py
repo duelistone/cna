@@ -309,19 +309,19 @@ def load_lichess_game_callback(*args):
 
 @control_key_callback(gdk.KEY_1)
 def load_lichess_game_1_callback(*args):
-    return load_lichess_game_callback(1)
+    return load_lichess_game_callback(0)
 
 @control_key_callback(gdk.KEY_2)
 def load_lichess_game_2_callback(*args):
-    return load_lichess_game_callback(2)
+    return load_lichess_game_callback(1)
 
 @control_key_callback(gdk.KEY_3)
 def load_lichess_game_3_callback(*args):
-    return load_lichess_game_callback(3)
+    return load_lichess_game_callback(2)
 
 @control_key_callback(gdk.KEY_4)
 def load_lichess_game_4_callback(*args):
-    return load_lichess_game_callback(4)
+    return load_lichess_game_callback(3)
 
 @key_callback(gdk.KEY_r)
 @entry_callback("toggle_lichess", "tl")
@@ -608,6 +608,7 @@ def next_game_callback(widget=None):
     return False
 
 @key_callback(gdk.KEY_Down, gdk.KEY_J)
+@entry_callback("demote_variation")
 @gui_callback
 def demote_callback(widget=None):
     '''Demote a variation.'''
@@ -619,6 +620,7 @@ def demote_callback(widget=None):
     return False
 
 @key_callback(gdk.KEY_Up, gdk.KEY_K)
+@entry_callback("promote_variation")
 @gui_callback
 def promote_callback(widget=None):
     '''Promote a variation.'''
