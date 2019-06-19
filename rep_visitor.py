@@ -1,7 +1,7 @@
 # rep_visitor.py
 
 import global_variables as G
-import datetime
+import datetime, random
 import mmrw
 import chess, chess.polyglot, time
 from chess_tools import board_moves
@@ -42,16 +42,94 @@ def rep_visitor(board, player=None, only_sr=False, return_entry=False):
                 board.pop()
     return rep_visitor(board, player, only_sr, return_entry)
 
-def get_learning_schedule(board, player, max_lines=100):
-    visitor = rep_visitor(board, player, only_sr=True, return_entry=True)
-    entries = []
-    boards = []
-    for b, m, entry in visitor:
-        entries.append(entry)
-        boards.append(b)
-    sorted_entries_and_boards = sorted(zip(entries, boards), key=lambda x:x[0].learn)
+def quickselect_partition(f, l, left, right, pivotIndex):
+    '''Helper function for quickselect based on Wikipedia's algorithm.'''
+    l[pivotIndex], l[right] = l[right], l[pivotIndex]
+    storeIndex = left
+    for i in range(left, right):
+        if f(l[i]) < f(l[pivotIndex]):
+            l[storeIndex], l[i] = l[i], l[storeIndex]
+            storeIndex += 1
+    l[right], l[storeIndex] = l[storeIndex], l[right]
+    return storeIndex
+
+def quickselect(f, k, l, left=0, right=-1):
+    '''Quickselect function based on Wikipedia's algorithm.
+
+    We actually don't care about the return value, as we just want the algorithm
+    to rearrange the list so that the kth element is in the correct spot,
+    with the elements to the less being less and the elements to the right being more.'''
+    if right == -1:
+        right = len(l) - 1 # Quick hack since default argument can't depend on l
+    if left == right:
+        return
+    pivotIndex = random.randint(left, right)
+    pivotIndex = quickselect_partition(f, l, left, right, pivotIndex)
+    if k == pivotIndex:
+        return
+    elif k < pivotIndex:
+        return quickselect(f, k, l, left, pivotIndex - 1)
+    return quickselect(f, k, l, pivotIndex + 1, right)
+
+def clear_orphaned_learn_values(player):
+    # WARNING: This function assumes that the repertoire is not modified
+    # while the function is running, but it does not implement a lock mechanism.
+    # Use with caution.
+    # Partially for these reasons, this is not currently tied to a callback,
+    # and can only be used manually.
+    start_time = int(time.time() / 60)
+    entries_and_boards = get_learning_schedule(chess.Board(), player, 0, True)
+    hashes_set = set(map(lambda x : (x[0].key, x[0].raw_move), entries_and_boards))
+    subrep = G.rep.ww if player == chess.WHITE else G.rep.bb
     counter = 0
-    for entry, b in sorted_entries_and_boards:
+    for i, entry in enumerate(subrep):
+        if (entry.key, entry.raw_move) not in hashes_set and entry.learn > 0:
+            counter += 1
+            subrep[i] = chess.polyglot.Entry(entry.key, entry.raw_move, entry.weight, 0)
+    print("%d changes made." % counter)
+
+def repeated_nodes(subrep):
+    # Just for debugging
+    hashes_set = set()
+    for entry in subrep:
+        if (entry.key, entry.raw_move) in hashes_set and entry.learn > 0:
+            print(entry)
+            for entry2 in subrep:
+                if (entry2.key, entry2.raw_move) == (entry.key, entry.raw_move):
+                    print(entry2)
+            print("---")
+        hashes_set.add((entry.key, entry.raw_move))
+
+def flat_rep_visitor(player):
+    subrep = G.rep.ww if player == chess.WHITE else G.rep.bb
+    for entry in subrep:
+        if entry.learn > 0:
+            yield entry
+
+def get_learning_schedule(board, player, max_lines=100, must_use_tree_visitor=False):
+    startTime = time.time()
+    entries_and_boards = []
+    # Get spaced repetition entries
+    if max_lines > 0 or must_use_tree_visitor:
+        visitor = rep_visitor(board, player, only_sr=True, return_entry=True)
+        for b, m, entry in visitor:
+            entries_and_boards.append((entry, b))
+    else:
+        visitor = flat_rep_visitor(player)
+        for entry in visitor:
+            entries_and_boards.append((entry, None))
+    if max_lines == 0:
+        return entries_and_boards
+    if max_lines > len(entries_and_boards):
+        max_lines = len(entries_and_boards)
+    # Now we sort the 'max_lines' most urgent entries
+    # This is orders of magnitude faster than the iterating through rep_visitor step
+    key_function = lambda x : x[0].learn
+    quickselect(key_function, max_lines, entries_and_boards)
+    entries_and_boards[:max_lines] = sorted(entries_and_boards[:max_lines], key=key_function)
+    # The rest is just the printing, which should probably be done somewhere else
+    counter = 0
+    for entry, b in entries_and_boards:
         counter += 1
         if counter > max_lines:
             break
@@ -62,4 +140,4 @@ def get_learning_schedule(board, player, max_lines=100):
         print("|", end=" ")
         line = board_moves(b)
         print(line if len(line) > 0 else "(root)")
-    return sorted_entries_and_boards
+    return entries_and_boards

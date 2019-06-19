@@ -10,11 +10,11 @@ class MemoryMappedReaderWriter(chess.polyglot.MemoryMappedReader):
     def __init__(self, filename, length=0, offset=0):
         # Like superclass init, just allowing writing
         self.fd = os.open(filename, os.O_RDWR)
-        
+
         try:
             self.mmap = mmap.mmap(self.fd, length, offset=offset)
         except:
-            self.mmap = None 
+            self.mmap = None
 
     def add_entry(self, entry):
         # Get bytes to write
@@ -28,29 +28,41 @@ class MemoryMappedReaderWriter(chess.polyglot.MemoryMappedReader):
         oldEndIndex = self.mmap.size()
         self.mmap.resize(oldEndIndex + 16)
 
-        # Write to mmap (use flush method on self.mmap to make sure this 
+        # Write to mmap (use flush method on self.mmap to make sure this
         # has gone through to hard drive)
         # To keep the book ordered, we apply an insertion sort
         nextEntry = None
         for i in range(insertionIndex, oldEndIndex + 16, 16):
-            if i == insertionIndex: 
+            if i == insertionIndex:
                 nextEntry = self.mmap[i:i + 16]
                 self.mmap[i:i + 16] = byteArray
-            else: 
+            else:
                 nextTempEntry = self.mmap[i:i + 16]
                 self.mmap[i:i + 16] = nextEntry
                 nextEntry = nextTempEntry
 
+    def remove_entry(self, entry):
+        for i, e in enumerate(self):
+            if e == entry:
+                del self[i]
+                break
+
     def edit_entry(self, index, position, move, new_weight, new_learn):
         # Make entry and corresponding byte array
         entry = makeEntry(position, move, new_weight, new_learn)
-        byteArray = entry.key.to_bytes(8, byteorder="big")
-        byteArray += entry.raw_move.to_bytes(2, byteorder="big")
-        byteArray += entry.weight.to_bytes(2, byteorder="big")
-        byteArray += entry.learn.to_bytes(4, byteorder="big")
+        self[index] = entry
 
-        # Remember that the input index should be entry index, not byte index
-        self.mmap[16 * index:16 * index + 16] = byteArray
+    def __setitem__(self, key, value):
+        byteArray = value.key.to_bytes(8, byteorder="big")
+        byteArray += value.raw_move.to_bytes(2, byteorder="big")
+        byteArray += value.weight.to_bytes(2, byteorder="big")
+        byteArray += value.learn.to_bytes(4, byteorder="big")
+        self.mmap[16 * key : 16 * key + 16] = byteArray
+
+    def __delitem__(self, key):
+        for i in range(key, len(self) - 1):
+            self[i] = self[i + 1]
+        self.mmap.resize(len(self.mmap) - 16)
 
     def add_position_and_move(self, p, m, weight=1, learn=0):
         entry = makeEntry(p, m, weight, learn)
@@ -98,7 +110,7 @@ class Repertoire(object):
             self.ww.add_position_and_move(p, m, weight, learn)
         else:
             self.wb.add_position_and_move(p, m, weight, learn)
-            
+
     def appendBlack(self, p, m, weight=1, learn=0):
         if p.turn == chess.WHITE:
             self.bw.add_position_and_move(p, m, weight, learn)
@@ -149,21 +161,21 @@ class Repertoire(object):
                 break
             elif move == None or moveToBits(move) == mBits:
                 deleteIndices.add(i)
-        
+
         # Make deletions to mmap
         if len(deleteIndices) > 0:
             offset = 0
             for i in range(index, 16 * len(mmrw), 16):
                 while i + offset in deleteIndices:
                     offset += 16
-                if i + offset >= 16 * len(mmrw): 
+                if i + offset >= 16 * len(mmrw):
                     break
                 if offset != 0:
                     mmrw.mmap[i:i + 16] = mmrw.mmap[i + offset:i + offset + 16]
         mmrw.mmap.resize(len(mmrw.mmap) - 16 * len(deleteIndices))
 
         return len(deleteIndices)
-        
+
     def removeWhite(self, p, move=None):
         return self.remove(chess.WHITE, p, move)
 
@@ -228,7 +240,7 @@ class Repertoire(object):
                     pgnFile.close()
                     game = game.variation(0)
                     continue
-                    
+
                 if pgnFile != None:
                     # Parse file contents
                     firstLine = pgnFile.readline().strip()
@@ -236,7 +248,7 @@ class Repertoire(object):
                     pgnFile.close()
                     # Form new first line
                     firstLine += ',' + str(next_game_number)
-                    # Reopen to write 
+                    # Reopen to write
                     # TODO: Use temp file in case something goes wrong between
                     # reading and writing
                     pgnFile = open(position_directory + os.sep + str(key), 'w')
@@ -246,10 +258,10 @@ class Repertoire(object):
 
                 # Go to next node
                 game = game.variation(0)
-            
+
             # Update next_game_number
             next_game_number += 1
-                
+
         # Return number of errors
         return errors
 
@@ -284,7 +296,7 @@ class Repertoire(object):
             # The line below would be more efficient if it used hash and raw move
             # The weight and learn should already be in their raw bits format
             # First we check it hasn't been already set for learning!
-            if entry.learn == 0 or override == True: 
+            if entry.learn == 0 or override == True:
                 mmrw.edit_entry(index, position, entry.move(), weight, learn)
             index += 1
 
