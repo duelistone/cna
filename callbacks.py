@@ -25,6 +25,7 @@ from help_helpers import *
 
 # GUI callbacks
 
+@gui_callback # Since used in helper.py
 @entry_callback("flip", "f")
 @key_callback(gdk.KEY_f)
 def flip_callback(*args):
@@ -36,11 +37,14 @@ def flip_callback(*args):
     # Flip board
     G.player = not G.player
     # Set perspective if necessary
-    if len(args) > 0 and type(args[0]) == str:
-        if args[0].lower() in ['w', 'white']:
-            G.player = chess.WHITE
-        elif args[0].lower() in ['b', 'black']:
-            G.player = chess.BLACK
+    if len(args) > 0:
+        if type(args[0]) == str:
+            if args[0].lower() in ['w', 'white']:
+                G.player = chess.WHITE
+            elif args[0].lower() in ['b', 'black']:
+                G.player = chess.BLACK
+        else:
+            G.player = bool(args[0])
     # Update node properties, PGN text, and board appropriately
     mark_nodes(G.g.root())
     update_pgn_message()
@@ -108,6 +112,7 @@ def go_to_beginning_callback(*args):
     G.board_display.queue_draw()
     return False
 
+@gui_callback # Since this is referenced in helper.py
 @key_callback(gdk.KEY_G, gdk.KEY_End)
 @entry_callback("go_to_end", "gte")
 def go_to_end_callback(*args):

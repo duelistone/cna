@@ -332,6 +332,13 @@ def load_new_game_from_board(board):
     load_new_game_from_game(new_game, board.turn)
     return True
 
+def load_new_game_from_board_history(board):
+    new_game = chess.pgn.Game.from_board(board)
+    load_new_game_from_game(new_game)
+    G.handlers["go_to_end_callback"]()
+    G.handlers["flip_callback"](G.g.board().turn)
+    return True
+
 def load_new_game_from_pgn_file(file_name):
     pgnFile = None
     movePath = []
@@ -559,7 +566,7 @@ def ot_move_completed_callback(answer):
             else:
                 G.handlers["go_back_callback"]() # Uses dictionary to avoid circular reference problem
         return f
-    return lambda x : None
+    return lambda _ : None
 
 def sr_move_completed_callback(answer):
     '''Similar to ot_move_completed_callback, except for spaced repetition practice.'''
@@ -581,7 +588,7 @@ def sr_move_completed_callback(answer):
                 G.incorrect_answers += 1
                 G.handlers["go_back_callback"]()
         return f
-    return lambda x : None
+    return lambda _ : None
 
 def setup_ot_mode(only_sr=False):
     '''Sets up opening trainer mode, and starts it or continues it with the next problem).'''
@@ -604,7 +611,7 @@ def setup_ot_mode(only_sr=False):
         G.move_completed_callback = sr_move_completed_callback(m) # This is a function
     else:
         G.move_completed_callback = ot_move_completed_callback(m) # This is a function
-    load_new_game_from_board(b)
+    load_new_game_from_board_history(b)
     display_status(board_moves(b))
 
     return False
