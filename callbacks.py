@@ -426,7 +426,7 @@ def paste_callback(*args):
     check that the text is as intended.'''
     text = G.clipboard.wait_for_text()
     def result():
-        G.entry_bar.set_text("l \"%s\"" % text)
+        G.entry_bar.set_text("l '%s'" % text)
         G.entry_bar.grab_focus()
         G.entry_bar.set_position(-1)
     if len(args) > 0 and type(args[0]) != str:
