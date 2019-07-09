@@ -5,7 +5,7 @@ from gi.repository import Gtk as gtk
 from gi.repository import Gdk as gdk
 from gi.repository import GLib
 import chess, chess.pgn
-import threading, os, sys
+import threading, os, sys, asyncio
 from matplotlib import colors as mcolors
 
 '''Global variables defined here so they are accessible to all modules. The coder is responsible for not using these before they are defined correctly.'''
@@ -112,9 +112,14 @@ move_completed_callback = lambda x : None
 
 # Engine
 engine_command = "stockfish"
-engine_settings = {"stockfish" : {"MultiPV" : 1, "Hash" : 4096, "Threads" : 2, "Contempt" : 0}, "leela" : {}, "ethereal" : {"Hash" : 4096, "Threads" : 2}}
+engine_settings = {"stockfish" : {"Hash" : 4096, "Threads" : 2, "Contempt" : 0}, "leela" : {}, "ethereal" : {"Hash" : 4096, "Threads" : 2}}
+engine_board = chess.Board()
 stockfish_text_lock = threading.Lock()
-stockfish_enabled = False
+engine_enabled_event = None # Must be defined inside async loop
+latest_engine_stats = [-1, -1, -1, -1, -1]
+latest_engine_lines = []
+engine_best_move = None
+multipv = 1
 stockfish = None 
 playLevel = 20 # Int represents depth, float represents time
 

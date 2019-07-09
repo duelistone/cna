@@ -120,7 +120,7 @@ class Repertoire(object):
     def findMove(self, perspective, p):
         mmrw = self.get_mmrw(perspective, p.turn)
         for entry in mmrw.find_all(p):
-            return entry.move()
+            return entry.move
 
     def findMoveWhite(self, p):
         return self.findMove(chess.WHITE, p)
@@ -130,7 +130,7 @@ class Repertoire(object):
 
     def findMoves(self, perspective, p):
         mmrw = self.get_mmrw(perspective, p.turn)
-        return map(lambda e : e.move(), mmrw.find_all(p))
+        return map(lambda e : e.move, mmrw.find_all(p))
 
     def findMovesWhite(self, p):
         return self.findMoves(chess.WHITE, p)
@@ -297,7 +297,7 @@ class Repertoire(object):
             # The weight and learn should already be in their raw bits format
             # First we check it hasn't been already set for learning!
             if entry.learn == 0 or override == True:
-                mmrw.edit_entry(index, position, entry.move(), weight, learn)
+                mmrw.edit_entry(index, position, entry.move, weight, learn)
             index += 1
 
     # def is_position_due(self, position, perspective):
@@ -345,7 +345,7 @@ class Repertoire(object):
             entry = mmrw[index]
             if entry.key != position_hash:
                 break
-            if entry.move() != move:
+            if entry.move != move:
                 index += 1
                 continue
             if counter > 0:
@@ -362,6 +362,6 @@ class Repertoire(object):
             e, c, n = read_values((entry.weight << 32) | entry.learn)
             e, c, n = update_spaced_repetition_values(e, c, n, q)
             weight, learn = export_values(e, c, n)
-            mmrw.edit_entry(index, position, entry.move(), weight, learn)
+            mmrw.edit_entry(index, position, entry.move, weight, learn)
             index += 1
             counter += 1

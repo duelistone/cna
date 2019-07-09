@@ -26,7 +26,7 @@ def rep_visitor(board, player=None, only_sr=False, return_entry=False):
             subrep = G.rep.bb
         for entry in subrep.find_all(board):
             child_board = board.copy()
-            child_board.push(entry.move())
+            child_board.push(entry.move)
             child_hash = chess.polyglot.zobrist_hash(child_board)
             if child_hash not in visited_hashes:
                 if (board.turn == player or player == None) and \
@@ -34,10 +34,10 @@ def rep_visitor(board, player=None, only_sr=False, return_entry=False):
                     (entry.learn > 0 and \
                     (return_entry == True or entry.learn <= int(time.time() / 60)))):
                     if not return_entry:
-                        yield board.copy(), entry.move()
+                        yield board.copy(), entry.move
                     else:
-                        yield board.copy(), entry.move(), entry
-                board.push(entry.move())
+                        yield board.copy(), entry.move, entry
+                board.push(entry.move)
                 yield from rep_visitor(board.copy(), player, only_sr, return_entry)
                 board.pop()
     return rep_visitor(board, player, only_sr, return_entry)

@@ -79,6 +79,10 @@ def main():
     autosave_thread = threading.Thread(target=autosave, daemon=True)
     autosave_thread.start()
 
+    # asyncio thread
+    asyncio_thread = threading.Thread(target=lambda : asyncio.run(engine_init()), daemon=True)
+    asyncio_thread.start()
+
     # Start main loop
     G.glib_mainloop.run()
 

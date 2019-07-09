@@ -4,6 +4,7 @@ in the handlers dictionary in the global_variables module, which is done
 automatically if you use the @gui_callback decorator defined below.'''
 
 import gi
+import asyncio
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
 from gi.repository import Gdk as gdk
@@ -345,7 +346,7 @@ def display_variations_callback(widget=None):
     '''Displays a list of the variations in the current game for the current position.'''
     words = ["Variations:"]
     for child in G.g.variations:
-        words.append(G.g.board().san(child.move))
+        words.append(G.g.readonly_board.san(child.move))
     display_status(" ".join(words))
     return False
 
@@ -442,7 +443,7 @@ def copy_fen_callback(widget=None):
 
     Note that this disables the standard Ctrl-C copy text shortcut sometimes.'''
     if G.board_display.is_focus():
-        G.clipboard.set_text(G.g.board().fen(), -1)
+        G.clipboard.set_text(G.g.readonly_board.fen(), -1)
     return False
 
 @entry_callback("clear_arrows")
@@ -703,9 +704,9 @@ def opening_test_callback(widget=None):
         # create_opening_game("currentTest.pgn", G.rep, G.player, G.g)
         # subprocess.Popen(['ot', 'currentTest.pgn'])
         if G.player == chess.WHITE:
-            subprocess.Popen(['python3', 'gui.py', '--ot', G.g.board().fen()])
+            subprocess.Popen(['python3', 'gui.py', '--ot', G.g.readonly_board.fen()])
         else:
-            subprocess.Popen(['python3', 'gui.py', '-b', '--ot', G.g.board().fen()])
+            subprocess.Popen(['python3', 'gui.py', '-b', '--ot', G.g.readonly_board.fen()])
     else:
         display_status("No repertoire file loaded.")
     return False
@@ -746,7 +747,7 @@ def board_draw_callback(widget, cr):
                 highlight_square(cr, G.g.arrows[(square, square)], square_size)
 
             # Draw the piece, if there is one
-            piece = G.g.board().piece_at(square)
+            piece = G.g.readonly_board.piece_at(square)
             if piece != None and (G.drag_source == G.NULL_SQUARE or chess.square(x, y) != G.drag_source):
                 draw_piece(cr, piece, square_size)
 
@@ -770,7 +771,7 @@ def board_draw_callback(widget, cr):
     centerCoord = margin + radius
     cr.save()
     cr.translate(centerCoord, 8 * square_size - centerCoord) # To get bottom left
-    if G.g.board().turn == chess.WHITE:
+    if G.g.readonly_board.turn == chess.WHITE:
         cr.set_source_rgb(1, 1, 1)
     else:
         cr.set_source_rgb(0, 0, 0)
@@ -796,7 +797,7 @@ def board_draw_callback(widget, cr):
         cr.save()
         cr.identity_matrix()
         cr.translate(padding + G.mouse_x - square_size // 2, padding + G.mouse_y - square_size // 2)
-        draw_piece(cr, G.g.board().piece_at(G.drag_source), square_size)
+        draw_piece(cr, G.g.readonly_board.piece_at(G.drag_source), square_size)
         cr.restore()
 
     return False
@@ -809,7 +810,7 @@ def board_mouse_down_callback(widget, event):
 
     clicked_square = board_coords_to_square(event.x, event.y)
     if clicked_square != None:
-        if event.button == 1 and G.g.board().piece_at(clicked_square) != None:
+        if event.button == 1 and G.g.readonly_board.piece_at(clicked_square) != None:
             G.drag_source = clicked_square
         elif event.button == 3:
             G.arrow_source = clicked_square
@@ -937,7 +938,7 @@ def opening_size_callback(widget=None):
     if G.rep:
         opening_game = create_opening_game(None, G.rep, G.player, G.g)
         count = countNodes(opening_game, color=G.player)
-        count -= G.g.board().fullmove_number - 1
+        count -= G.g.readonly_board.fullmove_number - 1
         display_status("Opening size: %d" % count)
     else:
         display_status("No repertoire file loaded.")
@@ -1145,75 +1146,71 @@ def toggle_stockfish_callback(widget=None):
     '''Toggles the main engine.'''
     if G.stockfish == None:
         # Start up stockfish
-        G.stockfish = engine_init()
-        G.stockfish.info_handlers[0].curr_pos = G.g.board()
-        G.stockfish_enabled = True
+        G.engine_board = G.g.board()
+        G.engine_enabled_event.set()
         G.stockfish_textview.show_all()
-        engine_go(G.stockfish)
         return False
 
-    if G.stockfish_enabled:
+    if G.engine_enabled_event.is_set():
         # Turn stockfish off
-        G.stockfish.process.process.send_signal(signal.SIGSTOP)
         G.stockfish_textview.hide()
-        G.stockfish_enabled = False
+        G.stockfish[0].send_signal(signal.SIGSTOP)
+        G.engine_enabled_event.clear()
     else:
         # Turn stockfish on
-        G.stockfish.process.process.send_signal(signal.SIGCONT)
-        new_board = G.g.board()
-        if new_board != G.stockfish.info_handlers[0].curr_pos:
-            G.stockfish.stop()
-            G.stockfish.info_handlers[0].curr_pos = G.g.board()
-            engine_go(G.stockfish)
+        G.stockfish[0].send_signal(signal.SIGCONT)
+        G.engine_board = G.g.board()
+        G.engine_enabled_event.set()
         G.stockfish_textview.show_all()
-        G.stockfish_enabled = True
 
     return False
 
-@gui_callback
 @key_callback(gdk.KEY_1)
-def set_multipv_1_callback(widget=None):
+def set_multipv_1_callback(*args):
     '''Sets engine multiPV to 1.'''
-    change_multipv(1)
+    G.multipv = 1
     return False
 
-@gui_callback
 @key_callback(gdk.KEY_2)
-def set_multipv_2_callback(widget=None):
+def set_multipv_2_callback(*args):
     '''Sets engine multiPV to 2.'''
-    change_multipv(2)
+    G.multipv = 2
     return False
 
-@gui_callback
 @key_callback(gdk.KEY_3)
-def set_multipv_3_callback(widget=None):
+def set_multipv_3_callback(*args):
     '''Sets engine multiPV to 3.'''
-    change_multipv(3)
+    G.multipv = 3
     return False
 
-@gui_callback
 @key_callback(gdk.KEY_4)
-def set_multipv_4_callback(widget=None):
+def set_multipv_4_callback(*args):
     '''Sets engine multiPV to 4.'''
-    change_multipv(4)
+    G.multipv = 4
     return False
 
-@gui_callback
 @key_callback(gdk.KEY_5)
-def set_multipv_5_callback(widget=None):
+def set_multipv_5_callback(*args):
     '''Sets engine multiPV to 5.'''
-    change_multipv(5)
+    G.multipv = 5
     return False
+
+@entry_callback("set_multipv")
+def set_multipv_callback(*args):
+    try:
+        G.multipv = int(args[0])
+    except:
+        return False
 
 @key_callback(gdk.KEY_space)
 @entry_callback("play_move")
 @gui_callback
 def play_move_callback(widget=None):
     # Casework on whether engine is currently enabled
-    if G.stockfish_enabled:
-        if G.stockfish.info_handlers[0].curr_pos == G.g.board():
+    if G.engine_enabled_event.is_set():
+        if G.engine_board == G.g.board():
             try:
-                move = find_current_best_move(G.stockfish)
+                move = G.engine_best_move
                 make_move(move)
                 # Start analyzing new position
                 toggle_stockfish_callback()
@@ -1224,33 +1221,36 @@ def play_move_callback(widget=None):
         else:
             display_status("Cannot play engine move: engine currently analyzing a different position.")
     else:
-        # Make sure engine has been initialized
-        if G.stockfish == None:
-            # Start up stockfish
-            G.stockfish = engine_init()
+        # TODO: This won't work right now
+        pass
+        
+        ## Make sure engine has been initialized
+        #if G.stockfish == None:
+        #    # Start up stockfish
+        #    G.stockfish = engine_init()
 
-        print(G.playLevel)
-        G.stockfish.process.process.send_signal(signal.SIGCONT)
-        G.stockfish.stop()
-        G.stockfish.info_handlers[0].curr_pos = G.g.board()
-        G.stockfish.isready()
-        G.stockfish.position(G.stockfish.info_handlers[0].curr_pos)
-        G.stockfish.isready()
+        #print(G.playLevel)
+        #G.stockfish.process.process.send_signal(signal.SIGCONT)
+        #G.stockfish.stop()
+        #G.stockfish.info_handlers[0].curr_pos = G.g.board()
+        #G.stockfish.isready()
+        #G.stockfish.position(G.stockfish.info_handlers[0].curr_pos)
+        #G.stockfish.isready()
 
-        try:
-            # Use G.playLevel type to determine depth or time
-            # Depth - int, time - float
-            if type(G.playLevel) == int:
-                # Use depth
-                analysis_result = G.stockfish.go(depth=G.playLevel)
-            else:
-                # Use time
-                analysis_result = G.stockfish.go(wtime=G.playLevel * 1000)
-            make_move(analysis_result[0])
-            G.board_display.queue_draw()
-        except Exception as e:
-            display_status("Unexpected error finding or making engine move.")
-            print(e)
+        #try:
+        #    # Use G.playLevel type to determine depth or time
+        #    # Depth - int, time - float
+        #    if type(G.playLevel) == int:
+        #        # Use depth
+        #        analysis_result = G.stockfish.go(depth=G.playLevel)
+        #    else:
+        #        # Use time
+        #        analysis_result = G.stockfish.go(wtime=G.playLevel * 1000)
+        #    make_move(analysis_result[0])
+        #    G.board_display.queue_draw()
+        #except Exception as e:
+        #    display_status("Unexpected error finding or making engine move.")
+        #    print(e)
     return False
 
 @key_callback(gdk.KEY_t)
@@ -1301,7 +1301,7 @@ def puzzle_file_name_callback(*args):
 @entry_callback("save_puzzle", "sp")
 def save_puzzle_callback(*args):
     fil = open(G.puzzle_file, 'a')
-    print(G.g.board().fen(), file=fil)
+    print(G.g.readonly_board.fen(), file=fil)
     if len(args) > 0:
         # Add comment about position
         print(args[0], file=fil)
@@ -1470,7 +1470,7 @@ def enter_opening_test_mode_callback(*args):
     Unlike opening_test_callback, this does not start a new subprocess.
     To get back to analysis mode, see enter_analysis_mode_callback.'''
     if G.ot_board == None:
-        G.ot_board = chess.Board(G.g.board().fen()) # To strip board history
+        G.ot_board = chess.Board(G.g.readonly_board.fen()) # To strip board history
         G.ot_gen = None
     setup_ot_mode()
     return False
@@ -1523,7 +1523,7 @@ def entry_bar_callback(widget):
         # Try to parse moves
         move = None
         try:
-            move = G.g.board().parse_san(args[0])
+            move = G.g.readonly_board.parse_san(args[0])
         except ValueError:
             pass
 
@@ -1557,7 +1557,7 @@ def entry_bar_key_press_callback(widget, event):
             partial = words[0]
             if partial != "":
                 matches = []
-                moves = map(lambda m: G.g.board().san(m), G.g.board().legal_moves)
+                moves = map(lambda m: G.g.readonly_board.san(m), G.g.readonly_board.legal_moves)
                 for command in G.command_callbacks:
                     if partial == command[:len(partial)]:
                         matches.append(command)

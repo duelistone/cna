@@ -30,7 +30,7 @@ def make_move(m):
         update_pgn_textview_move()
         G.move_completed_callback(m)
         return True
-    elif m in G.g.board().legal_moves:
+    elif m in G.g.readonly_board.legal_moves:
         if G.new_move_mode == G.ADD_MAIN_VARIATION:
             G.g = G.g.add_main_variation(m)
         elif G.new_move_mode == G.ADD_LAST_VARIATION:
@@ -55,7 +55,7 @@ def mark_if_special(game):
     game.special = False
     if game.is_main_variation() and (game.parent == None or game.parent.special):
         game.special = True # Root node
-    elif game.board().turn == G.player:
+    elif game.readonly_board.turn == G.player:
         if game.parent.special:
             game.special = True
 
@@ -68,7 +68,7 @@ def mark_if_book(game):
             game.book = 1.5 # 1 for repertoire position, 0.5 for set to learn
 
         else:
-            position = game.parent.board()
+            position = game.parent.readonly_board
             parent_book = int(game.parent.book)
             
             # Normal book
@@ -87,7 +87,7 @@ def mark_if_book(game):
                 entry = mmrw[index]
                 if entry.key != zh:
                     break
-                if entry.move() != game.move:
+                if entry.move != game.move:
                     index += 1
                     continue
                 if entry.learn != 0:
@@ -122,6 +122,9 @@ def mark_nodes(game):
     # Make sure node has an arrows attribute
     if not hasattr(game, 'arrows'):
         game.arrows = {}
+
+    if not hasattr(game, 'readonly_board'):
+        game.readonly_board = game.board()
 
     # Change special NAG's to arrows
     # Reminder: Root nodes don't have nags, so no arrows of the root node will be saved
@@ -336,7 +339,7 @@ def load_new_game_from_board_history(board):
     new_game = chess.pgn.Game.from_board(board)
     load_new_game_from_game(new_game)
     G.handlers["go_to_end_callback"]()
-    G.handlers["flip_callback"](G.g.board().turn)
+    G.handlers["flip_callback"](G.g.readonly_board.turn)
     return True
 
 def load_new_game_from_pgn_file(file_name):
@@ -382,7 +385,7 @@ def load_new_game_from_pgn_file(file_name):
     G.pgnFile = pgnFile
     G.currentGame += 1
     G.g = new_game
-    G.player = G.g.board().turn
+    G.player = G.g.readonly_board.turn
     update_pgn_message()
     update_game_info()
     return True
@@ -532,7 +535,7 @@ def make_report():
     return False
 
 def move_completion(s):
-    sans = map(G.g.board().san, G.g.board().legal_moves)
+    sans = map(G.g.readonly_board.san, G.g.readonly_board.legal_moves)
     candidates = list(filter(lambda x: x[0:len(s)] == s, sans))
     if len(candidates) == 0:
         return s, ""
@@ -575,14 +578,14 @@ def sr_move_completed_callback(answer):
             if guess == answer:
                 # Correct answer
                 # Update learning data
-                G.rep.update_learning_data(G.player, G.g.parent.board(), answer, G.incorrect_answers, time.time() - G.starting_time)
+                G.rep.update_learning_data(G.player, G.g.parent.readonly_board, answer, G.incorrect_answers, time.time() - G.starting_time)
 
                 # Prepare next
                 setup_ot_mode(only_sr=True)
-            elif guess in G.rep.findMoves(G.player, G.g.parent.board()):
+            elif guess in G.rep.findMoves(G.player, G.g.parent.readonly_board):
                 # Valid alternate, give another try
                 G.handlers["go_back_callback"]()
-                display_status("%s is a valid alternate." % G.g.board().san(guess))
+                display_status("%s is a valid alternate." % G.g.readonly_board.san(guess))
                 G.starting_time = time.time()
             else:
                 G.incorrect_answers += 1
@@ -619,8 +622,8 @@ def setup_ot_mode(only_sr=False):
 def cleanup(showMessage=False):
     '''Cleans up any child processes to quit cleanly.'''
     if G.stockfish != None:
-        G.stockfish.process.process.send_signal(signal.SIGCONT) # In case stopped
-        G.stockfish.terminate()
+        G.stockfish[0].send_signal(signal.SIGCONT) # In case stopped
+        G.stockfish[0].terminate()
     if showMessage:
         print('Exiting gracefully.')
 
