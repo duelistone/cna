@@ -85,7 +85,7 @@ def clear_orphaned_learn_values(player):
     for i, entry in enumerate(subrep):
         if (entry.key, entry.raw_move) not in hashes_set and entry.learn > 0:
             counter += 1
-            subrep[i] = chess.polyglot.Entry(entry.key, entry.raw_move, entry.weight, 0)
+            subrep[i] = chess.polyglot.Entry(entry.key, entry.raw_move, entry.weight, 0, 0)
     print("%d changes made." % counter)
 
 def repeated_nodes(subrep):

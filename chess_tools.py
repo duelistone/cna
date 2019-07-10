@@ -69,7 +69,7 @@ def bytesToKeyAndBits(byteArray):
     return (key, bits)
 
 def makeEntry(board, move, weight=1, learn=0):
-    return chess.polyglot.Entry(zobrist_hash(board), moveToBits(move), weight, learn)
+    return chess.polyglot.Entry(zobrist_hash(board), moveToBits(move), weight, learn, move)
 
 def lmFilter(board, move):
     if move in board.legal_moves:
