@@ -52,6 +52,8 @@ def parse_engine_data(info):
     for i, e in enumerate(stats):
         if e != None:
             G.latest_engine_stats[i] = e
+        if i == 2:
+            G.latest_engine_stats[i] /= 10.0
     lines.append("Time: %.1f TB: %d Hash: %.1f%% NPS: %.0f Nodes: %d" % tuple(G.latest_engine_stats))
 
     if len(G.latest_engine_lines) != G.multipv:

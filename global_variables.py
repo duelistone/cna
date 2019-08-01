@@ -111,8 +111,8 @@ starting_time = 0
 move_completed_callback = lambda x : None
 
 # Engine
-engine_command = "stockfish"
-engine_settings = {"stockfish" : {"Hash" : 4096, "Threads" : 2, "Contempt" : 0}, "leela" : {}, "ethereal" : {"Hash" : 4096, "Threads" : 2}}
+engine_command = "leela"
+engine_settings = {"stockfish" : {"Hash" : 8192, "Threads" : 8, "Contempt" : 0}, "leela" : {}, "ethereal" : {"Hash" : 4096, "Threads" : 2}}
 engine_board = chess.Board()
 stockfish_text_lock = threading.Lock()
 engine_enabled_event = None # Must be defined inside async loop
