@@ -51,7 +51,7 @@ async def weak_engine_init():
         play_result = await engine[1].play(board, limit=chess.engine.Limit(time=1), options={"Skill Level" : score_to_level(score, G.WEAK_STOCKFISH_DEFAULT_LEVEL)}, info=chess.engine.INFO_SCORE)
         GLib.idle_add(make_move, play_result.move)
         GLib.idle_add(G.board_display.queue_draw)
-        score = play_result.info['score'].pov(not board.turn).score(mate_score=10**6)
+        score = play_result.info['score'].pov(board.turn).score(mate_score=10**6)
         G.weak_engine_enabled_event.clear()
         await G.weak_engine_enabled_event.wait()
         board = G.g.board()
