@@ -13,7 +13,6 @@ import signal, math, subprocess, sys, os, os.path, shutil, chess, chess.pgn, shl
 from functools import reduce
 from opening_pgn import *
 from mmrw import *
-from engine import *
 from drawing import *
 from dfs import *
 from lichess_helpers import *

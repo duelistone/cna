@@ -1257,23 +1257,7 @@ def play_move_callback(widget=None):
 @entry_callback("play_training_move")
 def play_training_move_callback(*args):
     # Play engine in training mode
-    if G.weak_stockfish == None:
-        G.weak_stockfish = weak_engine_init(G.WEAK_STOCKFISH_DEFAULT_LEVEL)
-    while 1:
-        G.weak_stockfish.position(G.g.board())
-        best, _ = G.weak_stockfish.go(movetime=1000)
-        score = G.weak_stockfish.info_handlers[0].e
-        if score.cp != None:
-            correctLevel = score_to_level(score.cp, G.WEAK_STOCKFISH_DEFAULT_LEVEL)
-            if correctLevel == G.weak_stockfish.level:
-                break
-            change_level(G.weak_stockfish, correctLevel)
-        else:
-            # If a mate was found, we don't care about the level right now
-            break
-    print("Current level: %s" % G.weak_stockfish.level)
-    make_move(best)
-    G.board_display.queue_draw()
+    G.weak_engine_enabled_event.set()
     return False
 
 @gui_callback

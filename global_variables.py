@@ -124,8 +124,7 @@ stockfish = None
 playLevel = 20 # Int represents depth, float represents time
 
 # Weak engine
-weak_stockfish = None
-weak_stockfish_enabled = False
+weak_engine_enabled_event = None
 WEAK_STOCKFISH_DEFAULT_LEVEL = 4
 
 # NAG's

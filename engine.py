@@ -7,23 +7,30 @@ from gi.repository import Gtk as gtk
 from gi.repository import Gdk as gdk
 from gi.repository import GLib
 import chess, chess.engine
+from chess.engine import Cp, Mate, MateGiven
 import global_variables as G
 import signal, math
+from helper import make_move
 
 '''Module for functions for working with engine.'''
 
+# async coroutines
+# The init functions are started in a separate thread in main
+
 asyncio.set_event_loop_policy(chess.engine.EventLoopPolicy())
 
-# Extract best current move
-# The engine should be running on the correct position
-def find_current_best_move(engine):
-    return G.engine_best_move
+# Prepare engine
+async def engine_init():
+    G.engine_enabled_event = asyncio.Event()
+    await G.engine_enabled_event.wait()
+    G.stockfish = await chess.engine.popen_uci(G.engine_command)
+    await G.stockfish[1].configure(G.engine_settings[G.engine_command])
+    await engine_go(G.stockfish)
 
 # Standard infinite go
 async def engine_go(engine):
     while 1:
         with await engine[1].analysis(G.engine_board, multipv=G.multipv) as analysis:
-            print("New analysis!")
             old_board = G.engine_board
             old_multipv = G.multipv
             async for info in analysis:
@@ -32,6 +39,29 @@ async def engine_go(engine):
                     break
                 parse_engine_data(info)
                 save_best_move(info)
+
+# Prepare weak engine
+async def weak_engine_init():
+    G.weak_engine_enabled_event = asyncio.Event()
+    await G.weak_engine_enabled_event.wait()
+    engine = await chess.engine.popen_uci("stockfish") # TODO: Flexible engine path
+    score = 0
+    board = G.g.board()
+    while 1:
+        play_result = await engine[1].play(board, limit=chess.engine.Limit(time=1), options={"Skill Level" : score_to_level(score, G.WEAK_STOCKFISH_DEFAULT_LEVEL)}, info=chess.engine.INFO_SCORE)
+        GLib.idle_add(make_move, play_result.move)
+        GLib.idle_add(G.board_display.queue_draw)
+        score = play_result.info['score'].pov(not board.turn).score(mate_score=10**6)
+        G.weak_engine_enabled_event.clear()
+        await G.weak_engine_enabled_event.wait()
+        board = G.g.board()
+
+# Helpers
+
+# Extract best current move
+# The engine should be running on the correct position
+def find_current_best_move(engine):
+    return G.engine_best_move
 
 def save_best_move(info):
     try:
@@ -89,17 +119,9 @@ def parse_engine_data(info):
 
     display_stockfish_string("\n".join(lines))
 
-# Prepare engine
-async def engine_init():
-    G.engine_enabled_event = asyncio.Event()
-    await G.engine_enabled_event.wait()
-    G.stockfish = await chess.engine.popen_uci(G.engine_command)
-    await G.stockfish[1].configure(G.engine_settings[G.engine_command])
-    await engine_go(G.stockfish)
-
 # Display analysis lines
 def display_stockfish_string(s):
-    GLib.idle_add(lambda x : G.stockfish_buffer.set_text(x), s)
+    GLib.idle_add(G.stockfish_buffer.set_text, s)
 
 def score_to_level(score, defaultLevel):
     levelSize = 50
@@ -125,21 +147,3 @@ def change_engine_setting(name, value):
         engine_go(G.stockfish)
         if not G.stockfish_enabled:
             G.stockfish.process.process.send_signal(signal.SIGSTOP)
-
-def weak_engine_init(level):
-    weak_engine = uci.popen_engine("stockfish")
-    weak_engine.uci()
-    weak_engine.setoption({"Skill Level": level})
-    weak_engine.level = level
-    info_handler = EvalInfoHandler()
-    weak_engine.info_handlers.append(info_handler)
-    weak_engine.isready()
-    return weak_engine
-
-def change_level(engine, new_level):
-    # Meant for usage with a weak_engine
-    engine.setoption({"Skill Level": new_level})
-    engine.isready()
-    engine.level = new_level
-
-

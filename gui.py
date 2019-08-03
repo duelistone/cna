@@ -13,6 +13,7 @@ from drawing import *
 from callbacks import *
 from lichess_helpers import *
 from help_helpers import *
+from engine import *
 
 def main():
     # Change directory to application directory
@@ -79,9 +80,9 @@ def main():
     autosave_thread = threading.Thread(target=autosave, daemon=True)
     autosave_thread.start()
 
-    # asyncio thread
-    asyncio_thread = threading.Thread(target=lambda : asyncio.run(engine_init()), daemon=True)
-    asyncio_thread.start()
+    # asyncio threads
+    threading.Thread(target=lambda : asyncio.run(engine_init()), daemon=True).start()
+    threading.Thread(target=lambda : asyncio.run(weak_engine_init()), daemon=True).start()
 
     # Start main loop
     G.glib_mainloop.run()
