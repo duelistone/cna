@@ -56,7 +56,6 @@ def game_gui_string_list(game, offset=0, firstMoveOfVariation=False, firstMoveAf
             strings.append(piece)
             offset += len(piece)
         elif firstMoveOfVariation:
-            indentationLevel += 1
             piece = '\n%s( ' % (indentationLevel * indentation_width * ' ')
             strings.append(piece)
             offset += len(piece)
@@ -136,7 +135,7 @@ def game_gui_string(game):
         if num_children > 1:
             for i in range(num_children - 1, 1, -1):
                 stack.append((game.variation(i), True, True, indentationLevel + 1))
-            stack.append((game.variation(1), True, False, indentationLevel))
+            stack.append((game.variation(1), True, False, indentationLevel + 1))
 
     # Testing
     if len(times) > 0:
