@@ -1141,8 +1141,9 @@ def flip_turn_callback(*args):
     load_new_game_from_board(board)
 
 @key_callback(gdk.KEY_e)
+@entry_callback("te", "toggle_engine")
 @gui_callback
-def toggle_stockfish_callback(widget=None):
+def toggle_stockfish_callback(*args):
     '''Toggles the main engine.'''
     if G.stockfish == None:
         # Start up stockfish

@@ -30,7 +30,7 @@ async def engine_init():
 # Standard infinite go
 async def engine_go(engine):
     while 1:
-        with await engine[1].analysis(G.engine_board, multipv=G.multipv) as analysis:
+        with await engine[1].analysis(G.engine_board, multipv=G.multipv, info=chess.engine.INFO_BASIC | chess.engine.INFO_SCORE | chess.engine.INFO_PV) as analysis:
             old_board = G.engine_board
             old_multipv = G.multipv
             async for info in analysis:
