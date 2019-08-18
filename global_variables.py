@@ -122,6 +122,8 @@ engine_best_move = None
 multipv = 1
 stockfish = None 
 playLevel = 20 # Int represents depth, float represents time
+show_engine_pv = True
+current_engine_task = None
 
 # Weak engine
 weak_engine_enabled_event = None

@@ -418,7 +418,6 @@ def load_fen_entry_callback(widget, dialog=None):
     return False
 
 @entry_callback("paste_position")
-@key_callback(gdk.KEY_p)
 @control_key_callback(gdk.KEY_v)
 def paste_callback(*args):
     '''Sets the entry bar text to loading the current clipboard text.
@@ -1157,13 +1156,41 @@ def toggle_stockfish_callback(*args):
         G.stockfish_textview.hide()
         G.stockfish[0].send_signal(signal.SIGSTOP)
         G.engine_enabled_event.clear()
+        if G.current_engine_task:
+            G.engine_async_loop.call_soon_threadsafe(G.current_engine_task.cancel)
     else:
         # Turn stockfish on
         G.stockfish[0].send_signal(signal.SIGCONT)
-        G.engine_board = G.g.board()
+        if G.engine_board != G.g.board():
+            G.engine_enabled_event.clear() # To make sure G.engine_board is updated in time
+            if G.current_engine_task:
+                G.engine_async_loop.call_soon_threadsafe(G.current_engine_task.cancel)
+            G.engine_board = G.g.board()
         G.engine_enabled_event.set()
         G.stockfish_textview.show_all()
 
+    return False
+
+@key_callback(gdk.KEY_E, gdk.KEY_p)
+@entry_callback("se", "start_engine")
+def start_engine_callback(*args):
+    '''Starts engine analysis for current position.'''
+    if G.stockfish == None or not G.engine_enabled_event.is_set():
+        # Engine is off, use toggle_stockfish_callback
+        return toggle_stockfish_callback()
+    # Engine is already on
+    if G.engine_board != G.g.board():
+        G.engine_enabled_event.clear() # To make sure G.engine_board is updated in time
+        if G.current_engine_task:
+            G.engine_async_loop.call_soon_threadsafe(G.current_engine_task.cancel)
+        G.engine_board = G.g.board()
+        G.engine_enabled_event.set()
+    return False
+
+@entry_callback("toggle_pv", "tp")
+def toggle_pv(*args):
+    '''Toggles whether engine analysis shows pv line or just score.'''
+    G.show_engine_pv = not G.show_engine_pv
     return False
 
 @key_callback(gdk.KEY_1)
@@ -1214,8 +1241,7 @@ def play_move_callback(widget=None):
                 move = G.engine_best_move
                 make_move(move)
                 # Start analyzing new position
-                toggle_stockfish_callback()
-                toggle_stockfish_callback()
+                start_engine_callback()
             except:
                 pass
                 display_status("Error finding move.")

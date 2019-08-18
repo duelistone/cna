@@ -21,24 +21,29 @@ asyncio.set_event_loop_policy(chess.engine.EventLoopPolicy())
 
 # Prepare engine
 async def engine_init():
+    G.engine_async_loop = asyncio.get_running_loop()
     G.engine_enabled_event = asyncio.Event()
     await G.engine_enabled_event.wait()
     G.stockfish = await chess.engine.popen_uci(G.engine_command)
     await G.stockfish[1].configure(G.engine_settings[G.engine_command])
     await engine_go(G.stockfish)
 
+# Read and parse engine lines
+async def handle_engine_info(analysis):
+    async for info in analysis:
+        parse_engine_data(info)
+        save_best_move(info)
+    
 # Standard infinite go
 async def engine_go(engine):
     while 1:
+        await G.engine_enabled_event.wait()
         with await engine[1].analysis(G.engine_board, multipv=G.multipv, info=chess.engine.INFO_BASIC | chess.engine.INFO_SCORE | chess.engine.INFO_PV) as analysis:
-            old_board = G.engine_board
-            old_multipv = G.multipv
-            async for info in analysis:
-                await G.engine_enabled_event.wait()
-                if G.engine_board != old_board or G.multipv != old_multipv:
-                    break
-                parse_engine_data(info)
-                save_best_move(info)
+            G.current_engine_task = asyncio.create_task(handle_engine_info(analysis))
+            try:
+                await G.current_engine_task
+            except asyncio.CancelledError:
+                pass
 
 # Prepare weak engine
 async def weak_engine_init():
@@ -109,7 +114,8 @@ def parse_engine_data(info):
             sanList.append(sanMove)
     if len(sanList) > 0 and G.engine_board.turn == chess.BLACK:
         sanList[0] = str(G.engine_board.fullmove_number) + '...' + sanList[0]
-    words.extend(sanList)
+    if G.show_engine_pv:
+        words.extend(sanList)
     if info.get("multipv") != None:
         G.latest_engine_lines[info.get("multipv") - 1] = " ".join(words)
     else:
