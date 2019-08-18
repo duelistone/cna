@@ -827,6 +827,13 @@ def board_mouse_up_callback(widget, event):
     '''Board mouse up callback.
 
     Used for events such as completing a move or arrow.'''
+    if event.button == 8:
+        return previous_game_callback()
+    if event.button == 9:
+        return next_game_callback()
+    if event.button == 2:
+        return analyze_callback()
+        
     if event.button == 3:
         # Right click lifted
         if G.arrow_source == G.NULL_SQUARE:

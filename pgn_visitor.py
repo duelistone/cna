@@ -138,9 +138,9 @@ def game_gui_string(game):
             stack.append((game.variation(1), True, False, indentationLevel + 1))
 
     # Testing
-    if len(times) > 0:
-        print("Avg %f" % (sum(times) / len(times)))
-        print("Min %f" % min(times))
-        print("Max %f" % max(times))
+    #if len(times) > 0:
+    #    print("Avg %f" % (sum(times) / len(times)))
+    #    print("Min %f" % min(times))
+    #    print("Max %f" % max(times))
 
     return "".join(strings)
