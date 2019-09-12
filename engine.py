@@ -63,7 +63,9 @@ async def engine_match(white_engine_name, black_engine_name, time_control, start
         board = start_node.board()
         while True:
             # Stop conditions
-            if board.is_game_over(claim_draw=True):
+            if board.is_game_over(claim_draw=True) and board.is_repetition(3):
+                # The second condition above is necessary to not claim a draw 
+                # the turn before the repetition might or might not occur
                 node.comment += " %s" % board.result(claim_draw=True)
                 # TODO: If in principal variation, update result
                 break
