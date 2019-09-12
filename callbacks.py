@@ -828,9 +828,13 @@ def board_mouse_up_callback(widget, event):
 
     Used for events such as completing a move or arrow.'''
     if event.button == 8:
-        return previous_game_callback()
+        if G.ot_board != None:
+            return previous_game_callback()
+        return play_move_callback()
     if event.button == 9:
-        return next_game_callback()
+        if G.ot_board != None:
+            return next_game_callback()
+        return play_training_move_callback()
     if event.button == 2:
         return analyze_callback()
         
@@ -1197,7 +1201,10 @@ def start_engine_callback(*args):
 @entry_callback("toggle_pv", "tp")
 def toggle_pv(*args):
     '''Toggles whether engine analysis shows pv line or just score.'''
-    G.show_engine_pv = not G.show_engine_pv
+    if len(args) > 0:
+        G.show_engine_pv = bool(int(args[0]))
+    else:
+        G.show_engine_pv = not G.show_engine_pv
     return False
 
 @key_callback(gdk.KEY_1)
@@ -1247,6 +1254,7 @@ def play_move_callback(widget=None):
             try:
                 move = G.engine_best_move
                 make_move(move)
+                G.board_display.queue_draw()
                 # Start analyzing new position
                 start_engine_callback()
             except:
