@@ -85,11 +85,11 @@ async def engine_match(white_engine_name, black_engine_name, time_control, start
             if board.turn == chess.WHITE:
                 start_time = time.time()
                 play_result = await white_engine[1].play(board, limits, info=chess.engine.INFO_SCORE)
-                wtime -= time.time() - start_time + winc
+                wtime -= time.time() - start_time - winc
             else:
                 start_time = time.time()
                 play_result = await black_engine[1].play(board, limits, info=chess.engine.INFO_SCORE)
-                btime -= time.time() - start_time + binc
+                btime -= time.time() - start_time - binc
             # TODO: Flagging, report time
 
             # Update comment
