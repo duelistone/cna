@@ -9,8 +9,8 @@ from gi.repository import GLib
 import chess, chess.engine
 from chess.engine import Cp, Mate, MateGiven
 import global_variables as G
-import signal, math
-from helper import make_move
+import signal, math, time, sys
+from helper import make_move, mark_nodes, update_pgn_message
 
 '''Module for functions for working with engine.'''
 
@@ -44,6 +44,89 @@ async def engine_go(engine):
                 await G.current_engine_task
             except asyncio.CancelledError:
                 pass
+
+# Engine match
+async def engine_match(white_engine_name, black_engine_name, time_control, start_node):
+    try:
+        # Init engines
+        G.match_async_loop = asyncio.get_running_loop()
+        white_engine = await chess.engine.popen_uci(white_engine_name)
+        black_engine = await chess.engine.popen_uci(black_engine_name)
+        await white_engine[1].configure(G.engine_settings[white_engine_name])
+        await black_engine[1].configure(G.engine_settings[black_engine_name])
+
+        # Parse time controls
+        wtime, winc, btime, binc = parse_time_control_string(time_control)
+        
+        # Playing loop
+        node = start_node
+        board = start_node.board()
+        while True:
+            # Stop conditions
+            if board.is_game_over(claim_draw=True):
+                node.comment += " %s" % board.result(claim_draw=True)
+                # TODO: If in principal variation, update result
+                break
+            if G.tablebase != None:
+                tb_result = G.tablebase.get_wdl(board)
+                if tb_result != None:
+                    # Set result to white's perspective
+                    if board.turn == chess.BLACK:
+                        tb_result *= -1
+                    if node.comment:
+                        node.comment += " "
+                    node.comment += "TB result: %d (%s)" % (tb_result, G.tablebase_results[tb_result])
+                    GLib.idle_add(update_pgn_message)
+                    # TODO: If in principal variation, update result
+                    break
+
+            # Actually play
+            limits = chess.engine.Limit(white_clock=wtime, white_inc=winc, black_clock=btime, black_inc=binc)
+            if board.turn == chess.WHITE:
+                start_time = time.time()
+                play_result = await white_engine[1].play(board, limits, info=chess.engine.INFO_SCORE)
+                wtime -= time.time() - start_time + winc
+            else:
+                start_time = time.time()
+                play_result = await black_engine[1].play(board, limits, info=chess.engine.INFO_SCORE)
+                btime -= time.time() - start_time + binc
+            # TODO: Flagging, report time
+
+            # Update comment
+            if node.comment:
+                node.comment += " "
+            node.comment += "%s %d/%s" % (white_engine_name if board.turn == chess.WHITE else black_engine_name, play_result.info["depth"], str(play_result.info["score"].pov(chess.WHITE)))
+
+            # Update game, node, and board
+            if play_result.move in map(lambda v: v.move, node.variations):
+                node = node.variation(play_result.move)
+            elif play_result.move in node.readonly_board.legal_moves:
+                node = node.add_variation(play_result.move)
+            else:
+                raise ValueError("Illegal move given by engine, aborting game.")
+            mark_nodes(node)
+            if node.parent == G.g:
+                G.g = node
+            GLib.idle_add(G.board_display.queue_draw)
+            # TODO: This update can throw errors when the engines are making moves super quickly. 
+            # I think this happens when G.g gets updated too quickly for update_pgn_textview_move
+            # I think these errors are harmless, but they can briefly wipe out the GUI.
+            GLib.idle_add(update_pgn_message)
+            board = node.board()
+    finally:
+        # Cleanup the large amount of resources used by engines
+        await white_engine[1].quit()
+        await black_engine[1].quit()
+        GLib.idle_add(update_pgn_message) # A final catchup opportunity when engine moves too quickly
+
+async def engine_match_wrapper(*args, **kwargs):
+    # Wraps an engine_match call into a task
+    # so it can be cancelled
+    try:
+        G.current_match_task = asyncio.create_task(engine_match(*args, **kwargs))
+        await G.current_match_task
+    except asyncio.CancelledError:
+        pass
 
 # Prepare weak engine
 async def weak_engine_init():
@@ -139,6 +222,17 @@ def score_to_level(score, defaultLevel):
     elif proposal > 20:
         proposal = 20
     return proposal
+
+def parse_time_control_string(s):
+    time_control_strings = s.split(',')
+    result = []
+    for e in time_control_strings:
+        e = e.split('+')
+        result.append(60 * float(e[0]))
+        result.append(float(e[1]))
+    if len(result) == 4:
+        return tuple(result)
+    return result[0], result[1], result[0], result[1]
 
 # TODO: Update functions below
 

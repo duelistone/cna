@@ -26,7 +26,7 @@ def make_move(m):
     moves = map(lambda v: v.move, G.g.variations)
     if m in moves:
         G.g = G.g.variation(m)
-        update_pgn_textview_move()
+        update_pgn_textview_move(G.g)
         G.move_completed_callback(m)
         return True
     elif m in G.g.readonly_board.legal_moves:
@@ -118,6 +118,7 @@ def parse_arrow_nag(nag):
 
 def mark_nodes(game):
     '''Marks special and book nodes, as well as the arrows given by arrow nags.'''
+    # TODO: Create subclass to have these attributes
     # Make sure node has an arrows attribute
     if not hasattr(game, 'arrows'):
         game.arrows = {}
@@ -456,7 +457,7 @@ def load_new_game_from_pgn_string(pgn_string):
     else:
         return False
 
-def update_pgn_textview_tags():
+def update_pgn_textview_tags(node):
     if G.pgn_textview_enabled:
         # Useful iterators
         veryStart = G.pgn_buffer.get_start_iter()
@@ -486,26 +487,27 @@ def update_pgn_textview_tags():
             start = G.pgn_buffer.get_iter_at_offset(start)
             end = G.pgn_buffer.get_iter_at_offset(end)
             G.pgn_buffer.apply_tag_by_name("comment", start, end)
-        update_pgn_textview_move()
+        update_pgn_textview_move(node)
 
 def update_pgn_message():
     if G.pgn_textview_enabled:
+        current_game_node = G.g
         # Do updating
         G.pgn_buffer.set_text(game_gui_string(G.g.root()))
 
         # Update text tags
-        update_pgn_textview_tags()
+        update_pgn_textview_tags(current_game_node)
         G.pgn_textview.queue_draw()
         # Scrolling will occur after drawing since 
         # the draw event has higher priority.
         # Would be nice to prevent unscrolling in first place when possible.
         # Running update_pgn_textview_move before queue_draw did not work.
-        GLib.idle_add(update_pgn_textview_move) 
+        GLib.idle_add(update_pgn_textview_move, current_game_node)
 
-def update_pgn_textview_move():
+def update_pgn_textview_move(node):
     if G.pgn_textview_enabled:
         G.pgn_buffer.remove_tag_by_name("current", G.pgn_buffer.get_start_iter(), G.pgn_buffer.get_end_iter())
-        start, end = G.nodesToRanges[G.g]
+        start, end = G.nodesToRanges[node]
         start = G.pgn_buffer.get_iter_at_offset(start)
         end = G.pgn_buffer.get_iter_at_offset(end)
         G.pgn_buffer.apply_tag_by_name("current", start, end)
@@ -619,6 +621,8 @@ def setup_ot_mode(only_sr=False):
 
 def cleanup(showMessage=False):
     '''Cleans up any child processes to quit cleanly.'''
+    # TODO: Determine if this is still necessary
+    # My guess is no.
     if G.stockfish != None:
         G.stockfish[0].send_signal(signal.SIGCONT) # In case stopped
         G.stockfish[0].terminate()

@@ -47,7 +47,7 @@ def game_gui_string_list(game, offset=0, firstMoveOfVariation=False, firstMoveAf
         commentLength = len(game.comment)
         if commentLength > 0:
             G.commentRanges.append((offset, offset + commentLength))
-            strings.append("%s " & game.comment)
+            strings.append("%s " % game.comment)
             offset += commentLength + 1
     else:
         # Normal node

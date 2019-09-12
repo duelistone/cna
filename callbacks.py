@@ -59,7 +59,7 @@ def go_back_callback(widget=None):
     '''Moves back to parent node.'''
     if G.g.parent:
         G.g = G.g.parent
-        update_pgn_textview_move()
+        update_pgn_textview_move(G.g)
         G.board_display.queue_draw()
     return False
 
@@ -80,7 +80,7 @@ def go_forward_callback(var_index=0, *args):
     # Moving and updating
     if var_index >= 0:
         G.g = G.g.variation(var_index)
-        update_pgn_textview_move()
+        update_pgn_textview_move(G.g)
         G.board_display.queue_draw()
     return False
 
@@ -109,7 +109,7 @@ def go_third_variation_callback():
 def go_to_beginning_callback(*args):
     '''Moves to root node.'''
     G.g = G.g.root()
-    update_pgn_textview_move()
+    update_pgn_textview_move(G.g)
     G.board_display.queue_draw()
     return False
 
@@ -120,7 +120,7 @@ def go_to_end_callback(*args):
     '''Moves to end of PV (from current node).'''
     while len(G.g.variations) > 0:
         G.g = G.g.variation(0)
-    update_pgn_textview_move()
+    update_pgn_textview_move(G.g)
     G.board_display.queue_draw()
     return False
 
@@ -1180,6 +1180,26 @@ def toggle_stockfish_callback(*args):
 
     return False
 
+@key_callback(gdk.KEY_M)
+@entry_callback("engine_match")
+def engine_match_callback(time_control=G.default_match_time_control, player_engine="leela", other_engine="stockfish"):
+    # Set white and black based on perspective
+    if G.player == chess.WHITE:
+        white_engine, black_engine = player_engine, other_engine
+    else:
+        white_engine, black_engine = other_engine, player_engine
+    
+    print("Starting engine match %s vs %s" % (white_engine, black_engine), file=sys.stderr)
+
+    # Start playing thread
+    threading.Thread(target=lambda : asyncio.run(engine_match_wrapper(white_engine, black_engine, time_control, G.g)), daemon=True).start()
+
+@entry_callback("stop_match")
+def stop_match_callback():
+    if G.current_match_task:
+        G.match_async_loop.call_soon_threadsafe(G.current_match_task.cancel)
+    return False
+
 @key_callback(gdk.KEY_E, gdk.KEY_p)
 @entry_callback("se", "start_engine")
 def start_engine_callback(*args):
@@ -1467,7 +1487,7 @@ def textview_mouse_released_callback(widget, event):
         if G.textview_pressed_text_iter.equal(text_iter): # The == operator isn't overloaded
             try:
                 G.g = G.bufferToNodes[text_iter.get_offset()]
-                update_pgn_textview_move()
+                update_pgn_textview_move(G.g)
             except KeyError:
                 pass
             G.board_display.queue_draw()

@@ -52,6 +52,7 @@ def main():
             del sys.argv[tbIndex]
         for e in G.engine_settings:
             G.engine_settings[e].update({"SyzygyPath": tablebase_path})
+        G.tablebase = chess.syzygy.open_tablebase(tablebase_path)
 
     # Check if should use opening test or learn mode and finish preperations
     useOpeningMode = '--ot' in sys.argv

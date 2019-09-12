@@ -4,7 +4,7 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
 from gi.repository import Gdk as gdk
 from gi.repository import GLib
-import chess, chess.pgn
+import chess, chess.pgn, chess.syzygy
 import threading, os, sys, asyncio
 from matplotlib import colors as mcolors
 
@@ -123,7 +123,15 @@ multipv = 1
 stockfish = None 
 playLevel = 20 # Int represents depth, float represents time
 show_engine_pv = True
+engine_async_loop = None
+match_async_loop = None
 current_engine_task = None
+current_match_task = None
+default_match_time_control = "12+3"
+
+# Tablebase
+tablebase = None
+tablebase_results = {-2 : "0-1", -1 : "Cursed black win", 0 : "1/2-1/2", 1 : "Cursed white win", 2 : "1-0"}
 
 # Weak engine
 weak_engine_enabled_event = None
