@@ -1167,8 +1167,6 @@ def toggle_stockfish_callback(*args):
         G.stockfish_textview.hide()
         G.stockfish[0].send_signal(signal.SIGSTOP)
         G.engine_enabled_event.clear()
-        if G.current_engine_task:
-            G.engine_async_loop.call_soon_threadsafe(G.current_engine_task.cancel)
     else:
         # Turn stockfish on
         G.stockfish[0].send_signal(signal.SIGCONT)
