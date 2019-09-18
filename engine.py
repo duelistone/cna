@@ -63,11 +63,10 @@ async def engine_match(white_engine_name, black_engine_name, time_control, start
         board = start_node.board()
         while True:
             # Stop conditions
-            if board.is_game_over(claim_draw=True) and board.is_repetition(3):
+            if board.is_game_over() or board.halfmove_clock >= 100 or board.is_repetition(3):
                 # The second condition above is necessary to not claim a draw 
                 # the turn before the repetition might or might not occur
                 node.comment += " %s" % board.result(claim_draw=True)
-                # TODO: If in principal variation, update result
                 break
             if G.tablebase != None:
                 tb_result = G.tablebase.get_wdl(board)
@@ -79,7 +78,6 @@ async def engine_match(white_engine_name, black_engine_name, time_control, start
                         node.comment += " "
                     node.comment += "TB result: %d (%s)" % (tb_result, G.tablebase_results[tb_result])
                     GLib.idle_add(update_pgn_message)
-                    # TODO: If in principal variation, update result
                     break
 
             # Actually play
@@ -92,6 +90,7 @@ async def engine_match(white_engine_name, black_engine_name, time_control, start
                 start_time = time.time()
                 play_result = await black_engine[1].play(board, limits, info=chess.engine.INFO_SCORE)
                 btime -= time.time() - start_time - binc
+            print("(White time, Black time) = (%f, %f)" % (wtime, btime), file=sys.stderr)
             # TODO: Flagging, report time
 
             # Update comment
