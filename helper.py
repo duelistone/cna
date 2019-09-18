@@ -567,7 +567,7 @@ def ot_move_completed_callback(answer):
             if guess.from_square == answer.from_square and guess.to_square == answer.to_square and guess.promotion == answer.promotion:
                 setup_ot_mode()
             else:
-                G.handlers["go_back_callback"]() # Uses dictionary to avoid circular reference problem
+                G.handlers["delete_children_callback"]() # Uses dictionary to avoid circular reference problem
         return f
     return lambda _ : None
 
@@ -589,7 +589,7 @@ def sr_move_completed_callback(answer):
                 G.starting_time = time.time()
             else:
                 G.incorrect_answers += 1
-                G.handlers["go_back_callback"]()
+                G.handlers["delete_children_callback"]()
         return f
     return lambda _ : None
 
