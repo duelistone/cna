@@ -125,7 +125,7 @@ def go_to_end_callback(*args):
 
 @key_callback(gdk.KEY_c)
 @entry_callback("ec", "edit_comment")
-def add_comment_callback(widget=None):
+def add_comment_callback(*args):
     '''Opens a dialog to edit the comment of the current node.'''
     commentPrompt(G.window, "Edit comment:", comment_key_press_callback, G.g.comment)
     return False
@@ -193,7 +193,7 @@ def set_engine_callback(*args):
     return False
 
 @entry_callback("list_opening_games")
-def opening_games_callback(widget=None):
+def opening_games_callback(*args):
     '''Lists available opening games in a position in the repertoire.
 
     This feature is experimental and probably won't work too well.'''
@@ -203,7 +203,7 @@ def opening_games_callback(widget=None):
     return False
 
 @entry_callback("save_opening")
-def opening_save_callback(widget=None):
+def opening_save_callback(*args):
     '''Adds all special nodes in the current game to the repertoire,.'''
     if G.rep:
         save_special_nodes_to_repertoire(G.g.root())
@@ -216,7 +216,7 @@ def opening_save_callback(widget=None):
     return False
 
 @entry_callback("save_opening_node")
-def opening_single_save_callback(widget=None):
+def opening_single_save_callback(*args):
     '''Adds the current node to the repertoire.'''
     if G.rep:
         save_special_node_to_repertoire(G.g)
@@ -229,7 +229,7 @@ def opening_single_save_callback(widget=None):
     return False
 
 @entry_callback("save_game_to_repertoire")
-def opening_save_game_callback(widget=None):
+def opening_save_game_callback(*args):
     '''Adds a game of chess to the repertoire.
 
     This does not affect the positions in the repertoire itself.'''
@@ -241,7 +241,7 @@ def opening_save_game_callback(widget=None):
 
 @key_callback(gdk.KEY_o)
 @entry_callback("o", "display_repertoire_moves")
-def display_repertoire_moves_callback(widget=None):
+def display_repertoire_moves_callback(*args):
     '''Displays the moves given in the repertoire, and optionally in the
     lichess opening explorer as well, for the current position.'''
     if G.rep or G.use_lichess:
@@ -335,7 +335,7 @@ def toggle_lichess_callback(*args):
 
 @key_callback(gdk.KEY_v)
 @entry_callback("v", "display_variations")
-def display_variations_callback(widget=None):
+def display_variations_callback(*args):
     '''Displays a list of the variations in the current game for the current position.'''
     words = ["Variations:"]
     for child in G.g.variations:
@@ -372,7 +372,7 @@ def knight_promotion_callback(*args):
     return False
 
 @gui_callback
-def save_file_name_callback(widget=None):
+def save_file_name_callback(*args):
     '''Open a prompt to set a new save file name for the current game.'''
     promptMessage = "Enter path to save file. This does not save the file!"
     prompt(G.window, promptMessage, file_name_entry_callback)
@@ -423,7 +423,7 @@ def paste_callback(*args):
     return result
 
 @control_key_callback(gdk.KEY_c)
-def copy_fen_callback(widget=None):
+def copy_fen_callback(*args):
     '''Copies the FEN of the current position to the clipboard.
 
     Note that this disables the standard Ctrl-C copy text shortcut sometimes.'''
@@ -924,7 +924,7 @@ def load_repertoire_callback(*args):
 
 @control_key_callback(gdk.KEY_n)
 @entry_callback("opening_size")
-def opening_size_callback(widget=None):
+def opening_size_callback(*args):
     '''Displays number of positions that would appear in an opening test using the current position.
     
     (See opening_test_callback).'''
@@ -937,8 +937,8 @@ def opening_size_callback(widget=None):
         display_status("No repertoire file loaded.")
     return False
 
-@gui_callback
-def delete_opening_node_callback(widget=None):
+@control_key_callback(gdk.KEY_Delete)
+def delete_opening_node_callback(*args):
     '''Deletes the current node from the repertoire.'''
     if G.rep:
         if G.player == chess.WHITE:
@@ -984,7 +984,7 @@ def save_callback(*args):
     return False
 
 @control_key_callback(gdk.KEY_p)
-def open_pgn_textview_callback(widget=None):
+def open_pgn_textview_callback(*args):
     '''Toggles appearance of textview that displays game PGN.'''
     # Extract modifier keys
     if G.pgn_textview_enabled:
@@ -997,7 +997,7 @@ def open_pgn_textview_callback(widget=None):
     return False
 
 @control_key_callback(gdk.KEY_a)
-def analyze_callback(widget=None):
+def analyze_callback(*args):
     '''Opens a separate instance of the program to analyze current game.
 
     For now, this ignores useful command line args of the original instance
@@ -1243,7 +1243,7 @@ def set_multipv_callback(*args):
 
 @key_callback(gdk.KEY_space)
 @entry_callback("play_move")
-def play_move_callback(widget=None):
+def play_move_callback(*args):
     # Casework on whether engine is currently enabled
     if G.engine_enabled_event.is_set():
         if G.engine_board == G.g.board():
@@ -1299,14 +1299,14 @@ def play_training_move_callback(*args):
     return False
 
 @gui_callback
-def load_fen_callback(widget=None):
+def load_fen_callback(*args):
     '''Graphical way to load FEN or PGN file.'''
     promptMessage = "Enter FEN or path to PGN file"
     prompt(G.window, promptMessage, load_fen_entry_callback)
     return False
 
 @entry_callback("make_report")
-def make_report_callback(widget=None):
+def make_report_callback(*args):
     '''Makes opening repertoire based on current position, perspective, and repertoire.'''
     make_report()
     return False
