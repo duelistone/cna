@@ -173,40 +173,6 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="promote_to_main">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Promote to main</property>
-                        <signal name="activate" handler="promote_to_main_callback" swapped="no"/>
-                        <accelerator key="Page_Up" signal="activate"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="demote_to_last">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Demote to last</property>
-                        <signal name="activate" handler="demote_to_last_callback" swapped="no"/>
-                        <accelerator key="Page_Down" signal="activate"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="promote_one_level">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Promote one level</property>
-                        <signal name="activate" handler="promote_callback" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="demote_one_level">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Demote one level</property>
-                        <signal name="activate" handler="demote_callback" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
                       <object class="GtkMenuItem" id="set_header">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>

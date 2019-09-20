@@ -19,6 +19,7 @@ def documented(cb):
 
 def entry_callback(*strings):
     def result(cb):
+        G.handlers[cb.__name__] = cb
         G.documented_functions.add(cb)
         for s in strings:
             G.command_callbacks[s] = cb
@@ -27,6 +28,7 @@ def entry_callback(*strings):
 
 def press_callback(mask, *keys):
     def result(cb):
+        G.handlers[cb.__name__] = cb
         G.documented_functions.add(cb)
         if mask not in G.key_binding_maps:
             G.key_binding_maps[mask] = {}

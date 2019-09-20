@@ -1,7 +1,7 @@
 # callbacks.py
 '''Module for callbacks from GUI. These must also be registered
 in the handlers dictionary in the global_variables module, which is done
-automatically if you use the @gui_callback decorator defined below.'''
+automatically if you use the @gui_callback decorator defined in decorators.py.'''
 
 import gi
 import asyncio
@@ -26,7 +26,6 @@ from help_helpers import *
 
 # GUI callbacks
 
-@gui_callback # Since used in helper.py
 @entry_callback("flip", "f")
 @key_callback(gdk.KEY_f)
 def flip_callback(*args):
@@ -54,7 +53,6 @@ def flip_callback(*args):
 
 @entry_callback("gb", "go_back")
 @key_callback(gdk.KEY_Left, gdk.KEY_h, gdk.KEY_a)
-@gui_callback # Used for namespace issue in helper.py (TODO: Fix this.)
 def go_back_callback(widget=None):
     '''Moves back to parent node.'''
     if G.g.parent:
@@ -113,7 +111,6 @@ def go_to_beginning_callback(*args):
     G.board_display.queue_draw()
     return False
 
-@gui_callback # Since this is referenced in helper.py
 @key_callback(gdk.KEY_G, gdk.KEY_End)
 @entry_callback("go_to_end", "gte")
 def go_to_end_callback(*args):
@@ -126,7 +123,6 @@ def go_to_end_callback(*args):
 
 @key_callback(gdk.KEY_c)
 @entry_callback("ec", "edit_comment")
-@gui_callback
 def add_comment_callback(widget=None):
     '''Opens a dialog to edit the comment of the current node.'''
     commentPrompt(G.window, "Edit comment:", comment_key_press_callback, G.g.comment)
@@ -194,7 +190,6 @@ def set_engine_callback(*args):
     G.engine_command = args[0]
     return False
 
-@gui_callback
 @entry_callback("list_opening_games")
 def opening_games_callback(widget=None):
     '''Lists available opening games in a position in the repertoire.
@@ -206,7 +201,6 @@ def opening_games_callback(widget=None):
     return False
 
 @entry_callback("save_opening")
-@gui_callback
 def opening_save_callback(widget=None):
     '''Adds all special nodes in the current game to the repertoire,.'''
     if G.rep:
@@ -220,7 +214,6 @@ def opening_save_callback(widget=None):
     return False
 
 @entry_callback("save_opening_node")
-@gui_callback
 def opening_single_save_callback(widget=None):
     '''Adds the current node to the repertoire.'''
     if G.rep:
@@ -234,7 +227,6 @@ def opening_single_save_callback(widget=None):
     return False
 
 @entry_callback("save_game_to_repertoire")
-@gui_callback
 def opening_save_game_callback(widget=None):
     '''Adds a game of chess to the repertoire.
 
@@ -341,7 +333,6 @@ def toggle_lichess_callback(*args):
 
 @key_callback(gdk.KEY_v)
 @entry_callback("v", "display_variations")
-@gui_callback
 def display_variations_callback(widget=None):
     '''Displays a list of the variations in the current game for the current position.'''
     words = ["Variations:"]
@@ -350,7 +341,6 @@ def display_variations_callback(widget=None):
     display_status(" ".join(words))
     return False
 
-@gui_callback
 @entry_callback("set_queen_promotion")
 @key_callback(gdk.KEY_Q)
 def queen_promotion_callback(*args):
@@ -358,7 +348,6 @@ def queen_promotion_callback(*args):
     G.promotion_piece = chess.QUEEN
     return False
 
-@gui_callback
 @entry_callback("set_rook_promotion")
 @key_callback(gdk.KEY_R)
 def rook_promotion_callback(*args):
@@ -366,7 +355,6 @@ def rook_promotion_callback(*args):
     G.promotion_piece = chess.ROOK
     return False
 
-@gui_callback
 @entry_callback("set_bishop_promotion")
 @key_callback(gdk.KEY_B)
 def bishop_promotion_callback(*args):
@@ -374,7 +362,6 @@ def bishop_promotion_callback(*args):
     G.promotion_piece = chess.BISHOP
     return False
 
-@gui_callback
 @entry_callback("set_knight_promotion")
 @key_callback(gdk.KEY_N)
 def knight_promotion_callback(*args):
@@ -390,7 +377,6 @@ def save_file_name_callback(widget=None):
     return False
 
 @entry_callback("save_file_name")
-@gui_callback
 def file_name_entry_callback(widget, dialog=None):
     '''Sets the save file name for the current game.'''
     G.save_file_names[G.currentGame] = widget.get_text() if type(widget) != str else widget
@@ -398,7 +384,6 @@ def file_name_entry_callback(widget, dialog=None):
     return False
 
 @entry_callback("load", "l")
-@gui_callback
 def load_fen_entry_callback(widget, dialog=None):
     '''Loads the given PGN, FEN, piece list, or PGN string into a new game.
 
@@ -435,7 +420,6 @@ def paste_callback(*args):
         return False
     return result
 
-@gui_callback
 @control_key_callback(gdk.KEY_c)
 def copy_fen_callback(widget=None):
     '''Copies the FEN of the current position to the clipboard.
@@ -446,7 +430,6 @@ def copy_fen_callback(widget=None):
     return False
 
 @entry_callback("clear_arrows")
-@gui_callback
 def clear_arrows_callback(*args):
     '''Clears all arrows from the current position.'''
     # Remove any arrow NAGs
@@ -574,14 +557,14 @@ def header_entry_callback(widget, dialog, entries):
     return False
 
 @gui_callback
-def header_set_callback(widget=None):
+def header_set_callback(*args):
     '''Creates a graphical dialog to add header tags.'''
     messages = ["Tag name (defaults: Event, Site, Date, Round, White, Black, Result)", "Value"]
     multiPrompt(G.window, messages, header_entry_callback)
     return False
 
 @gui_callback
-def previous_game_callback(widget=None):
+def previous_game_callback(*args):
     '''Moves to previous game in game list.'''
     # TODO: Test previous/next game functionality and fix bugs
     if G.currentGame > 0:
@@ -593,7 +576,7 @@ def previous_game_callback(widget=None):
     return False
 
 @gui_callback
-def next_game_callback(widget=None):
+def next_game_callback(*args):
     '''Moves to next game in game list.
 
     If no such game exists and the current game was retrieved from a PGN file, 
@@ -614,8 +597,7 @@ def next_game_callback(widget=None):
 
 @key_callback(gdk.KEY_Down, gdk.KEY_J)
 @entry_callback("demote_variation")
-@gui_callback
-def demote_callback(widget=None):
+def demote_callback(*args):
     '''Demote a variation.'''
     if G.g.parent != None:
         fork, transitionMove = findFork(G.g)
@@ -626,8 +608,7 @@ def demote_callback(widget=None):
 
 @key_callback(gdk.KEY_Up, gdk.KEY_K)
 @entry_callback("promote_variation")
-@gui_callback
-def promote_callback(widget=None):
+def promote_callback(*args):
     '''Promote a variation.'''
     if G.g.parent != None:
         fork, transitionMove = findFork(G.g)
@@ -636,8 +617,9 @@ def promote_callback(widget=None):
         update_pgn_message()
     return False
 
-@gui_callback
-def promote_to_main_callback(widget=None):
+@key_callback(gdk.KEY_Page_Up)
+@entry_callback("promote_to_main")
+def promote_to_main_callback(*args):
     '''Promote a variation to main variation.'''
     if G.g.parent != None:
         fork, transitionMove = findFork(G.g)
@@ -646,8 +628,9 @@ def promote_to_main_callback(widget=None):
         update_pgn_message()
     return False
 
-@gui_callback
-def demote_to_last_callback(widget=None):
+@key_callback(gdk.KEY_Page_Down)
+@entry_callback("demote_to_last")
+def demote_to_last_callback(*args):
     '''Demote a variation to last variation.'''
     # Is this even necessary?
     if G.g.parent != None:
@@ -660,8 +643,7 @@ def demote_to_last_callback(widget=None):
 
 @key_callback(gdk.KEY_Delete)
 @entry_callback("delete_children")
-@gui_callback
-def delete_children_callback(widget=None):
+def delete_children_callback(*args):
     '''Callback to delete nodes in current game.
 
     First tries to deletes the children of a node.
@@ -682,8 +664,7 @@ def delete_children_callback(widget=None):
     return False
 
 @entry_callback("delete_nonspecial_nodes")
-@gui_callback
-def delete_nonspecial_nodes_callback(widget=None):
+def delete_nonspecial_nodes_callback(*args):
     '''Creates and opens a copy of the current game, but only with only its special nodes.
 
     The original game stays intact, and can be reopened by 
@@ -694,7 +675,7 @@ def delete_nonspecial_nodes_callback(widget=None):
     return False
 
 @gui_callback
-def opening_test_callback(widget=None):
+def opening_test_callback(*args):
     '''Opens an opening test for the descendents of the current node in the repertoire.
 
     Uses the same point of view as currently being used.'''
@@ -989,7 +970,6 @@ def set_extended_save_format_callback(*args):
 
 @entry_callback("save")
 @control_key_callback(gdk.KEY_s)
-@gui_callback
 def save_callback(*args):
     '''Saves current game to specified file.
     
@@ -1002,7 +982,6 @@ def save_callback(*args):
     return False
 
 @control_key_callback(gdk.KEY_p)
-@gui_callback
 def open_pgn_textview_callback(widget=None):
     '''Toggles appearance of textview that displays game PGN.'''
     # Extract modifier keys
@@ -1016,7 +995,6 @@ def open_pgn_textview_callback(widget=None):
     return False
 
 @control_key_callback(gdk.KEY_a)
-@gui_callback
 def analyze_callback(widget=None):
     '''Opens a separate instance of the program to analyze current game.
 
@@ -1152,7 +1130,6 @@ def flip_turn_callback(*args):
 
 @key_callback(gdk.KEY_e)
 @entry_callback("te", "toggle_engine")
-@gui_callback
 def toggle_stockfish_callback(*args):
     '''Toggles the main engine.'''
     if G.stockfish == None:
@@ -1264,7 +1241,6 @@ def set_multipv_callback(*args):
 
 @key_callback(gdk.KEY_space)
 @entry_callback("play_move")
-@gui_callback
 def play_move_callback(widget=None):
     # Casework on whether engine is currently enabled
     if G.engine_enabled_event.is_set():
@@ -1327,7 +1303,6 @@ def load_fen_callback(widget=None):
     prompt(G.window, promptMessage, load_fen_entry_callback)
     return False
 
-@gui_callback
 @entry_callback("make_report")
 def make_report_callback(widget=None):
     '''Makes opening repertoire based on current position, perspective, and repertoire.'''
