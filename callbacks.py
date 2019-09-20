@@ -53,7 +53,7 @@ def flip_callback(*args):
 
 @entry_callback("gb", "go_back")
 @key_callback(gdk.KEY_Left, gdk.KEY_h, gdk.KEY_a)
-def go_back_callback(widget=None):
+def go_back_callback(*args):
     '''Moves back to parent node.'''
     if G.g.parent:
         G.g = G.g.parent
@@ -69,10 +69,12 @@ def go_forward_callback(var_index=0, *args):
     Default is to go to first child.'''
     # If first argument is string (entry version), then 
     # we try to make it var_index.
-    try:
-        var_index = int(widget)
-    except:
-        pass
+    if type(var_index) == str:
+        try:
+            var_index = int(var_index)
+        except:
+            var_index = 0
+            pass
     # If var_index is too big, we go down last variation
     var_index = min(len(G.g.variations) - 1, var_index)
     # Moving and updating
