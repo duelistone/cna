@@ -14,20 +14,12 @@ from callbacks import *
 from lichess_helpers import *
 from help_helpers import *
 from engine import *
+from shortcut_loader import load_shortcuts_from_config_file
 
 def main():
     # Change directory to application directory
     if G.base_directory != "": 
         os.chdir(G.base_directory)
-
-    # Check for configuration file
-    # TODO: Allow command line arg for different location
-    process_configuration_file("settings")
-
-    # Help?
-    if '-h' in sys.argv:
-        print(full_help_report())
-        exit(0)
 
     # Load images and GUI elements
     load_svgs("pieces/merida/")
@@ -72,6 +64,20 @@ def main():
         setup_ot_mode(only_sr=useLearningMode)
     else:
         preparations(builder)
+
+    # Read configuration file for command shortcuts
+    # TODO: Allow command line arg for different location
+    try:
+        load_shortcuts_from_config_file("shortcuts.json")
+    except FileNotFoundError:
+        print("shortcuts.json file not found, setting up default shortcuts", file=sys.stderr)
+        os.system("cp default_shortcuts.json shortcuts.json")
+        load_shortcuts_from_config_file("shortcuts.json")
+
+    # Help?
+    if '-h' in sys.argv:
+        print(full_help_report())
+        exit(0)
 
     # Show elements
     G.window.show_all()

@@ -34,16 +34,6 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="save_file_name_item">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Save file name...</property>
-                        <property name="use_underline">True</property>
-                        <signal name="activate" handler="save_file_name_callback" swapped="no"/>
-                        <accelerator key="F12" signal="activate"/>
-                      </object>
-                    </child>
-                    <child>
                       <object class="GtkMenuItem" id="previous_game_menu_item">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -146,14 +136,6 @@
                   <object class="GtkMenu" id="menu3">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <child>
-                      <object class="GtkMenuItem" id="delete_children">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Delete children</property>
-                        <signal name="activate" handler="delete_children_callback" swapped="no"/>
-                      </object>
-                    </child>
                     <child>
                       <object class="GtkMenuItem" id="delete_nonspecial_nodes">
                         <property name="visible">True</property>

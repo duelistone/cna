@@ -26,8 +26,8 @@ from help_helpers import *
 
 # GUI callbacks
 
-@entry_callback("flip", "f")
-@key_callback(gdk.KEY_f)
+@gui_callback
+@documented
 def flip_callback(*args):
     '''Flips or sets board perspective. 
 
@@ -51,8 +51,8 @@ def flip_callback(*args):
     G.board_display.queue_draw()
     return False
 
-@entry_callback("gb", "go_back")
-@key_callback(gdk.KEY_Left, gdk.KEY_h, gdk.KEY_a)
+@gui_callback
+@documented
 def go_back_callback(*args):
     '''Moves back to parent node.'''
     if G.g.parent:
@@ -61,8 +61,8 @@ def go_back_callback(*args):
         G.board_display.queue_draw()
     return False
 
-@entry_callback("gf", "go_forward")
-@key_callback(gdk.KEY_Right, gdk.KEY_l, gdk.KEY_d)
+@gui_callback
+@documented
 def go_forward_callback(var_index=0, *args):
     '''Moves forward to a child node. 
 
@@ -89,23 +89,26 @@ def go_forward_callback(var_index=0, *args):
 # The next three are just for keyboard shortcuts.
 # In the entry bar or scripts, "go_forward var_index" can be used.
 
-@key_callback(gdk.KEY_L, gdk.KEY_D)
+@gui_callback
+@documented
 def go_first_variation_callback():
     '''Moves to first variation after PV.'''
     return go_forward_callback(1)
 
-@control_key_callback(gdk.KEY_l, gdk.KEY_d)
+@gui_callback
+@documented
 def go_second_variation_callback():
     '''Moves to second variation after PV.'''
     return go_forward_callback(2)
 
-@control_key_callback(gdk.KEY_L, gdk.KEY_D)
+@gui_callback
+@documented
 def go_third_variation_callback():
     '''Moves to third variation after PV.'''
     return go_forward_callback(3)
 
-@key_callback(gdk.KEY_g, gdk.KEY_Home)
-@entry_callback("go_to_beginning", "gtb")
+@gui_callback
+@documented
 def go_to_beginning_callback(*args):
     '''Moves to root node.'''
     G.g = G.g.root()
@@ -113,8 +116,8 @@ def go_to_beginning_callback(*args):
     G.board_display.queue_draw()
     return False
 
-@key_callback(gdk.KEY_G, gdk.KEY_End)
-@entry_callback("go_to_end", "gte")
+@gui_callback
+@documented
 def go_to_end_callback(*args):
     '''Moves to end of PV (from current node).'''
     while len(G.g.variations) > 0:
@@ -123,21 +126,23 @@ def go_to_end_callback(*args):
     G.board_display.queue_draw()
     return False
 
-@key_callback(gdk.KEY_c)
-@entry_callback("ec", "edit_comment")
+@gui_callback
+@documented
 def add_comment_callback(*args):
     '''Opens a dialog to edit the comment of the current node.'''
     commentPrompt(G.window, "Edit comment:", comment_key_press_callback, G.g.comment)
     return False
 
-@entry_callback("c", "comment", "set_comment")
+@gui_callback
+@documented
 def set_comment_callback(*args):
     '''Sets comment of current node to the given string.'''
     G.g.comment = " ".join(args)
     update_pgn_message()
     return False
 
-@entry_callback("add_last")
+@gui_callback
+@documented
 def add_last_callback(*args):
     '''Sets the default behavior of adding new variations.
 
@@ -145,7 +150,8 @@ def add_last_callback(*args):
     G.new_move_mode = G.ADD_LAST_VARIATION
     return False
 
-@entry_callback("add_first", "add_main")
+@gui_callback
+@documented
 def add_main_callback(*args):
     '''Sets the default behavior of adding new variations.
 
@@ -153,7 +159,8 @@ def add_main_callback(*args):
     G.new_move_mode = G.ADD_MAIN_VARIATION
     return False
 
-@entry_callback("set_hash", "set_ram")
+@gui_callback
+@documented
 def set_hash_callback(*args):
     '''Sets hash size for an engine.'''
     try:
@@ -164,7 +171,8 @@ def set_hash_callback(*args):
     change_engine_setting("Hash", hash_size)
     return False
 
-@entry_callback("set_engine_option")
+@gui_callback
+@documented
 def set_engine_option_callback(*args):
     '''Sets engine settings to specified name/value pairs.
 
@@ -178,7 +186,8 @@ def set_engine_option_callback(*args):
     change_engine_setting(name, value)
     return False
 
-@entry_callback("set_engine")
+@gui_callback
+@documented
 def set_engine_callback(*args):
     '''Sets which engine should be used. 
 
@@ -192,7 +201,8 @@ def set_engine_callback(*args):
     G.engine_command = args[0]
     return False
 
-@entry_callback("list_opening_games")
+@gui_callback
+@documented
 def opening_games_callback(*args):
     '''Lists available opening games in a position in the repertoire.
 
@@ -202,7 +212,8 @@ def opening_games_callback(*args):
     display_status(display_string)
     return False
 
-@entry_callback("save_opening")
+@gui_callback
+@documented
 def opening_save_callback(*args):
     '''Adds all special nodes in the current game to the repertoire,.'''
     if G.rep:
@@ -215,7 +226,8 @@ def opening_save_callback(*args):
         display_status("No repertoire file loaded.")
     return False
 
-@entry_callback("save_opening_node")
+@gui_callback
+@documented
 def opening_single_save_callback(*args):
     '''Adds the current node to the repertoire.'''
     if G.rep:
@@ -228,7 +240,8 @@ def opening_single_save_callback(*args):
         display_status("No repertoire file loaded.")
     return False
 
-@entry_callback("save_game_to_repertoire")
+@gui_callback
+@documented
 def opening_save_game_callback(*args):
     '''Adds a game of chess to the repertoire.
 
@@ -239,8 +252,8 @@ def opening_save_game_callback(*args):
         display_status("No repertoire file loaded.")
     return False
 
-@key_callback(gdk.KEY_o)
-@entry_callback("o", "display_repertoire_moves")
+@gui_callback
+@documented
 def display_repertoire_moves_callback(*args):
     '''Displays the moves given in the repertoire, and optionally in the
     lichess opening explorer as well, for the current position.'''
@@ -266,8 +279,8 @@ def display_repertoire_moves_callback(*args):
         display_status("No repertoire loaded, and lichess turned off.")
     return False
 
-@control_key_callback(gdk.KEY_t)
-@entry_callback("lichess_top_games", "ltg")
+@gui_callback
+@documented
 def lichess_top_games_callback(*args):
     def load_lichess_top_games():
         info_list, G.top_game_ids = lichess_top_games(G.g.board())
@@ -277,7 +290,8 @@ def lichess_top_games_callback(*args):
     thread.start()
     return False
 
-@entry_callback("load_lichess_game", "llg")
+@gui_callback
+@documented
 def load_lichess_game_callback(*args):
     if len(args) < 1:
         display_status("No game specified.")
@@ -307,24 +321,28 @@ def load_lichess_game_callback(*args):
     thread.start()
     return False
 
-@control_key_callback(gdk.KEY_1)
+@gui_callback
+@documented
 def load_lichess_game_1_callback(*args):
     return load_lichess_game_callback(0)
 
-@control_key_callback(gdk.KEY_2)
+@gui_callback
+@documented
 def load_lichess_game_2_callback(*args):
     return load_lichess_game_callback(1)
 
-@control_key_callback(gdk.KEY_3)
+@gui_callback
+@documented
 def load_lichess_game_3_callback(*args):
     return load_lichess_game_callback(2)
 
-@control_key_callback(gdk.KEY_4)
+@gui_callback
+@documented
 def load_lichess_game_4_callback(*args):
     return load_lichess_game_callback(3)
 
-@key_callback(gdk.KEY_r)
-@entry_callback("toggle_lichess", "tl")
+@gui_callback
+@documented
 def toggle_lichess_callback(*args):
     G.use_lichess = not G.use_lichess
     if G.use_lichess:
@@ -333,8 +351,8 @@ def toggle_lichess_callback(*args):
         display_status("Lichess opening support turned off.")
     return False
 
-@key_callback(gdk.KEY_v)
-@entry_callback("v", "display_variations")
+@gui_callback
+@documented
 def display_variations_callback(*args):
     '''Displays a list of the variations in the current game for the current position.'''
     words = ["Variations:"]
@@ -343,49 +361,36 @@ def display_variations_callback(*args):
     display_status(" ".join(words))
     return False
 
-@entry_callback("set_queen_promotion")
-@key_callback(gdk.KEY_Q)
+@gui_callback
+@documented
 def queen_promotion_callback(*args):
     '''Sets promotion piece to queen.'''
     G.promotion_piece = chess.QUEEN
     return False
 
-@entry_callback("set_rook_promotion")
-@key_callback(gdk.KEY_R)
+@gui_callback
+@documented
 def rook_promotion_callback(*args):
     '''Sets promotion piece to rook.'''
     G.promotion_piece = chess.ROOK
     return False
 
-@entry_callback("set_bishop_promotion")
-@key_callback(gdk.KEY_B)
+@gui_callback
+@documented
 def bishop_promotion_callback(*args):
     '''Sets promotion piece to bishop.'''
     G.promotion_piece = chess.BISHOP
     return False
 
-@entry_callback("set_knight_promotion")
-@key_callback(gdk.KEY_N)
+@gui_callback
+@documented
 def knight_promotion_callback(*args):
     '''Sets promotion piece to knight.'''
     G.promotion_piece = chess.KNIGHT
     return False
 
 @gui_callback
-def save_file_name_callback(*args):
-    '''Open a prompt to set a new save file name for the current game.'''
-    promptMessage = "Enter path to save file. This does not save the file!"
-    prompt(G.window, promptMessage, file_name_entry_callback)
-    return False
-
-@entry_callback("save_file_name")
-def file_name_entry_callback(widget, dialog=None):
-    '''Sets the save file name for the current game.'''
-    G.save_file_names[G.currentGame] = widget.get_text() if type(widget) != str else widget
-    if dialog != None: dialog.destroy()
-    return False
-
-@entry_callback("load", "l")
+@documented
 def load_fen_entry_callback(widget, dialog=None):
     '''Loads the given PGN, FEN, piece list, or PGN string into a new game.
 
@@ -404,8 +409,8 @@ def load_fen_entry_callback(widget, dialog=None):
     G.board_display.queue_draw()
     return False
 
-@entry_callback("paste_position")
-@control_key_callback(gdk.KEY_v)
+@gui_callback
+@documented
 def paste_callback(*args):
     '''Sets the entry bar text to loading the current clipboard text.
 
@@ -422,7 +427,8 @@ def paste_callback(*args):
         return False
     return result
 
-@control_key_callback(gdk.KEY_c)
+@gui_callback
+@documented
 def copy_fen_callback(*args):
     '''Copies the FEN of the current position to the clipboard.
 
@@ -431,7 +437,8 @@ def copy_fen_callback(*args):
         G.clipboard.set_text(G.g.readonly_board.fen(), -1)
     return False
 
-@entry_callback("clear_arrows")
+@gui_callback
+@documented
 def clear_arrows_callback(*args):
     '''Clears all arrows from the current position.'''
     # Remove any arrow NAGs
@@ -443,7 +450,8 @@ def clear_arrows_callback(*args):
     G.board_display.queue_draw()
     return True
 
-@entry_callback("arrow_color")
+@gui_callback
+@documented
 def arrow_color_callback(*args):
     '''Set main arrow color callback. 
 
@@ -480,7 +488,8 @@ def arrow_color_callback(*args):
             pass
     return False
 
-@entry_callback("arrow_transparency")
+@gui_callback
+@documented
 def arrow_transparency_callback(*args):
     '''Just set the main arrow transparency.
 
@@ -493,7 +502,8 @@ def arrow_transparency_callback(*args):
         return False
     G.arrowRGBA[3] = transparency
 
-@entry_callback("sh", "header", "set_header")
+@gui_callback
+@documented
 def set_header_callback(*args):
     '''Set PGN headers.
 
@@ -505,14 +515,16 @@ def set_header_callback(*args):
     G.g.root().headers[args[0]] = args[1]
     return set_header_callback(args[2:])
 
-@entry_callback("clear_headers")
+@gui_callback
+@documented
 def clear_headers_callback(*args):
     '''Remove headers from PGN, and adds the 7 default (supposedly mandatory) headers.'''
     G.g.root().headers = chess.pgn.Game().headers.copy()
     update_pgn_message()
     return False
 
-@entry_callback("nag", "add_nag", "set_nag")
+@gui_callback
+@documented
 def set_nag_callback(*args):
     '''Adds a NAG to a node.
 
@@ -536,7 +548,8 @@ def set_nag_callback(*args):
         update_pgn_message()
     return False
 
-@entry_callback("remove_nags")
+@gui_callback
+@documented
 def remove_nags_callback():
     '''Removes all NAGs from a node.'''
     if len(G.g.nags) > 0:
@@ -559,6 +572,7 @@ def header_entry_callback(widget, dialog, entries):
     return False
 
 @gui_callback
+@documented
 def header_set_callback(*args):
     '''Creates a graphical dialog to add header tags.'''
     messages = ["Tag name (defaults: Event, Site, Date, Round, White, Black, Result)", "Value"]
@@ -566,6 +580,7 @@ def header_set_callback(*args):
     return False
 
 @gui_callback
+@documented
 def previous_game_callback(*args):
     '''Moves to previous game in game list.'''
     # TODO: Test previous/next game functionality and fix bugs
@@ -597,8 +612,8 @@ def next_game_callback(*args):
 
     return False
 
-@key_callback(gdk.KEY_Down, gdk.KEY_J)
-@entry_callback("demote_variation")
+@gui_callback
+@documented
 def demote_callback(*args):
     '''Demote a variation.'''
     if G.g.parent != None:
@@ -608,8 +623,8 @@ def demote_callback(*args):
         update_pgn_message()
     return False
 
-@key_callback(gdk.KEY_Up, gdk.KEY_K)
-@entry_callback("promote_variation")
+@gui_callback
+@documented
 def promote_callback(*args):
     '''Promote a variation.'''
     if G.g.parent != None:
@@ -619,8 +634,8 @@ def promote_callback(*args):
         update_pgn_message()
     return False
 
-@key_callback(gdk.KEY_Page_Up)
-@entry_callback("promote_to_main")
+@gui_callback
+@documented
 def promote_to_main_callback(*args):
     '''Promote a variation to main variation.'''
     if G.g.parent != None:
@@ -630,8 +645,8 @@ def promote_to_main_callback(*args):
         update_pgn_message()
     return False
 
-@key_callback(gdk.KEY_Page_Down)
-@entry_callback("demote_to_last")
+@gui_callback
+@documented
 def demote_to_last_callback(*args):
     '''Demote a variation to last variation.'''
     # Is this even necessary?
@@ -643,8 +658,8 @@ def demote_to_last_callback(*args):
         update_pgn_message()
     return False
 
-@key_callback(gdk.KEY_Delete)
-@entry_callback("delete_children")
+@gui_callback
+@documented
 def delete_children_callback(*args):
     '''Callback to delete nodes in current game.
 
@@ -665,7 +680,8 @@ def delete_children_callback(*args):
     update_pgn_message()
     return False
 
-@entry_callback("delete_nonspecial_nodes")
+@gui_callback
+@documented
 def delete_nonspecial_nodes_callback(*args):
     '''Creates and opens a copy of the current game, but only with only its special nodes.
 
@@ -903,7 +919,8 @@ def board_scroll_event_callback(widget, event):
         go_forward_callback(var_index=var_index)
     return False
 
-@entry_callback("load_repertoire", "lr")
+@gui_callback
+@documented
 def load_repertoire_callback(*args):
     try:
         G.repertoire_file_name = args[0]
@@ -922,8 +939,8 @@ def load_repertoire_callback(*args):
     update_pgn_message()
     return False
 
-@control_key_callback(gdk.KEY_n)
-@entry_callback("opening_size")
+@gui_callback
+@documented
 def opening_size_callback(*args):
     '''Displays number of positions that would appear in an opening test using the current position.
     
@@ -937,7 +954,8 @@ def opening_size_callback(*args):
         display_status("No repertoire file loaded.")
     return False
 
-@control_key_callback(gdk.KEY_Delete)
+@gui_callback
+@documented
 def delete_opening_node_callback(*args):
     '''Deletes the current node from the repertoire.'''
     if G.rep:
@@ -952,7 +970,8 @@ def delete_opening_node_callback(*args):
         display_status("No repertoire file loaded.")
     return False
 
-@entry_callback("set_proper_save_format")
+@gui_callback
+@documented
 def set_proper_save_format_callback(*args):
     '''Sets save format to not use extended NAG format.
 
@@ -961,7 +980,8 @@ def set_proper_save_format_callback(*args):
     G.proper_save_format = True
     return False
 
-@entry_callback("set_extended_save_format", "set_arrow_save_format")
+@gui_callback
+@documented
 def set_extended_save_format_callback(*args):
     '''Sets save format to use extended NAG format.
 
@@ -970,8 +990,8 @@ def set_extended_save_format_callback(*args):
     G.proper_save_format = False
     return False
 
-@entry_callback("save")
-@control_key_callback(gdk.KEY_s)
+@gui_callback
+@documented
 def save_callback(*args):
     '''Saves current game to specified file.
     
@@ -983,7 +1003,8 @@ def save_callback(*args):
     save_current_pgn(save_file_name, show_status=True, prelude=None, set_global_save_file=True, proper_format=G.proper_save_format)
     return False
 
-@control_key_callback(gdk.KEY_p)
+@gui_callback
+@documented
 def open_pgn_textview_callback(*args):
     '''Toggles appearance of textview that displays game PGN.'''
     # Extract modifier keys
@@ -996,7 +1017,8 @@ def open_pgn_textview_callback(*args):
     update_pgn_message()
     return False
 
-@control_key_callback(gdk.KEY_a)
+@gui_callback
+@documented
 def analyze_callback(*args):
     '''Opens a separate instance of the program to analyze current game.
 
@@ -1016,7 +1038,8 @@ def analyze_callback(*args):
     subprocess.Popen(["python3", "gui.py", "game.temp"])
     return False
 
-@entry_callback("add_pieces")
+@gui_callback
+@documented
 def add_pieces_callback(*args):
     '''Opens a new game starting from the current position with the specified piece additions.
 
@@ -1053,7 +1076,8 @@ def add_pieces_callback(*args):
         board.set_piece_at(square, piece)
     load_new_game_from_board(board)
 
-@entry_callback("remove_pieces")
+@gui_callback
+@documented
 def remove_pieces_callback(*args):
     '''Creates new game starting at current position, but with removed pieces at the specified squares.
 
@@ -1076,7 +1100,8 @@ def remove_pieces_callback(*args):
         return
     load_new_game_from_board(board)
 
-@entry_callback("set_castling")
+@gui_callback
+@documented
 def set_castling_callback(*args):
     '''Creates new game starting at current position, but with the specified castling rights.
     
@@ -1096,7 +1121,8 @@ def set_castling_callback(*args):
         board.castling_rights |= chess.BB_A8
     load_new_game_from_board(board)
 
-@entry_callback("set_en_passant", "set_ep_square")
+@gui_callback
+@documented
 def set_en_passant_callback(*args):
     '''Creates new game starting at current position, but with the newly specified en_passant square.'''
     board = G.g.board()
@@ -1111,7 +1137,8 @@ def set_en_passant_callback(*args):
         return
     load_new_game_from_board(board)
 
-@entry_callback("flip_turn")
+@gui_callback
+@documented
 def flip_turn_callback(*args):
     '''Loads new game with current position but opposite (or specified) side to move.'''
     board = G.g.board()
@@ -1130,8 +1157,8 @@ def flip_turn_callback(*args):
         board.turn = not board.turn
     load_new_game_from_board(board)
 
-@key_callback(gdk.KEY_e)
-@entry_callback("te", "toggle_engine")
+@gui_callback
+@documented
 def toggle_stockfish_callback(*args):
     '''Toggles the main engine.'''
     if G.stockfish == None:
@@ -1159,8 +1186,8 @@ def toggle_stockfish_callback(*args):
 
     return False
 
-@key_callback(gdk.KEY_M)
-@entry_callback("engine_match")
+@gui_callback
+@documented
 def engine_match_callback(time_control=G.default_match_time_control, player_engine="leela", other_engine="stockfish"):
     # Set white and black based on perspective
     if G.player == chess.WHITE:
@@ -1173,14 +1200,15 @@ def engine_match_callback(time_control=G.default_match_time_control, player_engi
     # Start playing thread
     threading.Thread(target=lambda : asyncio.run(engine_match_wrapper(white_engine, black_engine, time_control, G.g)), daemon=True).start()
 
-@entry_callback("stop_match")
+@gui_callback
+@documented
 def stop_match_callback():
     if G.current_match_task:
         G.match_async_loop.call_soon_threadsafe(G.current_match_task.cancel)
     return False
 
-@key_callback(gdk.KEY_E, gdk.KEY_p)
-@entry_callback("se", "start_engine")
+@gui_callback
+@documented
 def start_engine_callback(*args):
     '''Starts engine analysis for current position.'''
     if G.stockfish == None or not G.engine_enabled_event.is_set():
@@ -1195,8 +1223,9 @@ def start_engine_callback(*args):
         G.engine_enabled_event.set()
     return False
 
-@entry_callback("toggle_pv", "tp")
-def toggle_pv(*args):
+@gui_callback
+@documented
+def toggle_pv_callback(*args):
     '''Toggles whether engine analysis shows pv line or just score.'''
     if len(args) > 0:
         G.show_engine_pv = bool(int(args[0]))
@@ -1204,45 +1233,51 @@ def toggle_pv(*args):
         G.show_engine_pv = not G.show_engine_pv
     return False
 
-@key_callback(gdk.KEY_1)
+@gui_callback
+@documented
 def set_multipv_1_callback(*args):
     '''Sets engine multiPV to 1.'''
     G.multipv = 1
     return False
 
-@key_callback(gdk.KEY_2)
+@gui_callback
+@documented
 def set_multipv_2_callback(*args):
     '''Sets engine multiPV to 2.'''
     G.multipv = 2
     return False
 
-@key_callback(gdk.KEY_3)
+@gui_callback
+@documented
 def set_multipv_3_callback(*args):
     '''Sets engine multiPV to 3.'''
     G.multipv = 3
     return False
 
-@key_callback(gdk.KEY_4)
+@gui_callback
+@documented
 def set_multipv_4_callback(*args):
     '''Sets engine multiPV to 4.'''
     G.multipv = 4
     return False
 
-@key_callback(gdk.KEY_5)
+@gui_callback
+@documented
 def set_multipv_5_callback(*args):
     '''Sets engine multiPV to 5.'''
     G.multipv = 5
     return False
 
-@entry_callback("set_multipv")
+@gui_callback
+@documented
 def set_multipv_callback(*args):
     try:
         G.multipv = int(args[0])
     except:
         return False
 
-@key_callback(gdk.KEY_space)
-@entry_callback("play_move")
+@gui_callback
+@documented
 def play_move_callback(*args):
     # Casework on whether engine is currently enabled
     if G.engine_enabled_event.is_set():
@@ -1291,8 +1326,8 @@ def play_move_callback(*args):
         #    print(e)
     return False
 
-@key_callback(gdk.KEY_t)
-@entry_callback("play_training_move")
+@gui_callback
+@documented
 def play_training_move_callback(*args):
     # Play engine in training mode
     G.weak_engine_enabled_event.set()
@@ -1305,13 +1340,15 @@ def load_fen_callback(*args):
     prompt(G.window, promptMessage, load_fen_entry_callback)
     return False
 
-@entry_callback("make_report")
+@gui_callback
+@documented
 def make_report_callback(*args):
     '''Makes opening repertoire based on current position, perspective, and repertoire.'''
     make_report()
     return False
 
-@entry_callback("puzzle_file_name")
+@gui_callback
+@documented
 def puzzle_file_name_callback(*args):
     try:
         G.puzzle_file = args[0]
@@ -1319,7 +1356,8 @@ def puzzle_file_name_callback(*args):
         display_status("No file name given.")
     return False
 
-@entry_callback("save_puzzle", "sp")
+@gui_callback
+@documented
 def save_puzzle_callback(*args):
     fil = open(G.puzzle_file, 'a')
     print(G.g.readonly_board.fen(), file=fil)
@@ -1332,7 +1370,8 @@ def save_puzzle_callback(*args):
     fil.close()
     return False
 
-@entry_callback("load_puzzle")
+@gui_callback
+@documented
 def load_puzzle_callback(*args):
     fil = open(G.puzzle_file, 'r')
     if len(args) > 0:
@@ -1374,8 +1413,8 @@ def load_puzzle_callback(*args):
         display_status(comments[puzzle_number])
         return False
 
-@entry_callback("set_to_learn")
-@key_callback(gdk.KEY_asciitilde)
+@gui_callback
+@documented
 def set_to_learn_callback(*args):
     '''Sets up spaced repetition for the current position with current perspective, as well as any parents.'''
     if G.rep:
@@ -1387,8 +1426,8 @@ def set_to_learn_callback(*args):
         update_pgn_message()
     return False
 
-@entry_callback("set_game_to_learn")
-@control_key_callback(gdk.KEY_asciitilde)
+@gui_callback
+@documented
 def set_game_to_learn_callback(*args):
     '''Sets up spaced repetition for all special and book nodes in current game.'''
     if G.rep:
@@ -1399,15 +1438,16 @@ def set_game_to_learn_callback(*args):
     return False
 
 
-@entry_callback("reset_learn")
+@gui_callback
+@documented
 def reset_learn_callback(*args):
     '''Resets spaced repetition learning data as new item.'''
     if G.rep:
         G.rep.make_position_learnable(G.g.board(), G.player, override=True)
     return False
 
-@entry_callback("reset_learn_timer")
-@control_key_callback(gdk.KEY_r)
+@gui_callback
+@documented
 def reset_learn_timer_callback(*args):
     '''Resets spaced repetition information (for use when going afk or mouse slipping in session).'''
     G.starting_time = time.time()
@@ -1415,7 +1455,8 @@ def reset_learn_timer_callback(*args):
     display_status("Reset training timer.")
     return False
 
-@entry_callback("show_learn_info")
+@gui_callback
+@documented
 def show_learn_info_callback(*args):
     '''Shows learning information stored for a position.
     
@@ -1432,7 +1473,8 @@ def show_learn_info_callback(*args):
     # correct answers, and the next time to train it
     return False
 
-@entry_callback("print_schedule")
+@gui_callback
+@documented
 def print_schedule_callback(*args):
     '''Prints schedule of upcoming spaced repetition exercises.'''
     lines = 100
@@ -1475,7 +1517,8 @@ def textview_mouse_released_callback(widget, event):
 def pgn_textview_key_press_callback(widget, event):
     return True
 
-@entry_callback("enter_analysis_mode")
+@gui_callback
+@documented
 def enter_analysis_mode_callback(*args):
     '''Starts the (default) analysis mode.
 
@@ -1484,7 +1527,8 @@ def enter_analysis_mode_callback(*args):
     G.move_completed_callback = lambda x : None
     return False
 
-@entry_callback("enter_test_mode")
+@gui_callback
+@documented
 def enter_opening_test_mode_callback(*args):
     '''Starts test mode using current position (from current perspective) as start.
     
@@ -1496,7 +1540,8 @@ def enter_opening_test_mode_callback(*args):
     setup_ot_mode()
     return False
 
-@entry_callback("reset_test_mode")
+@gui_callback
+@documented
 def reset_test_mode_callback(*args):
     '''Restarts an opening test mode from the start.
     
@@ -1507,7 +1552,8 @@ def reset_test_mode_callback(*args):
     setup_ot_mode()
     return False
 
-@entry_callback("rs", "run_script")
+@gui_callback
+@documented
 def run_script_callback(*args):
     '''Runs a script.
 
@@ -1523,7 +1569,8 @@ def run_script_callback(*args):
         entry_bar_callback(line.strip())
     return False
 
-@key_callback(gdk.KEY_i)
+@gui_callback
+@documented
 def insert_mode_callback(*args):
     G.entry_bar.grab_focus()
     return False
@@ -1629,6 +1676,7 @@ def entry_bar_key_press_callback(widget, event):
 
     return False
 
+@gui_callback
 def comment_key_press_callback(widget, event, dialog=None):
     if event.keyval == gdk.KEY_Return:
         buff = widget.get_buffer()
@@ -1673,7 +1721,9 @@ def key_press_callback(widget, event):
 
 # Other callbacks
 
-def destroy_main_window_callback(widget):
+@gui_callback
+@documented
+def destroy_main_window_callback(widget=None):
     '''Destroy main window callback. Provides cleanup code for things like stockfish, etc, as well.'''
     G.glib_mainloop.quit()
     cleanup(True)
