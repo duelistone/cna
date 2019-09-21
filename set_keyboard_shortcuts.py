@@ -71,6 +71,7 @@ for i, callback in enumerate(G.documented_functions):
     shortcut2_area = gtk.Entry()
     shortcut2_area.connect("key-press-event", create_entry_keypress_callback(callback.__name__, 1, shortcut2_area))
     shortcut2_area.connect("key-release-event", do_nothing)
+    # TODO: Add delete shortcut buttons
     grid.attach(label, 0, i, 1, 1)
     grid.attach(shortcut1_area, 1, i, 1, 1)
     grid.attach(shortcut2_area, 2, i, 1, 1)
