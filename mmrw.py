@@ -1,6 +1,6 @@
 # mmrw.py
 
-import mmap, os, time
+import mmap, os, os.path, time, sys
 import chess, chess.polyglot, chess.pgn
 from spaced_repetition import *
 from chess_tools import *
@@ -68,20 +68,134 @@ class MemoryMappedReaderWriter(chess.polyglot.MemoryMappedReader):
         entry = makeEntry(p, m, weight, learn)
         self.add_entry(entry)
 
+class CommentsMMRW(mmap.mmap):
+    def __init__(self, fd, length):
+        self.key_size = 8
+        self.comment_size = 248
+        self.entry_size = self.key_size + self.comment_size
+
+    def hash_at_position_index(self, i):
+        byte_list = self[i * self.entry_size:i * self.entry_size + self.key_size]
+        return int.from_bytes(byte_list, byteorder="big")
+
+    def comment_at_position_index(self, i):
+        start = i * self.entry_size + self.key_size
+        end = (i + 1) * self.entry_size
+        return self[start:end].decode('utf-8').rstrip('\0')
+
+    def create_entry(self, i):
+        '''Creates an empty entry at index i, which should immediately after
+        be given an appropriate hash to keep the ordering.'''
+        if i > self.size() // self.entry_size or i < 0:
+            raise ValueError("Invalid index given")
+        start = i * self.entry_size
+        end = self.size()
+        self.resize(self.size() + self.entry_size)
+        self[start + self.entry_size : end + self.entry_size] = self[start:end]
+        self[start : start + self.entry_size] = self.entry_size * b'\0'
+
+    def replace_entry(self, i, h, s):
+        '''Replaces the entry at index i with hash h and string s.'''
+        # Get bytes to add
+        byteArray = h.to_bytes(8, byteorder="big")
+        byteArray += s.encode('utf-8')
+        padding_length = self.entry_size - len(byteArray)
+        if padding_length < 0:
+            raise ValueError("Size of opening comment is too large")
+        byteArray += padding_length * b'\0'
+
+        # Get indices
+        start = i * self.entry_size
+        end = (i + 1) * self.entry_size
+        self[start:end] = byteArray
+        
+    def find_position(self, p):
+        if type(p) != int:
+            p = chess.polyglot.zobrist_hash(p)
+        left = 0
+        right = self.size() // self.entry_size
+        while left < right:
+            middle = (left + right) // 2
+            hash_to_test = self.hash_at_position_index(middle)
+            if hash_to_test < p:
+                left = middle + 1
+            elif hash_to_test > p:
+                right = middle
+            else:
+                return middle
+        return left
+
+
 class Repertoire(object):
     '''Loads, reads, and modifies a repertoire.
-    The repertoire in the file system should be a directory with two subdirectories called 'white' and 'black'. Each subdirectory should also contain two files, titled 'white' and 'black'. The 'white' directory contains moves in a repertoire for white, while the black repertoire contains moves in a repertoire for black. In each directory,
+    
+    The repertoire in the file system should be a directory with two 
+    subdirectories called 'white' and 'black'. Each subdirectory should 
+    also contain two files, titled 'white' and 'black'. The 'white' 
+    directory contains moves in a repertoire for white, while the black 
+    repertoire contains moves in a repertoire for black. In each directory, 
     the 'white' file contains positions where it is white's move, and the 'black'
     file contains positions where it is black's move.'''
 
     def __init__(self, directory):
+        # TODO: Create directories/files when they do not exist
         self.directory = directory
-        self.ww = MemoryMappedReaderWriter(directory + '/white/white')
-        self.wb = MemoryMappedReaderWriter(directory + '/white/black')
-        self.bw = MemoryMappedReaderWriter(directory + '/black/white')
-        self.bb = MemoryMappedReaderWriter(directory + '/black/black')
+        self.ww = MemoryMappedReaderWriter(os.sep.join([directory, 'white', 'white']))
+        self.wb = MemoryMappedReaderWriter(os.sep.join([directory, 'white', 'black']))
+        self.bw = MemoryMappedReaderWriter(os.sep.join([directory, 'black', 'white']))
+        self.bb = MemoryMappedReaderWriter(os.sep.join([directory, 'black', 'black']))
+        comments_filename = directory + os.sep + 'comments'
+        if os.path.getsize(comments_filename) == 0:
+            fil = open(comments_filename, 'w')
+            # TODO: Create a constant to remove the 256 below
+            fil.write(256 * '\0') # Change if comment entry size changes
+            fil.close()
+        comments_file = os.open(comments_filename, os.O_RDWR)
+        try:
+            self.comments = CommentsMMRW(comments_file, 0)
+        except Exception as e:
+            # For now
+            print(e, file=sys.stderr)
+            pass
 
-        if None in [self.ww.mmap, self.wb.mmap, self.bw.mmap, self.bb.mmap]: return None
+        if None in [self.ww.mmap, self.wb.mmap, self.bw.mmap, self.bb.mmap]:
+            return None
+
+    def set_comment(self, position, comment):
+        '''Saves the comment for the position in the self.comments file.'''
+        if type(position) == int:
+            # Hash already given
+            h = position
+        else:
+            h = chess.polyglot.zobrist_hash(position)
+        index = self.comments.find_position(h)
+        if self.comments.hash_at_position_index(index) == h:
+            try:
+                # Replace opening comment
+                self.comments.replace_entry(index, h, comment)
+            except ValueError as e:
+                print(e, file=sys.stderr)
+                return
+        else:
+            # Add new entry at index
+            self.comments.create_entry(index)
+            self.comments.replace_entry(index, h, comment)
+            return None
+        pass
+
+    def get_comment(self, position):
+        '''Returns comment for given position, or None if the position
+        does not have a comment in the repertoire.'''
+        if type(position) == int:
+            # Hash already given
+            h = position
+        else:
+            h = chess.polyglot.zobrist_hash(position)
+        index = self.comments.find_position(h)
+        if self.comments.hash_at_position_index(index) == h:
+            return self.comments.comment_at_position_index(index)
+        else:
+            return None
 
     def get_mmrw(self, player, turn_color):
         if player == chess.WHITE and turn_color == chess.WHITE:

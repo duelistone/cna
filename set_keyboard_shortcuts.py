@@ -10,11 +10,6 @@ from shortcut_loader import load_shortcuts_from_config_file
 
 shortcuts_filename = "shortcuts.json"
 shortcut_list = load_shortcuts_from_config_file(shortcuts_filename)
-try:
-    shortcut_list = sorted(shortcut_list, key=lambda x:x["name"])
-except:
-    # Give up on sorting if an entry doesn't have a name
-    pass
 
 def do_nothing(*args):
     return True
@@ -37,9 +32,16 @@ def create_entry_keypress_callback(callback_name, index, entry):
                     entry.set_text(str(e["shortcuts"][index]))
                 except:
                     pass
+                break
         except:
             pass
     if shortcut_object == None:
+        # Make new entry
+        shortcut_object = {}
+        shortcut_object["name"] = callback_name
+        shortcut_object["entries"] = []
+        shortcut_object["shortcuts"] = []
+        shortcut_list.append(shortcut_object)
         return do_nothing
 
     def cb(widget, event):
@@ -62,7 +64,7 @@ window.add(scrolled_window)
 grid = gtk.Grid()
 scrolled_window.add(grid)
 
-for i, callback in enumerate(G.documented_functions):
+for i, callback in enumerate(sorted(G.documented_functions, key=lambda x:x.__name__)):
     label = gtk.Label()
     label.set_text(callback.__name__)
     shortcut1_area = gtk.Entry()
@@ -83,4 +85,5 @@ grid.attach(save_button, 0, i + 1, 3, 1)
 
 window.connect("destroy", gtk.main_quit)
 window.show_all()
+save_button.grab_focus()
 gtk.main()

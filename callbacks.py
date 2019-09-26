@@ -143,6 +143,27 @@ def set_comment_callback(*args):
 
 @gui_callback
 @documented
+def set_opening_comment_callback(*args):
+    '''Sets opening comment of current board position.'''
+    if len(args) == 0:
+        display_status("No comment given.")
+        return False
+    G.rep.set_comment(G.g.readonly_board, args[0])
+    return False
+
+@gui_callback
+@documented
+def show_opening_comment_callback(*args):
+    '''Shows opening comment of current board position.'''
+    c = G.rep.get_comment(G.g.readonly_board)
+    if c:
+        display_status(c)
+    else:
+        display_status("No opening comment exists for this position.")
+    return False
+
+@gui_callback
+@documented
 def add_last_callback(*args):
     '''Sets the default behavior of adding new variations.
 
