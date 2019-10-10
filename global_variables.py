@@ -103,6 +103,7 @@ command_index = 0
 # Generator for opening trainer positions
 ot_gen = None
 ot_board = None
+ot_progress = (0, 0) # Correct and total answered in session
 incorrect_answers = 0
 starting_time = 0
 
@@ -111,23 +112,21 @@ starting_time = 0
 move_completed_callback = lambda x : None
 
 # Engine
-engine_command = "leela"
-engine_settings = {"stockfish" : {"Hash" : 8192, "Threads" : 8, "Contempt" : 0}, "leela" : {}, "ethereal" : {"Hash" : 4096, "Threads" : 2}}
-engine_board = chess.Board()
-stockfish_text_lock = threading.Lock()
-engine_enabled_event = None # Must be defined inside async loop
+engine_commands = ["leela", "stockfish", "ethereal"] # Used for order
+engine_settings = {"stockfish" : {"Hash" : 8192, "Threads" : 8, "Contempt" : 0}, "leela" : {}, "ethereal" : {"Hash" : 4096, "Threads" : 4}}
+engines = [] # Have to be defined elsewhere due to engine.py dependency on this file
+current_engine_index = 0
+# Output related
 latest_engine_stats = [-1, -1, -1, -1, -1]
 latest_engine_lines = []
-engine_best_move = None
 multipv = 1
-stockfish = None 
-playLevel = 20 # Int represents depth, float represents time
 show_engine_pv = True
-engine_async_loop = None
+# Weak engine related
+playLevel = 20 # Int represents depth, float represents time
+# Match related
 match_async_loop = None
-current_engine_task = None
 current_match_task = None
-default_match_time_control = "12+3"
+default_match_time_control = "25+2"
 
 # Tablebase
 tablebase = None

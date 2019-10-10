@@ -88,7 +88,9 @@ def main():
     autosave_thread.start()
 
     # asyncio threads
-    threading.Thread(target=lambda : asyncio.run(engine_init()), daemon=True).start()
+    G.engines = list(map(AnalysisEngine, G.engine_commands))
+    for e in G.engines:
+        threading.Thread(target=lambda : asyncio.run(e.async_init()), daemon=True).start()
     threading.Thread(target=lambda : asyncio.run(weak_engine_init()), daemon=True).start()
 
     # Start main loop
@@ -128,6 +130,7 @@ def preparations(builder):
     G.board_display.connect("motion-notify-event", board_mouse_move_callback)
     G.board_display.connect("scroll-event", board_scroll_event_callback)
     G.pgn_textview.connect("key-press-event", pgn_textview_key_press_callback)
+    G.stockfish_textview.connect("button-press-event", engine_textview_mouse_down_callback)
 
     # PGN textview tags
     G.pgn_buffer.create_tag(tag_name="monospace", family="Monospace")

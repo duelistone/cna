@@ -180,46 +180,50 @@ def add_main_callback(*args):
     G.new_move_mode = G.ADD_MAIN_VARIATION
     return False
 
-@gui_callback
-@documented
-def set_hash_callback(*args):
-    '''Sets hash size for an engine.'''
-    try:
-        hash_size = int(args[0])
-    except:
-        display_status("Could not parse hash size (in MB).")
-        return False
-    change_engine_setting("Hash", hash_size)
-    return False
+#@gui_callback
+#@documented
+#def set_hash_callback(*args):
+#    '''Sets hash size for an engine.'''
+#    try:
+#        hash_size = int(args[0])
+#    except:
+#        display_status("Could not parse hash size (in MB).")
+#        return False
+#    change_engine_setting("Hash", hash_size)
+#    return False
 
-@gui_callback
-@documented
-def set_engine_option_callback(*args):
-    '''Sets engine settings to specified name/value pairs.
-
-    Args: name1 value1 [name2 value2] ...'''
-    try:
-        name = args[0]
-        value = args[1]
-    except:
-        display_status("An option name and value were not provided")
-        return False
-    change_engine_setting(name, value)
-    return False
+#@gui_callback
+#@documented
+#def set_engine_option_callback(*args):
+#    '''Sets engine settings to specified name/value pairs.
+#
+#    Args: name1 value1 [name2 value2] ...'''
+#    try:
+#        name = args[0]
+#        value = args[1]
+#    except:
+#        display_status("An option name and value were not provided")
+#        return False
+#    change_engine_setting(name, value)
+#    return False
 
 @gui_callback
 @documented
 def set_engine_callback(*args):
-    '''Sets which engine should be used. 
+    '''Sets which engines should be used first.
+    
+    Multiple arguments correspond to the first n engines which should be used.
+    This should be called before any engine is used.'''
+    for name in args:
+        try:
+            index = G.engine_commands.index(name)
+        except ValueError:
+            display_status("Invalid engine name '%s' given" % name)
+            return False
+        # Move index to front in engine_commands and engines
+        G.engine_commands = [G.engine_commands[index]] + G.engine_commands[:index] + G.engine_commands[index + 1:]
+        G.engines = [G.engines[index]] + G.engines[:index] + G.engines[index + 1:]
 
-    This must be done before the main engine is initialized.'''
-    if G.stockfish != None:
-        display_status("Engine can only be changed before it is first initialized.")
-        return False
-    if args[0] not in G.engine_settings:
-        display_status("Could not find specified engine.")
-        return False
-    G.engine_command = args[0]
     return False
 
 @gui_callback
@@ -941,6 +945,19 @@ def board_scroll_event_callback(widget, event):
     return False
 
 @gui_callback
+def engine_textview_mouse_down_callback(widget, event):
+    if event.button == 2:
+        # Middle click
+        next_engine_callback(initialize_new=True)
+        return True
+    if event.button == 3:
+        # Right click
+        next_engine_callback(initialize_new=False)
+        return True
+
+    return False # Keeps highlight and copy functionality
+
+@gui_callback
 @documented
 def load_repertoire_callback(*args):
     try:
@@ -1182,30 +1199,46 @@ def flip_turn_callback(*args):
 @documented
 def toggle_stockfish_callback(*args):
     '''Toggles the main engine.'''
-    if G.stockfish == None:
-        # Start up stockfish
-        G.engine_board = G.g.board()
-        G.engine_enabled_event.set()
+    engine = G.engines[G.current_engine_index]
+    if engine.is_initialized() == False:
+        # Start up engine
+        engine.board = G.g.board()
+        engine.engine_enabled_event.set()
         G.stockfish_textview.show_all()
-        return False
-
-    if G.engine_enabled_event.is_set():
+    elif engine.engine_enabled_event.is_set():
         # Turn stockfish off
         G.stockfish_textview.hide()
-        G.stockfish[0].send_signal(signal.SIGSTOP)
-        G.engine_enabled_event.clear()
+        engine.stop()
     else:
         # Turn stockfish on
-        G.stockfish[0].send_signal(signal.SIGCONT)
-        if G.engine_board != G.g.board():
-            G.engine_enabled_event.clear() # To make sure G.engine_board is updated in time
-            if G.current_engine_task:
-                G.engine_async_loop.call_soon_threadsafe(G.current_engine_task.cancel)
-            G.engine_board = G.g.board()
-        G.engine_enabled_event.set()
+        engine.cont(G.g.board())
         G.stockfish_textview.show_all()
-
     return False
+
+@gui_callback
+@documented
+def start_engine_callback(*args):
+    '''Starts engine analysis for current position.'''
+    engine = G.engines[G.current_engine_index]
+    if not engine.is_initialized() or not engine.engine_enabled_event.is_set():
+        # Engine is off, use toggle_stockfish_callback
+        return toggle_stockfish_callback()
+    # Engine is already on
+    engine.cont(G.g.board())
+    return False
+
+@gui_callback
+def next_engine_callback(initialize_new=True, *args):
+    '''Gets the next engine to analyze.'''
+    # Stop old engine (for now this assumes the old engine is being displayed and running).
+    # That's why this isn't documented yet.
+    G.engines[G.current_engine_index].stop()
+    G.current_engine_index = (G.current_engine_index + 1) % len(G.engines)
+    if not initialize_new:
+        # This can lead to an infinite loop if misused.
+        while not G.engines[G.current_engine_index].is_initialized(): 
+            G.current_engine_index = (G.current_engine_index + 1) % len(G.engines)
+    start_engine_callback()
 
 @gui_callback
 @documented
@@ -1226,22 +1259,6 @@ def engine_match_callback(time_control=G.default_match_time_control, player_engi
 def stop_match_callback():
     if G.current_match_task:
         G.match_async_loop.call_soon_threadsafe(G.current_match_task.cancel)
-    return False
-
-@gui_callback
-@documented
-def start_engine_callback(*args):
-    '''Starts engine analysis for current position.'''
-    if G.stockfish == None or not G.engine_enabled_event.is_set():
-        # Engine is off, use toggle_stockfish_callback
-        return toggle_stockfish_callback()
-    # Engine is already on
-    if G.engine_board != G.g.board():
-        G.engine_enabled_event.clear() # To make sure G.engine_board is updated in time
-        if G.current_engine_task:
-            G.engine_async_loop.call_soon_threadsafe(G.current_engine_task.cancel)
-        G.engine_board = G.g.board()
-        G.engine_enabled_event.set()
     return False
 
 @gui_callback
@@ -1301,10 +1318,11 @@ def set_multipv_callback(*args):
 @documented
 def play_move_callback(*args):
     # Casework on whether engine is currently enabled
-    if G.engine_enabled_event.is_set():
-        if G.engine_board == G.g.board():
+    engine = G.engines[G.current_engine_index]
+    if engine.engine_enabled_event.is_set():
+        if engine.board == G.g.board():
             try:
-                move = G.engine_best_move
+                move = engine.best_move
                 make_move(move)
                 G.board_display.queue_draw()
                 # Start analyzing new position
@@ -1747,7 +1765,6 @@ def key_press_callback(widget, event):
 def destroy_main_window_callback(widget=None):
     '''Destroy main window callback. Provides cleanup code for things like stockfish, etc, as well.'''
     G.glib_mainloop.quit()
-    cleanup(True)
     return False
 
 def signal_handler(signum=None):
@@ -1755,5 +1772,4 @@ def signal_handler(signum=None):
     # signum is ignored because this handler is only registered elsewhere
     # for SIGINT and SIGTERM. If that changes, this function needs to be changed
     # appropriately.
-    cleanup(True)
     exit(0)

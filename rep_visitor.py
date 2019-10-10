@@ -71,7 +71,7 @@ def quickselect(f, k, l, left=0, right=-1):
         return quickselect(f, k, l, left, pivotIndex - 1)
     return quickselect(f, k, l, pivotIndex + 1, right)
 
-def clear_orphaned_learn_values(player):
+def clear_orphaned_learn_values(player, only_print=True):
     # WARNING: This function assumes that the repertoire is not modified
     # while the function is running, but it does not implement a lock mechanism.
     # Use with caution.
@@ -85,8 +85,11 @@ def clear_orphaned_learn_values(player):
     for i, entry in enumerate(subrep):
         if (entry.key, entry.raw_move) not in hashes_set and entry.learn > 0:
             counter += 1
-            subrep[i] = chess.polyglot.Entry(entry.key, entry.raw_move, entry.weight, 0, 0)
-    print("%d changes made." % counter)
+            if not only_print:
+                subrep[i] = chess.polyglot.Entry(entry.key, entry.raw_move, entry.weight, 0, 0)
+            else:
+                print(entry.key)
+    print("%d changes%s." % (counter, "" if only_print else " made"))
 
 def repeated_nodes(subrep):
     # Just for debugging
@@ -124,6 +127,7 @@ def get_learning_schedule(board, player, max_lines=100, must_use_tree_visitor=Fa
         max_lines = len(entries_and_boards)
     # Now we sort the 'max_lines' most urgent entries
     # This is orders of magnitude faster than the iterating through rep_visitor step
+    # TODO: Fix (sorting is incorrect right now, quickselect is probably to blame)
     key_function = lambda x : x[0].learn
     quickselect(key_function, max_lines, entries_and_boards)
     entries_and_boards[:max_lines] = sorted(entries_and_boards[:max_lines], key=key_function)

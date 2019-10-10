@@ -568,6 +568,7 @@ def ot_move_completed_callback(answer):
                 setup_ot_mode()
             else:
                 G.handlers["delete_children_callback"]() # Uses dictionary to avoid circular reference problem
+                G.handlers["show_opening_comment_callback"]()
         return f
     return lambda _ : None
 
@@ -579,17 +580,20 @@ def sr_move_completed_callback(answer):
                 # Correct answer
                 # Update learning data
                 G.rep.update_learning_data(G.player, G.g.parent.readonly_board, answer, G.incorrect_answers, time.time() - G.starting_time)
+                # Update progress
+                G.ot_progress = (G.ot_progress[0] + (not G.incorrect_answers), G.ot_progress[1] + 1)
 
                 # Prepare next
                 setup_ot_mode(only_sr=True)
             elif guess in G.rep.findMoves(G.player, G.g.parent.readonly_board):
-                # Valid alternate, give another try
+                # Valid alternate, give another try with clock reset
                 G.handlers["go_back_callback"]()
                 display_status("%s is a valid alternate." % G.g.readonly_board.san(guess))
                 G.starting_time = time.time()
             else:
                 G.incorrect_answers += 1
                 G.handlers["delete_children_callback"]()
+                G.handlers["show_opening_comment_callback"]()
         return f
     return lambda _ : None
 
@@ -603,7 +607,7 @@ def setup_ot_mode(only_sr=False):
     try:
         b, m = next(G.ot_gen)
     except StopIteration:
-        display_status("Training complete!")
+        display_status("Training complete! (%d/%d)" % G.ot_progress)
         G.move_completed_callback = ot_move_completed_callback(chess.Move.null())
         return False
 
@@ -615,19 +619,9 @@ def setup_ot_mode(only_sr=False):
     else:
         G.move_completed_callback = ot_move_completed_callback(m) # This is a function
     load_new_game_from_board_history(b)
-    display_status(board_moves(b))
+    display_status(("(%d/%d) " + board_moves(b)) % G.ot_progress)
 
     return False
-
-def cleanup(showMessage=False):
-    '''Cleans up any child processes to quit cleanly.'''
-    # TODO: Determine if this is still necessary
-    # My guess is no.
-    if G.stockfish != None:
-        G.stockfish[0].send_signal(signal.SIGCONT) # In case stopped
-        G.stockfish[0].terminate()
-    if showMessage:
-        print('Exiting gracefully.')
 
 def save_current_pgn(save_file_name, show_status=False, prelude=None, set_global_save_file=False, proper_format=False):
     '''Saves current game to specified file.
