@@ -588,7 +588,7 @@ def setup_ot_mode(only_sr=False):
 
     # Set new answer + callback, and load new board
     if only_sr:
-        if random.random() < G.sr_full_line_probability:
+        if random.random() < G.SR_FULL_LINE_PROBABILITY:
             return sr_full_line_setup(create_board_answer_stack(b, m))
         else:
             G.incorrect_answers = 0

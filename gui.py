@@ -32,6 +32,10 @@ def main():
         G.player = chess.BLACK
         sys.argv.remove('-b')
 
+    # TODO: Add engine config to fill in G.engine_settings
+    # And SyzygyPath? Or is that part of a general config file?
+    # Speaking of which, should also have general config for global constants
+
     # Get tablebase path
     if "--tb" in sys.argv:
         tbIndex = sys.argv.index('--tb')
