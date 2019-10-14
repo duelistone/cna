@@ -572,31 +572,6 @@ def ot_move_completed_callback(answer):
         return f
     return lambda _ : None
 
-def sr_move_completed_callback(answer):
-    '''Similar to ot_move_completed_callback, except for spaced repetition practice.'''
-    if answer:
-        def f(guess):
-            if guess == answer:
-                # Correct answer
-                # Update learning data
-                G.rep.update_learning_data(G.player, G.g.parent.readonly_board, answer, G.incorrect_answers, time.time() - G.starting_time)
-                # Update progress
-                G.ot_progress = (G.ot_progress[0] + (not G.incorrect_answers), G.ot_progress[1] + 1)
-
-                # Prepare next
-                setup_ot_mode(only_sr=True)
-            elif guess in G.rep.findMoves(G.player, G.g.parent.readonly_board):
-                # Valid alternate, give another try with clock reset
-                G.handlers["go_back_callback"]()
-                display_status("%s is a valid alternate." % G.g.readonly_board.san(guess))
-                G.starting_time = time.time()
-            else:
-                G.incorrect_answers += 1
-                G.handlers["delete_children_callback"]()
-                G.handlers["show_opening_comment_callback"]()
-        return f
-    return lambda _ : None
-
 def setup_ot_mode(only_sr=False):
     '''Sets up opening trainer mode, and starts it or continues it with the next problem).'''
     # Load generator if first time
@@ -613,15 +588,79 @@ def setup_ot_mode(only_sr=False):
 
     # Set new answer + callback, and load new board
     if only_sr:
-        G.incorrect_answers = 0
-        G.starting_time = time.time()
-        G.move_completed_callback = sr_move_completed_callback(m) # This is a function
+        if random.random() < G.sr_full_line_probability:
+            return sr_full_line_setup(create_board_answer_stack(b, m))
+        else:
+            G.incorrect_answers = 0
+            G.starting_time = time.time()
+            G.move_completed_callback = sr_move_completed_callback(m) # This is a function
     else:
         G.move_completed_callback = ot_move_completed_callback(m) # This is a function
     load_new_game_from_board_history(b)
     display_status(("(%d/%d) " + board_moves(b)) % G.ot_progress)
 
     return False
+
+def sr_full_line_setup(stack, only_sr=True):
+    '''Similar to sr_move_completed_callback, except covers entire line.'''
+    # The only_sr argument is completely ignored, just meant for compatibilty 
+    # for 'setup_function' use in sr_move_completed_callback
+
+    # Create next board/answer pair
+    try:
+        board, answer = stack.pop()
+    except IndexError:
+        return setup_ot_mode(only_sr)
+
+    # Prepare callback and display problem
+    G.incorrect_answers = 0
+    G.starting_time = time.time()
+    load_new_game_from_board_history(board)
+    display_status(("(%d/%d) " + board_moves(board)) % G.ot_progress)
+    new_setup = lambda x : sr_full_line_setup(stack, x) # Closure
+    G.move_completed_callback = sr_move_completed_callback(answer, new_setup)
+        
+    return False
+
+def sr_move_completed_callback(answer, setup_function=setup_ot_mode):
+    '''Similar to ot_move_completed_callback, except for spaced repetition practice.'''
+    if answer:
+        def f(guess):
+            if guess == answer:
+                # Correct answer
+                # Update learning data
+                G.rep.update_learning_data(G.player, G.g.parent.readonly_board, answer, G.incorrect_answers, time.time() - G.starting_time)
+                # Update progress
+                G.ot_progress = (G.ot_progress[0] + (not G.incorrect_answers), G.ot_progress[1] + 1)
+
+                # Prepare next
+                setup_function(True)
+            elif guess in G.rep.findMoves(G.player, G.g.parent.readonly_board):
+                # Valid alternate, give another try with clock reset
+                G.handlers["go_back_callback"]()
+                display_status("%s is a valid alternate." % G.g.readonly_board.san(guess))
+                G.starting_time = time.time()
+            else:
+                G.incorrect_answers += 1
+                G.handlers["delete_children_callback"]()
+                G.handlers["show_opening_comment_callback"]()
+        return f
+    return lambda _ : None
+
+def create_board_answer_stack(board, final_answer):
+    # Create stack of positions of interest
+    # Helper for sr_full_line_setup
+    stack = [(board.copy(), final_answer)]
+    while 1:
+        try:
+            last_move = board.pop()
+        except IndexError:
+            break
+        if board.turn != G.player:
+            continue
+        stack.append((board.copy(), last_move))
+
+    return stack
 
 def save_current_pgn(save_file_name, show_status=False, prelude=None, set_global_save_file=False, proper_format=False):
     '''Saves current game to specified file.

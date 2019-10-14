@@ -106,6 +106,7 @@ ot_board = None
 ot_progress = (0, 0) # Correct and total answered in session
 incorrect_answers = 0
 starting_time = 0
+sr_full_line_probability = 0.05
 
 # Callback for after legal move is complete
 # Default is to do nothing

@@ -44,10 +44,11 @@ def rep_visitor(board, player=None, only_sr=False, return_entry=False):
 
 def quickselect_partition(f, l, left, right, pivotIndex):
     '''Helper function for quickselect based on Wikipedia's algorithm.'''
+    pivotValue = l[pivotIndex]
     l[pivotIndex], l[right] = l[right], l[pivotIndex]
     storeIndex = left
     for i in range(left, right):
-        if f(l[i]) < f(l[pivotIndex]):
+        if f(l[i]) < f(pivotValue):
             l[storeIndex], l[i] = l[i], l[storeIndex]
             storeIndex += 1
     l[right], l[storeIndex] = l[storeIndex], l[right]
