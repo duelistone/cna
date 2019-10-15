@@ -1,6 +1,6 @@
 # mmrw.py
 
-import mmap, os, os.path, time, sys
+import mmap, os, os.path, time, sys, subprocess
 import chess, chess.polyglot, chess.pgn
 from spaced_repetition import *
 from chess_tools import *
@@ -10,6 +10,7 @@ class MemoryMappedReaderWriter(chess.polyglot.MemoryMappedReader):
     def __init__(self, filename, length=0, offset=0):
         # Like superclass init, just allowing writing
         self.fd = os.open(filename, os.O_RDWR)
+        self.filename = filename
 
         try:
             self.mmap = mmap.mmap(self.fd, length, offset=offset)
@@ -434,6 +435,10 @@ class Repertoire(object):
     #             return True
     #         index += 1
     #     return False
+
+    def update_modified_date(self, player, turn):
+        mmrw = self.get_mmrw(player, turn)
+        subprocess.Popen(["touch", mmrw.filename])
 
     def update_learning_data(self, player, position, move, incorrect_answers, time_to_complete):
         mmrw = self.get_mmrw(player, position.turn)

@@ -630,6 +630,8 @@ def sr_move_completed_callback(answer, setup_function=setup_ot_mode):
                 # Correct answer
                 # Update learning data
                 G.rep.update_learning_data(G.player, G.g.parent.readonly_board, answer, G.incorrect_answers, time.time() - G.starting_time)
+                # Update last modified date for directory monitors
+                G.rep.update_modified_date(G.player, G.g.parent.readonly_board.turn)
                 # Update progress
                 G.ot_progress = (G.ot_progress[0] + (not G.incorrect_answers), G.ot_progress[1] + 1)
 
