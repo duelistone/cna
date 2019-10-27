@@ -40,7 +40,9 @@ def update_spaced_repetition_values(e, c, n, q):
             n = int(now + 1440 * 365)
     elif c == 1:
         n = int(now + 240)
-    # Otherwise, c is 0, and the problem should be repeated, so n is unchanged
+    else:
+        # Otherwise, c is 0, and the problem should be repeated now
+        n = int(now)
 
     return e, c, n
 

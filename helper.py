@@ -17,7 +17,7 @@ from drawing import *
 from dfs import *
 from lichess_helpers import *
 from help_helpers import *
-from rep_visitor import rep_visitor
+from rep_visitor import rep_visitor, tactics_visitor
 from pgn_visitor import game_gui_string
 
 def make_move(m):
@@ -572,11 +572,13 @@ def ot_move_completed_callback(answer):
         return f
     return lambda _ : None
 
-def setup_ot_mode(only_sr=False):
+def setup_ot_mode(only_sr=False, visitor=rep_visitor):
     '''Sets up opening trainer mode, and starts it or continues it with the next problem).'''
+    tt_mode = (visitor == tactics_visitor)
+
     # Load generator if first time
-    if G.ot_gen == None and G.ot_board != None:
-        G.ot_gen = rep_visitor(G.ot_board, G.player, only_sr)
+    if G.ot_gen == None:
+        G.ot_gen = visitor(G.ot_board, G.player, only_sr)
 
     # Get next position
     try:
@@ -589,11 +591,11 @@ def setup_ot_mode(only_sr=False):
     # Set new answer + callback, and load new board
     if only_sr:
         if random.random() < G.SR_FULL_LINE_PROBABILITY:
-            return sr_full_line_setup(create_board_answer_stack(b, m))
+            return sr_full_line_setup(create_board_answer_stack(b, m), True, tt_mode)
         else:
             G.incorrect_answers = 0
             G.starting_time = time.time()
-            G.move_completed_callback = sr_move_completed_callback(m) # This is a function
+            G.move_completed_callback = sr_move_completed_callback(m, setup_ot_mode, tt_mode) # This is a function
     else:
         G.move_completed_callback = ot_move_completed_callback(m) # This is a function
     load_new_game_from_board_history(b)
@@ -601,7 +603,7 @@ def setup_ot_mode(only_sr=False):
 
     return False
 
-def sr_full_line_setup(stack, only_sr=True):
+def sr_full_line_setup(stack, only_sr=True, tt_mode=False):
     '''Similar to sr_move_completed_callback, except covers entire line.'''
     # The only_sr argument is completely ignored, just meant for compatibilty 
     # for 'setup_function' use in sr_move_completed_callback
@@ -617,21 +619,28 @@ def sr_full_line_setup(stack, only_sr=True):
     G.starting_time = time.time()
     load_new_game_from_board_history(board)
     display_status(("(%d/%d) " + board_moves(board)) % G.ot_progress)
-    new_setup = lambda x : sr_full_line_setup(stack, x) # Closure
-    G.move_completed_callback = sr_move_completed_callback(answer, new_setup)
+    new_setup = lambda x : sr_full_line_setup(stack, x, tt_mode) # Closure
+    G.move_completed_callback = sr_move_completed_callback(answer, new_setup, tt_mode)
         
     return False
 
-def sr_move_completed_callback(answer, setup_function=setup_ot_mode):
+def sr_move_completed_callback(answer, setup_function=setup_ot_mode, tt_mode=False):
     '''Similar to ot_move_completed_callback, except for spaced repetition practice.'''
     if answer:
         def f(guess):
             if guess == answer:
                 # Correct answer
                 # Update learning data
-                G.rep.update_learning_data(G.player, G.g.parent.readonly_board, answer, G.incorrect_answers, time.time() - G.starting_time)
+                if tt_mode:
+                    G.rep.update_learning_data(None, G.g.parent.readonly_board, answer, G.incorrect_answers, time.time() - G.starting_time)
+                else:
+                    G.rep.update_learning_data(G.player, G.g.parent.readonly_board, answer, G.incorrect_answers, time.time() - G.starting_time)
+                G.rep.flush()
                 # Update last modified date for directory monitors
-                G.rep.update_modified_date(G.player, G.g.parent.readonly_board.turn)
+                if tt_mode:
+                    G.rep.update_modified_date(None, G.g.parent.readonly_board.turn)
+                else:
+                    G.rep.update_modified_date(G.player, G.g.parent.readonly_board.turn)
                 # Update progress
                 G.ot_progress = (G.ot_progress[0] + (not G.incorrect_answers), G.ot_progress[1] + 1)
 

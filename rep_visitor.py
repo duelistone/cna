@@ -5,8 +5,13 @@ import datetime, random
 import mmrw
 import chess, chess.polyglot, time
 from chess_tools import board_moves
+from bisect import bisect_left
 
 '''Module to visit repertoire nodes that are children of given board.'''
+
+# Idea: Start a background thread to start looking for next rep_visitor node
+# since this search can be slow due to a giant tree traversal that is hard
+# to avoid.
 
 def rep_visitor(board, player=None, only_sr=False, return_entry=False):
     '''Visits repertoire nodes that are children of given board in dfs.
@@ -17,13 +22,7 @@ def rep_visitor(board, player=None, only_sr=False, return_entry=False):
         # For other nodes, this is redundant due to loop below
         hashValue = chess.polyglot.zobrist_hash(board)
         visited_hashes.add(hashValue)
-        subrep = G.rep.ww
-        if player == chess.WHITE and board.turn == chess.BLACK:
-            subrep = G.rep.wb
-        elif player == chess.BLACK and board.turn == chess.WHITE:
-            subrep = G.rep.bw
-        elif player == chess.BLACK and board.turn == chess.BLACK:
-            subrep = G.rep.bb
+        subrep = G.rep.get_mmrw(player, board.turn)
         for entry in subrep.find_all(board):
             child_board = board.copy()
             child_board.push(entry.move)
@@ -41,6 +40,52 @@ def rep_visitor(board, player=None, only_sr=False, return_entry=False):
                 yield from rep_visitor(board.copy(), player, only_sr, return_entry)
                 board.pop()
     return rep_visitor(board, player, only_sr, return_entry)
+
+def tactics_visitor(board=None, only_sr=False, return_entry=False):
+    '''Visits tactics repertoire nodes that are either the exercises starting from
+    the given initial position, or visits all tactics repertoire nodes
+    if board is None. The positions selected can also be filtered by only 
+    selecting entries with a nonzero learn value.'''
+    visited_hashes = set()
+
+    def exercise_visitor(board, player, only_sr=False, return_entry=False):
+        hashValue = chess.polyglot.zobrist_hash(board)
+        visited_hashes.add(hashValue)
+        for entry in G.rep.t.find_all(board):
+            child_board = board.copy()
+            child_board.push(entry.move)
+            child_hash = chess.polyglot.zobrist_hash(child_board)
+            if child_hash not in visited_hashes:
+                if board.turn == player and \
+                    (only_sr == False or \
+                    (entry.learn > 0 and \
+                    (return_entry == True or entry.learn <= int(time.time() / 60)))):
+                    if not return_entry:
+                        yield board.copy(), entry.move
+                    else:
+                        yield board.copy(), entry.move, entry
+                board.push(entry.move)
+                yield from exercise_visitor(board.copy(), player, only_sr, return_entry)
+                board.pop()
+
+    def tactics_visitor(board=None, only_sr=False, return_entry=False):
+        if board != None:
+            # Look up board in repertoire's initial positions
+            # Should be binary search to save time
+            index = bisect_left(G.rep.initial_position_hashes, board)
+            if G.rep.initial_positions[index] == board:
+                # Go through exercise
+                yield from exercise_visitor(board, board.turn, only_sr, return_entry)
+            else:
+                # Useless board given
+                return
+        else:
+            # Loop through initial positions
+            for b in G.rep.initial_positions:
+                yield from exercise_visitor(b, b.turn, only_sr, return_entry)
+
+    return tactics_visitor(board, only_sr, return_entry=False)
+
 
 def quickselect_partition(f, l, left, right, pivotIndex):
     '''Helper function for quickselect based on Wikipedia's algorithm.'''
@@ -105,7 +150,12 @@ def repeated_nodes(subrep):
         hashes_set.add((entry.key, entry.raw_move))
 
 def flat_rep_visitor(player):
-    subrep = G.rep.ww if player == chess.WHITE else G.rep.bb
+    if player == chess.WHITE:
+        subrep = G.rep.ww
+    elif player == chess.BLACK:
+        subrep = G.rep.bb
+    else:
+        subrep = G.rep.t
     for entry in subrep:
         if entry.learn > 0:
             yield entry
@@ -128,7 +178,6 @@ def get_learning_schedule(board, player, max_lines=100, must_use_tree_visitor=Fa
         max_lines = len(entries_and_boards)
     # Now we sort the 'max_lines' most urgent entries
     # This is orders of magnitude faster than the iterating through rep_visitor step
-    # TODO: Fix (sorting is incorrect right now, quickselect is probably to blame)
     key_function = lambda x : x[0].learn
     quickselect(key_function, max_lines, entries_and_boards)
     entries_and_boards[:max_lines] = sorted(entries_and_boards[:max_lines], key=key_function)

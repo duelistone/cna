@@ -4,6 +4,7 @@ import mmap, os, os.path, time, sys, subprocess
 import chess, chess.polyglot, chess.pgn
 from spaced_repetition import *
 from chess_tools import *
+from bisect import bisect_left
 
 class MemoryMappedReaderWriter(chess.polyglot.MemoryMappedReader):
     '''Extends python-chess's polyglot memory mapped reader to also modify them and write new entries.'''
@@ -145,11 +146,16 @@ class Repertoire(object):
         self.wb = MemoryMappedReaderWriter(os.sep.join([directory, 'white', 'black']))
         self.bw = MemoryMappedReaderWriter(os.sep.join([directory, 'black', 'white']))
         self.bb = MemoryMappedReaderWriter(os.sep.join([directory, 'black', 'black']))
-        comments_filename = directory + os.sep + 'comments'
+        self.t  = MemoryMappedReaderWriter(os.sep.join([directory, 'tactics']))
+
+        # If some of code below takes too long to run and isn't necessary
+        # at startup, consider putting it in a thread and joining the thread
+        # when necessary
+
+        comments_filename = os.sep.join([directory, 'comments'])
         if os.path.getsize(comments_filename) == 0:
             fil = open(comments_filename, 'w')
-            # TODO: Create a constant to remove the 256 below
-            fil.write(256 * '\0') # Change if comment entry size changes
+            fil.write(G.COMMENT_ENTRY_SIZE * '\0') # Change if comment entry size changes
             fil.close()
         comments_file = os.open(comments_filename, os.O_RDWR)
         try:
@@ -159,8 +165,57 @@ class Repertoire(object):
             print(e, file=sys.stderr)
             pass
 
-        if None in [self.ww.mmap, self.wb.mmap, self.bw.mmap, self.bb.mmap]:
+        # Load initial positions
+        self.initial_positions = []
+        self.initial_position_hashes = []
+        try:
+            fil = open(os.sep.join([directory, 'initial_positions']), 'r')
+            for line in fil:
+                try:
+                    b = chess.Board(fen=line.strip())
+                    self.initial_positions.append(b)
+                    self.initial_position_hashes.append(chess.polyglot.zobrist_hash(b))
+                except:
+                    continue
+            fil.close()
+        except FileNotFoundError:
+            pass
+
+        if None in [self.ww.mmap, self.wb.mmap, self.bw.mmap, self.bb.mmap, self.t]:
             return None
+
+    def save_initial_positions_to_file(self):
+        fil = open(os.sep.join([self.directory, 'initial_positions']), 'w')
+        for line in map(lambda x : x.fen(), self.initial_positions):
+            print(line, file=fil)
+        fil.close()
+
+    def add_initial_position(self, b, save=False):
+        h = chess.polyglot.zobrist_hash(b)
+        index = bisect_left(self.initial_position_hashes, h)
+        self.initial_positions.insert(index, b)
+        self.initial_position_hashes.insert(index, h)
+        if save:
+            self.save_initial_positions_to_file()
+
+    def delete_initial_position(self, b, delete_orphans=False, save=False):
+        h = chess.polyglot.zobrist_hash(b)
+        index = bisect_left(self.initial_position_hashes)
+        del self.initial_positions[index]
+        del self.initial_position_hashes[index]
+        if delete_orphans:
+            self.delete_orphaned_tactics()
+        if save:
+            self.save_initial_positions_to_file()
+
+    def delete_orphaned_tactics(self):
+        hashes = set()
+        for b, _ in tactics_visitor():
+            hashes.add(chess.polyglot.zobrist_hash(b))
+        # This can probably be more efficient, as each delete might be expensive
+        for i in range(0, len(self.t)):
+            if self.t[i].key not in hashes:
+                del self.t[i]
 
     def set_comment(self, position, comment):
         '''Saves the comment for the position in the self.comments file.'''
@@ -207,18 +262,22 @@ class Repertoire(object):
             return self.bw
         if player == chess.BLACK and turn_color == chess.BLACK:
             return self.bb
+        if player == None:
+            return self.t
 
     def flush(self):
         self.ww.mmap.flush()
         self.wb.mmap.flush()
         self.bw.mmap.flush()
         self.bb.mmap.flush()
+        self.t.mmap.flush()
 
     def close(self):
         self.ww.mmap.close()
         self.wb.mmap.close()
         self.bw.mmap.close()
         self.bb.mmap.close()
+        self.t.mmap.close()
 
     def appendWhite(self, p, m, weight=1, learn=0):
         if p.turn == chess.WHITE:
@@ -231,6 +290,11 @@ class Repertoire(object):
             self.bw.add_position_and_move(p, m, weight, learn)
         else:
             self.bb.add_position_and_move(p, m, weight, learn)
+
+    def appendTactic(self, p, m, weight=None, learn=None):
+        if weight == None or learn == None:
+            weight, learn = export_values(2.5, 0, int(time.time() / 60))
+        self.t.add_position_and_move(p, m, weight, learn)
 
     def findMove(self, perspective, p):
         mmrw = self.get_mmrw(perspective, p.turn)
@@ -296,6 +360,17 @@ class Repertoire(object):
 
     def removeBlack(self, p, move=None):
         return self.remove(chess.BLACK, p, move)
+
+    def removeTactic(self, p, move=None):
+        # Less efficient attempt than remove method
+        h = chess.polyglot.zobrist_hash(p)
+        index = mmrw.bisect_key_left(h)
+        for i in range(index, len(self.t)):
+            if self.t[i].key == h:
+                if move == None or move == self.t[i].move:
+                    del self.t[i]
+            else:
+                break
 
     def add_games(self, games=[], filenames=[]):
         # Do nothing case
@@ -393,15 +468,7 @@ class Repertoire(object):
 
     def make_position_learnable(self, position, perspective, override=False):
         weight, learn = export_values(2.5, 0, int(time.time() / 60))
-        mmrw = None
-        if perspective == chess.WHITE and position.turn == chess.WHITE:
-            mmrw = self.ww
-        elif perspective == chess.WHITE and position.turn == chess.BLACK:
-            mmrw = self.wb
-        elif perspective == chess.BLACK and position.turn == chess.WHITE:
-            mmrw = self.bw
-        else:
-            mmrw = self.bb
+        mmrw = self.get_mmrw(perspective, position.turn)
         position_hash = chess.polyglot.zobrist_hash(position)
         index = mmrw.bisect_key_left(position_hash)
         while index < len(mmrw):
@@ -414,27 +481,6 @@ class Repertoire(object):
             if entry.learn == 0 or override == True:
                 mmrw.edit_entry(index, position, entry.move, weight, learn)
             index += 1
-
-    # def is_position_due(self, position, perspective):
-    #     mmrw = None
-    #     if perspective == chess.WHITE and position.turn == chess.WHITE:
-    #         mmrw = self.ww
-    #     elif perspective == chess.WHITE and position.turn == chess.BLACK:
-    #         mmrw = self.wb
-    #     elif perspective == chess.BLACK and position.turn == chess.WHITE:
-    #         mmrw = self.bw
-    #     else:
-    #         mmrw = self.bb
-    #     position_hash = chess.polyglot.zobrist_hash(position)
-    #     index = mmrw.bisect_key_left(position_hash)
-    #     while index < len(mmrw):
-    #         entry = mmrw[index]
-    #         if entry.key != position_hash:
-    #             break
-    #         if entry.learn > 0 and entry.learn <= int(time.time() / 60):
-    #             return True
-    #         index += 1
-    #     return False
 
     def update_modified_date(self, player, turn):
         mmrw = self.get_mmrw(player, turn)

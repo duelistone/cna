@@ -5,6 +5,7 @@ python-chess module. Also includes a random search function, and a copy game fun
 
 import random, chess.pgn
 
+# Warning: this name is somewhat deceiving
 def dfs(node, color=None):
     '''Generates games, one for each line encountered in a
     depth first search from beginning to end.'''
@@ -17,6 +18,11 @@ def dfs(node, color=None):
         children = filter(lambda x : passesMainTest(x, color), children)
     for var in children:
         yield from dfs(var, color)
+
+def real_dfs(node):
+    yield node
+    for child in node.variations:
+        yield from real_dfs(child)
 
 def passesMainTest(node, color):
     '''Checks if the last move was made by color, or 

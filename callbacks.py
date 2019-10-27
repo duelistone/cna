@@ -1398,59 +1398,64 @@ def puzzle_file_name_callback(*args):
 @gui_callback
 @documented
 def save_puzzle_callback(*args):
-    fil = open(G.puzzle_file, 'a')
-    print(G.g.readonly_board.fen(), file=fil)
-    if len(args) > 0:
-        # Add comment about position
-        print(args[0], file=fil)
-    else:
-        # Add empty line if no comment
-        print("", file=fil)
-    fil.close()
+    G.rep.add_initial_position(G.g.board(), save=True)
+    color = G.g.board().turn
+    for node in real_dfs(G.g):
+        try:
+            child = node.variation(0)
+        except IndexError:
+            continue
+        b = node.board()
+        if b.turn == color:
+            G.rep.appendTactic(b, child.move)
+        else:
+            G.rep.appendTactic(b, child.move, 1, 0) # Don't learn both sides
+    G.rep.flush()
+
     return False
 
-@gui_callback
-@documented
-def load_puzzle_callback(*args):
-    fil = open(G.puzzle_file, 'r')
-    if len(args) > 0:
-        # A specific puzzle was specified by index
-        try:
-            puzzle_index = int(args[0])
-        except:
-            display_status("Puzzle index entered is not an integer.")
-            fil.close()
-            return False
-        for i in range(2 * puzzle_index):
-            fil.readline()
-        position_fen = fil.readline().strip()
-        position_comment = fil.readline().strip()
-        fil.close()
-        if position_fen != "":
-            load_new_game_from_board(chess.Board(position_fen))
-            display_status(position_comment)
-            return False
-        else:
-            display_status("Puzzle index given too large.")
-            return False
-    else:
-        # Load random puzzle
-        puzzles = []
-        comments = []
-        while True:
-            position = fil.readline().strip()
-            if position == "":
-                break
-            puzzles.append(position)
-            comments.append(fil.readline().strip())
-        fil.close()
-        if len(puzzles) == 0:
-            display_status("No puzzles available!")
-            return False
-        puzzle_number = random.randrange(len(puzzles))
-        load_new_game_from_board(chess.Board(puzzles[puzzle_number]))
-        display_status(comments[puzzle_number])
-        return False
+#@gui_callback
+#@documented
+#def load_puzzle_callback(*args):
+#    fil = open(G.puzzle_file, 'r')
+#    if len(args) > 0:
+#        # A specific puzzle was specified by index
+#        try:
+#            puzzle_index = int(args[0])
+#        except:
+#            display_status("Puzzle index entered is not an integer.")
+#            fil.close()
+#            return False
+#        for i in range(2 * puzzle_index):
+#            fil.readline()
+#        position_fen = fil.readline().strip()
+#        position_comment = fil.readline().strip()
+#        fil.close()
+#        if position_fen != "":
+#            load_new_game_from_board(chess.Board(position_fen))
+#            display_status(position_comment)
+#            return False
+#        else:
+#            display_status("Puzzle index given too large.")
+#            return False
+#    else:
+#        # Load random puzzle
+#        puzzles = []
+#        comments = []
+#        while True:
+#            position = fil.readline().strip()
+#            if position == "":
+#                break
+#            puzzles.append(position)
+#            comments.append(fil.readline().strip())
+#        fil.close()
+#        if len(puzzles) == 0:
+#            display_status("No puzzles available!")
+#            return False
+#        puzzle_number = random.randrange(len(puzzles))
+#        load_new_game_from_board(chess.Board(puzzles[puzzle_number]))
+#        display_status(comments[puzzle_number])
+#        return False
 
 @gui_callback
 @documented
@@ -1483,6 +1488,7 @@ def reset_learn_callback(*args):
     '''Resets spaced repetition learning data as new item.'''
     if G.rep:
         G.rep.make_position_learnable(G.g.board(), G.player, override=True)
+        G.rep.flush()
     return False
 
 @gui_callback
