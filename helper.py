@@ -590,12 +590,13 @@ def setup_ot_mode(only_sr=False, visitor=rep_visitor):
 
     # Set new answer + callback, and load new board
     if only_sr:
-        if random.random() < G.SR_FULL_LINE_PROBABILITY:
-            return sr_full_line_setup(create_board_answer_stack(b, m), True, tt_mode)
+        if not tt_mode and random.random() < G.SR_FULL_LINE_PROBABILITY:
+            return sr_full_line_setup(create_board_answer_stack(b, m), True)
         else:
             G.incorrect_answers = 0
             G.starting_time = time.time()
-            G.move_completed_callback = sr_move_completed_callback(m, setup_ot_mode, tt_mode) # This is a function
+            setup_function = lambda : setup_ot_mode(only_sr=only_sr, visitor=visitor) # Closure
+            G.move_completed_callback = sr_move_completed_callback(m, setup_function, tt_mode) # This is a function
     else:
         G.move_completed_callback = ot_move_completed_callback(m) # This is a function
     load_new_game_from_board_history(b)
@@ -603,7 +604,7 @@ def setup_ot_mode(only_sr=False, visitor=rep_visitor):
 
     return False
 
-def sr_full_line_setup(stack, only_sr=True, tt_mode=False):
+def sr_full_line_setup(stack, only_sr=True):
     '''Similar to sr_move_completed_callback, except covers entire line.'''
     # The only_sr argument is completely ignored, just meant for compatibilty 
     # for 'setup_function' use in sr_move_completed_callback
@@ -619,8 +620,8 @@ def sr_full_line_setup(stack, only_sr=True, tt_mode=False):
     G.starting_time = time.time()
     load_new_game_from_board_history(board)
     display_status(("(%d/%d) " + board_moves(board)) % G.ot_progress)
-    new_setup = lambda x : sr_full_line_setup(stack, x, tt_mode) # Closure
-    G.move_completed_callback = sr_move_completed_callback(answer, new_setup, tt_mode)
+    new_setup = lambda : sr_full_line_setup(stack, only_sr) # Closure
+    G.move_completed_callback = sr_move_completed_callback(answer, new_setup)
         
     return False
 
@@ -645,7 +646,7 @@ def sr_move_completed_callback(answer, setup_function=setup_ot_mode, tt_mode=Fal
                 G.ot_progress = (G.ot_progress[0] + (not G.incorrect_answers), G.ot_progress[1] + 1)
 
                 # Prepare next
-                setup_function(True)
+                setup_function()
             elif guess in G.rep.findMoves(G.player, G.g.parent.readonly_board):
                 # Valid alternate, give another try with clock reset
                 G.handlers["go_back_callback"]()
