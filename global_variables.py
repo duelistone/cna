@@ -110,7 +110,7 @@ move_completed_callback = lambda x : None
 
 # Engine
 engine_commands = ["leela", "stockfish", "ethereal"] # Used for order
-engine_settings = {"stockfish" : {"Hash" : 8192, "Threads" : 8, "Contempt" : 0}, "leela" : {}, "ethereal" : {"Hash" : 4096, "Threads" : 4}}
+engine_settings = {"stockfish" : {"Hash" : 12288, "Threads" : 12, "Contempt" : 0}, "leela" : {}, "ethereal" : {"Hash" : 4096, "Threads" : 4}}
 engines = [] # Have to be defined elsewhere due to engine.py dependency on this file
 current_engine_index = 0
 # Output related

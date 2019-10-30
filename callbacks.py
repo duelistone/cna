@@ -1771,6 +1771,7 @@ def key_press_callback(widget, event):
 def destroy_main_window_callback(widget=None):
     '''Destroy main window callback. Provides cleanup code for things like stockfish, etc, as well.'''
     G.glib_mainloop.quit()
+    cleanup()
     return False
 
 def signal_handler(signum=None):
@@ -1778,4 +1779,10 @@ def signal_handler(signum=None):
     # signum is ignored because this handler is only registered elsewhere
     # for SIGINT and SIGTERM. If that changes, this function needs to be changed
     # appropriately.
+    cleanup()
     exit(0)
+
+def cleanup():
+    for e in G.engines:
+        if e.engine_async_loop != None:
+            e.engine_async_loop.stop()

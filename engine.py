@@ -142,12 +142,6 @@ class AnalysisEngine(object):
 
         return "\n".join(lines)
 
-    def __del__(self):
-        try:
-            self.transport.send_signal(signal.SIGTERM)
-        except:
-            pass
-
 # Engine match
 async def engine_match(white_engine_name, black_engine_name, time_control, start_node):
     try:
