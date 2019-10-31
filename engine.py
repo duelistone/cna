@@ -111,32 +111,53 @@ class AnalysisEngine(object):
         if len(self.latest_engine_lines) != G.multipv:
             self.latest_engine_lines = [""] * G.multipv
 
+        # Keep track if upper bound or lower bound or normal output line
+        bound = " "
+        try:
+            if info.get("lowerbound"):
+                bound = '\u2265'
+        except KeyError:
+            pass
+        try:
+            if info.get("upperbound"):
+                bound = '\u2264'
+        except KeyError:
+            pass
+
         # Other lines (PVs)
         # Note that each input has only information about one line
         words = []
         words.append(str(info.get("depth")))
-        words.append(str(info.get("score").pov(chess.WHITE)))
+        words.append(bound + str(info.get("score").pov(chess.WHITE)))
+
         # Go through move list
-        sanList = []
-        p = self.board.copy()
-        for move in info.get("pv"):
-            try:
-                sanMove = p.san(move)
-                p.push(move)
-            except:
-                break
-            if p.turn == chess.BLACK:
-                sanList.append(str(p.fullmove_number) + '. ' + sanMove)
+        if bound == ' ':
+            sanList = []
+            p = self.board.copy()
+            for move in info.get("pv"):
+                try:
+                    sanMove = p.san(move)
+                    p.push(move)
+                except:
+                    break
+                if p.turn == chess.BLACK:
+                    sanList.append(str(p.fullmove_number) + '. ' + sanMove)
+                else:
+                    sanList.append(sanMove)
+            if len(sanList) > 0 and self.board.turn == chess.BLACK:
+                sanList[0] = str(self.board.fullmove_number) + '...' + sanList[0]
+            if G.show_engine_pv:
+                words.extend(sanList)
+        else:
+            if info.get("multipv") != None:
+                words += self.latest_engine_lines[info.get("multipv") - 1].split()[2:]
             else:
-                sanList.append(sanMove)
-        if len(sanList) > 0 and self.board.turn == chess.BLACK:
-            sanList[0] = str(self.board.fullmove_number) + '...' + sanList[0]
-        if G.show_engine_pv:
-            words.extend(sanList)
+                words += self.latest_engine_lines[0].split()[2:]
+
+        # Some engines (leela) don't specify multipv in multipv=1 mode, hence the casework
         if info.get("multipv") != None:
             self.latest_engine_lines[info.get("multipv") - 1] = " ".join(words)
         else:
-            # Some engines (leela) don't specify multipv in multipv=1 mode.
             self.latest_engine_lines[0] = " ".join(words)
         lines.extend(self.latest_engine_lines)
 
