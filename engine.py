@@ -150,13 +150,20 @@ class AnalysisEngine(object):
                 words.extend(sanList)
         else:
             if info.get("multipv") != None:
-                words += self.latest_engine_lines[info.get("multipv") - 1].split()[2:]
+                try:
+                    words += self.latest_engine_lines[info.get("multipv") - 1].split()[2:]
+                except IndexError:
+                    pass
             else:
                 words += self.latest_engine_lines[0].split()[2:]
 
         # Some engines (leela) don't specify multipv in multipv=1 mode, hence the casework
         if info.get("multipv") != None:
-            self.latest_engine_lines[info.get("multipv") - 1] = " ".join(words)
+            # try/except is in case G.multipv is changed...this should be made less hacky
+            try:
+                self.latest_engine_lines[info.get("multipv") - 1] = " ".join(words)
+            except IndexError:
+                pass
         else:
             self.latest_engine_lines[0] = " ".join(words)
         lines.extend(self.latest_engine_lines)
