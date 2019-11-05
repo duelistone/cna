@@ -84,7 +84,7 @@ def tactics_visitor(board=None, only_sr=False, return_entry=False):
             for b in G.rep.initial_positions:
                 yield from exercise_visitor(b, b.turn, only_sr, return_entry)
 
-    return tactics_visitor(board, only_sr, return_entry=False)
+    return tactics_visitor(board, only_sr, return_entry)
 
 
 def quickselect_partition(f, l, left, right, pivotIndex):
@@ -126,7 +126,7 @@ def clear_orphaned_learn_values(player, only_print=True):
     start_time = int(time.time() / 60)
     entries_and_boards = get_learning_schedule(chess.Board(), player, 0, True)
     hashes_set = set(map(lambda x : (x[0].key, x[0].raw_move), entries_and_boards))
-    subrep = G.rep.ww if player == chess.WHITE else G.rep.bb
+    subrep = G.rep.ww if player == chess.WHITE else (G.rep.bb if player == chess.BLACK else G.rep.t)
     counter = 0
     for i, entry in enumerate(subrep):
         if (entry.key, entry.raw_move) not in hashes_set and entry.learn > 0:
@@ -166,7 +166,10 @@ def get_learning_schedule(board, player, max_lines=100, must_use_tree_visitor=Fa
     entries_and_boards = []
     # Get spaced repetition entries
     if max_lines > 0 or must_use_tree_visitor:
-        visitor = rep_visitor(board, player, only_sr=True, return_entry=True)
+        if player != None:
+            visitor = rep_visitor(board, player, only_sr=True, return_entry=True)
+        else:
+            visitor = tactics_visitor(return_entry=True)
         for b, m, entry in visitor:
             entries_and_boards.append((entry, b))
     else:

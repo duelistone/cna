@@ -66,9 +66,18 @@ class MemoryMappedReaderWriter(chess.polyglot.MemoryMappedReader):
             self[i] = self[i + 1]
         self.mmap.resize(len(self.mmap) - 16)
 
+    def __contains__(self, entry):
+        index = self.bisect_key_left(entry.key)
+        suggestion = self[index]
+        if suggestion.key == entry.key and suggestion.move == entry.move:
+            return True
+        return False
+
     def add_position_and_move(self, p, m, weight=1, learn=0):
         entry = makeEntry(p, m, weight, learn)
-        self.add_entry(entry)
+        # We do nothing if entry with same position/move combo is already in mmap
+        if entry not in self:
+            self.add_entry(entry)
 
 class CommentsMMRW(mmap.mmap):
     def __init__(self, fd, length):
