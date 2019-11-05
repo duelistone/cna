@@ -139,6 +139,7 @@ def clear_orphaned_learn_values(player, only_print=True):
 
 def repeated_nodes(subrep):
     # Just for debugging
+    # If order can be counted on, it is much faster to implement a uniq style alg
     hashes_set = set()
     for entry in subrep:
         if (entry.key, entry.raw_move) in hashes_set and entry.learn > 0:

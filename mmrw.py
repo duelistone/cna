@@ -364,7 +364,7 @@ class Repertoire(object):
     def removeTactic(self, p, move=None):
         # Less efficient attempt than remove method
         h = chess.polyglot.zobrist_hash(p)
-        index = mmrw.bisect_key_left(h)
+        index = self.t.bisect_key_left(h)
         for i in range(index, len(self.t)):
             if self.t[i].key == h:
                 if move == None or move == self.t[i].move:
