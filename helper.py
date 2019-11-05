@@ -578,7 +578,7 @@ def setup_ot_mode(only_sr=False, visitor=rep_visitor):
 
     # Load generator if first time
     if G.ot_gen == None:
-        G.ot_gen = visitor(G.ot_board, G.player, only_sr)
+        G.ot_gen = visitor(board=G.ot_board, player=G.player, only_sr=only_sr)
 
     # Get next position
     try:

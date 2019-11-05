@@ -41,7 +41,7 @@ def rep_visitor(board, player=None, only_sr=False, return_entry=False):
                 board.pop()
     return rep_visitor(board, player, only_sr, return_entry)
 
-def tactics_visitor(board=None, only_sr=False, return_entry=False):
+def tactics_visitor(board=None, only_sr=False, return_entry=False, **kw):
     '''Visits tactics repertoire nodes that are either the exercises starting from
     the given initial position, or visits all tactics repertoire nodes
     if board is None. The positions selected can also be filtered by only 
