@@ -1700,7 +1700,7 @@ def entry_bar_key_press_callback(widget, event):
                     display_status("No matches for %s." % partial)
         elif len(words) > 1:
             # Other type of completion
-            # For now, we'll just assume this should be file, color, or NAG completion
+            # For now, we'll just assume this should be file, color, engine, or NAG completion
             partial = words[-1]
             prev = " ".join(words[:-1]) + " "
             path, tail = os.path.split(partial)
@@ -1711,7 +1711,7 @@ def entry_bar_key_press_callback(widget, event):
                 return True
             # NAG or color completion
             # TODO: Only apply these for appropriate commands
-            candidates += list(filter(lambda x : x[0:len(tail)] == tail, G.nag_set.union(set(G.colors))))
+            candidates += list(filter(lambda x : x[0:len(tail)] == tail, G.nag_set.union(set(G.colors)).union(set(G.engine_commands))))
             if len(candidates) > 0:
                 widget.set_text(prev + path + (os.sep if path != '' else '') + reduce(commonString, candidates))
                 display_status(", ".join(candidates))
