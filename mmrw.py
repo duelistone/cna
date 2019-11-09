@@ -69,8 +69,11 @@ class MemoryMappedReaderWriter(chess.polyglot.MemoryMappedReader):
     def __contains__(self, entry):
         index = self.bisect_key_left(entry.key)
         suggestion = self[index]
-        if suggestion.key == entry.key and suggestion.move == entry.move:
-            return True
+        while suggestion.key == entry.key:
+            if suggestion.move == entry.move:
+                return True
+            index += 1
+            suggestion = self[index]
         return False
 
     def add_position_and_move(self, p, m, weight=1, learn=0):

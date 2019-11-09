@@ -1401,18 +1401,32 @@ def save_puzzle_callback(*args):
     G.rep.add_initial_position(G.g.board(), save=True)
     color = G.g.board().turn
     for node in real_dfs(G.g):
-        try:
-            child = node.variation(0)
-        except IndexError:
-            continue
-        b = node.board()
-        if b.turn == color:
-            G.rep.appendTactic(b, child.move)
+        if len(args) > 0 and args[0] == 'all':
+            indices = range(0, len(node.variations))
         else:
-            G.rep.appendTactic(b, child.move, 1, 0) # Don't learn both sides
+            indices = [0] if len(node.variations) > 0 else []
+        for i in indices:
+            child = node.variation(i)
+            b = node.board()
+            if b.turn == color:
+                G.rep.appendTactic(b, child.move)
+            else:
+                G.rep.appendTactic(b, child.move, 1, 0) # Don't learn both sides
     G.rep.flush()
 
     return False
+
+@gui_callback
+@documented
+def add_tactics_child(*args):
+    '''Adds the parent board and move leading up to current position to tactics repertoire.'''
+    if G.g.parent != None:
+        parent_board = G.g.parent.readonly_board
+        if G.player == parent_board.turn:
+            G.rep.appendTactic(parent_board, G.g.move)
+        else:
+            # Don't learn if move from opposite player
+            G.rep.appendTactic(parent_board, G.g.move, 1, 0)
 
 #@gui_callback
 #@documented
