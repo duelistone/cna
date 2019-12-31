@@ -756,12 +756,17 @@ def board_draw_callback(widget, cr):
             # Color light/dark squares
             if (x + y) % 2 == 0:
                 # Dark squares
-                cr.set_source_rgb(0.450980, 0.53725, 0.713725)
+                # TODO: Make global setting and allow change
+                cr.set_source_rgb(182/256, 137/256, 100/256) # lichess
+                # cr.set_source_rgb(0.450980, 0.53725, 0.713725) # Blue
+                # cr.set_source_rgb(201/256, 171/256, 131/256) # Tan
+                # cr.set_source_rgb(108/256, 173/256, 76/256) # Green
                 cr.rectangle(0, 0, square_size, square_size)
                 cr.fill()
             else:
                 # Light squares
-                cr.set_source_rgb(0.952941, 0.952941, 0.952941)
+                #cr.set_source_rgb(0.952941, 0.952941, 0.952941)
+                cr.set_source_rgb(241/256, 218/256, 182/256) # lichess
                 cr.rectangle(0, 0, square_size, square_size)
                 cr.fill()
 
@@ -1785,6 +1790,9 @@ def key_press_callback(widget, event):
 def destroy_main_window_callback(widget=None):
     '''Destroy main window callback. Provides cleanup code for things like stockfish, etc, as well.'''
     G.glib_mainloop.quit()
+    for e in G.engines:
+        if e.transport != None:
+            e.transport.send_signal(signal.SIGCONT)
     return False
 
 def signal_handler(signum=None):

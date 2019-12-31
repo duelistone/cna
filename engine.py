@@ -106,7 +106,7 @@ class AnalysisEngine(object):
                 self.latest_engine_stats[i] = e
             if i == 2:
                 self.latest_engine_stats[i] /= 10.0
-        lines.append("%s Time: %.1f TB: %d Hash: %.1f%% NPS: %.0f Nodes: %d" % tuple([self.command] + self.latest_engine_stats))
+        lines.append("{0} Time: {1:.1f} TB: {2:,} Hash: {3:.1f}% NPS: {4} Nodes: {5:,}".format(*([self.command] + self.latest_engine_stats)))
 
         if len(self.latest_engine_lines) != G.multipv:
             self.latest_engine_lines = [""] * G.multipv
