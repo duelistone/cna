@@ -390,6 +390,31 @@ def load_new_game_from_pgn_file(file_name):
     update_game_info()
     return True
 
+def parse_piece_list_word(word):
+    # Determine piece type
+    if len(word) < 1:
+        return None
+    piece_types = ['N', 'B', 'R', 'Q', 'K']
+    piece_type = chess.PAWN
+    if word[0] in piece_types:
+        piece_type = 2 + piece_types.index(word[0]) # python-chess implementation dependent
+    elif word[0] not in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']:
+        return None
+    
+    # Determine locations
+    results = []
+    for i in range(1 if piece_type != chess.PAWN else 0, len(word), 2):
+        location_name = word[i:i + 2]
+        if len(word) < 2:
+            break
+        try:
+            square = chess.SQUARE_NAMES.index(location_name)
+        except:
+            break
+        results.append((piece_type, square))
+
+    return results
+
 def load_new_game_from_piece_list(piece_list_string):
     words = piece_list_string.split()
     isWhiteMarker = lambda x : x.lower() in ["w:", "w", "white:", "white"]
@@ -416,15 +441,9 @@ def load_new_game_from_piece_list(piece_list_string):
             continue
 
         # Get square
-        try:
-            square = chess.SQUARE_NAMES.index(words[i][-2:])
-            if len(words[i]) == 2:
-                piece_type = chess.PAWN
-            else:
-                piece_type = [None, None, 'N', 'B', 'R', 'Q', 'K'].index(words[i][0])
-            currentList.append((piece_type, square))
-        except:
-            return False
+        parsed_word = parse_piece_list_word(words[i])
+        if parsed_word != None:
+            currentList.extend(parsed_word)
 
         i += 1
 
@@ -442,7 +461,7 @@ def load_new_game_from_piece_list(piece_list_string):
     try:
         game = chess.pgn.Game()
         game.setup(board)
-        load_new_game_from_game(game)
+        load_new_game_from_game(game, player=turn)
     except:
         return False
 
