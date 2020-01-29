@@ -1514,8 +1514,7 @@ def reset_learn_callback(*args):
 @documented
 def reset_learn_timer_callback(*args):
     '''Resets spaced repetition information (for use when going afk or mouse slipping in session).'''
-    G.starting_time = time.time()
-    G.incorrect_answers = 0
+    G.ot_info.reset_question_info()
     display_status("Reset training timer.")
     return False
 

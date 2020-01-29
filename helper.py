@@ -584,7 +584,7 @@ def setup_ot_mode(only_sr=False, visitor=rep_visitor):
     try:
         b, m = next(G.ot_gen)
     except StopIteration:
-        display_status("Training complete! (%d/%d)" % G.ot_progress)
+        display_status("Training complete! (%d/%d)" % G.ot_info.ot_progress)
         G.move_completed_callback = ot_move_completed_callback(chess.Move.null())
         return False
 
@@ -593,14 +593,13 @@ def setup_ot_mode(only_sr=False, visitor=rep_visitor):
         if not tt_mode and random.random() < G.SR_FULL_LINE_PROBABILITY:
             return sr_full_line_setup(create_board_answer_stack(b, m), True)
         else:
-            G.incorrect_answers = 0
-            G.starting_time = time.time()
+            G.ot_info.reset_question_info()
             setup_function = lambda : setup_ot_mode(only_sr=only_sr, visitor=visitor) # Closure
             G.move_completed_callback = sr_move_completed_callback(m, setup_function, tt_mode) # This is a function
     else:
         G.move_completed_callback = ot_move_completed_callback(m) # This is a function
     load_new_game_from_board_history(b)
-    display_status(("(%d/%d) " + board_moves(b)) % G.ot_progress)
+    display_status(("(%d/%d) " + board_moves(b)) % G.ot_info.ot_progress)
 
     return False
 
@@ -616,10 +615,9 @@ def sr_full_line_setup(stack, only_sr=True):
         return setup_ot_mode(only_sr)
 
     # Prepare callback and display problem
-    G.incorrect_answers = 0
-    G.starting_time = time.time()
+    G.ot_info.reset_question_info()
     load_new_game_from_board_history(board)
-    display_status(("(%d/%d) " + board_moves(board)) % G.ot_progress)
+    display_status(("(%d/%d) " + board_moves(board)) % G.ot_info.ot_progress)
     new_setup = lambda : sr_full_line_setup(stack, only_sr) # Closure
     G.move_completed_callback = sr_move_completed_callback(answer, new_setup)
         
@@ -633,9 +631,9 @@ def sr_move_completed_callback(answer, setup_function=setup_ot_mode, tt_mode=Fal
                 # Correct answer
                 # Update learning data
                 if tt_mode:
-                    G.rep.update_learning_data(None, G.g.parent.readonly_board, answer, G.incorrect_answers, time.time() - G.starting_time)
+                    G.rep.update_learning_data(None, G.g.parent.readonly_board, answer, G.ot_info.incorrect_answers, time.time() - G.ot_info.starting_time)
                 else:
-                    G.rep.update_learning_data(G.player, G.g.parent.readonly_board, answer, G.incorrect_answers, time.time() - G.starting_time)
+                    G.rep.update_learning_data(G.player, G.g.parent.readonly_board, answer, G.ot_info.incorrect_answers, time.time() - G.ot_info.starting_time)
                 G.rep.flush()
                 # Update last modified date for directory monitors
                 if tt_mode:
@@ -643,7 +641,7 @@ def sr_move_completed_callback(answer, setup_function=setup_ot_mode, tt_mode=Fal
                 else:
                     G.rep.update_modified_date(G.player, G.g.parent.readonly_board.turn)
                 # Update progress
-                G.ot_progress = (G.ot_progress[0] + (not G.incorrect_answers), G.ot_progress[1] + 1)
+                G.ot_info.update_progress(not G.ot_info.incorrect_answers)
 
                 # Prepare next
                 setup_function()
@@ -651,9 +649,9 @@ def sr_move_completed_callback(answer, setup_function=setup_ot_mode, tt_mode=Fal
                 # Valid alternate, give another try with clock reset
                 G.handlers["go_back_callback"]()
                 display_status("%s is a valid alternate." % G.g.readonly_board.san(guess))
-                G.starting_time = time.time()
+                G.ot_info.reset_time()
             else:
-                G.incorrect_answers += 1
+                G.ot_info.incorrect_answer()
                 G.handlers["delete_children_callback"]()
                 G.handlers["show_opening_comment_callback"]()
         return f

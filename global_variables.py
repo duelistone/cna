@@ -7,6 +7,7 @@ from gi.repository import GLib
 import chess, chess.pgn, chess.syzygy
 import threading, os, sys, asyncio
 from matplotlib import colors as mcolors
+from ot_information import OT_Information
 from constants import *
 
 '''Global variables defined here so they are accessible to all modules. The coder is responsible for not using these before they are defined correctly.'''
@@ -97,12 +98,11 @@ command_callbacks = {}
 command_history = []
 command_index = 0
 
+        
 # Generator for opening trainer positions
 ot_gen = None
 ot_board = None
-ot_progress = (0, 0) # Correct and total answered in session
-incorrect_answers = 0
-starting_time = 0
+ot_info = OT_Information()
 
 # Callback for after legal move is complete
 # Default is to do nothing
@@ -123,7 +123,7 @@ playLevel = 20 # Int represents depth, float represents time
 # Match related
 match_async_loop = None
 current_match_task = None
-default_match_time_control = "25+2"
+default_match_time_control = "1+1"
 
 # Tablebase
 tablebase = None

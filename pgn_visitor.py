@@ -111,7 +111,7 @@ def game_gui_string(game):
     # recursions there were
 
     # Testing
-    times = []
+    #times = []
 
     stack = []
     strings = []
@@ -121,9 +121,9 @@ def game_gui_string(game):
 
     while len(stack) > 0:
         args = stack.pop()
-        starting_time = time.time()
+        #starting_time = time.time()
         new_string, offset = game_gui_string_list(args[0], offset, args[1], args[2], args[3])
-        times.append(time.time() - starting_time)
+        #times.append(time.time() - starting_time)
         strings.append(new_string)
         game = args[0]
         indentationLevel = args[3]

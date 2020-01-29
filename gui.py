@@ -15,6 +15,7 @@ from lichess_helpers import *
 from help_helpers import *
 from engine import *
 from shortcut_loader import load_shortcuts_from_config_file
+from command_line_arguments import cla_parser
 
 def main():
     # Change directory to application directory
@@ -27,42 +28,43 @@ def main():
     builder.add_from_file("chessboard.ui")
     builder.connect_signals(G.handlers)
 
+    # Parse command line arguments
+    parser = cla_parser(sys.argv)
+    parser.register("--tb", 1)
+    parser.register("--config", 1)
+    parser.register("--sr", 0, 2)
+    parser.register("-h", 0, 2)
+    parser.register("-b", 0, 2)
+    parser.register("--ot", -1, 9)
+    parser.register("--tt", -1, 9)
+    parser.parse()
+
     # Determine player color
-    if '-b' in sys.argv:
+    if '-b' in parser:
         G.player = chess.BLACK
-        sys.argv.remove('-b')
 
     # TODO: Add engine config to fill in G.engine_settings
     # And SyzygyPath? Or is that part of a general config file?
     # Speaking of which, should also have general config for global constants
 
     # Get tablebase path
-    if "--tb" in sys.argv:
-        tbIndex = sys.argv.index('--tb')
-        try:
-            tablebase_path = sys.argv[tbIndex + 1]
-            del sys.argv[tbIndex + 1]
-        except:
-            pass
-        finally:
-            del sys.argv[tbIndex]
+    tb_args = parser.args_for_keyword("--tb", enforce_num_args=True)
+    if tb_args != None:
         for e in G.engine_settings:
-            G.engine_settings[e].update({"SyzygyPath": tablebase_path})
-        G.tablebase = chess.syzygy.open_tablebase(tablebase_path)
+            G.engine_settings[e].update({"SyzygyPath": tb_args[0]})
+        G.tablebase = chess.syzygy.open_tablebase(tb_args[0])
 
     # Check if should use opening test or learn mode and finish preperations
-    useOpeningMode = '--ot' in sys.argv
-    useTacticsMode = '--tt' in sys.argv
-    useLearningMode = '--sr' in sys.argv # Still needs to have '--ot' or '--tt' as well, for now
-    if useLearningMode:
-        sys.argv.remove('--sr')
-        if not (useOpeningMode or useTacticsMode):
-            print("Incorrect usage. Cannot practice spaced repetition without ot mode.", file=sys.stderr)
-            exit(1)
+    useOpeningMode = '--ot' in parser
+    useTacticsMode = '--tt' in parser
+    useLearningMode = '--sr' in parser # Still needs to have '--ot' or '--tt' as well, for now
+    if useLearningMode and not (useOpeningMode or useTacticsMode):
+        print("Incorrect usage. Cannot practice spaced repetition without ot mode.", file=sys.stderr)
+        exit(1)
+    if useOpeningMode and useTacticsMode:
+        print("Incorrect usage. Cannot practice both opening and tactics.", file=sys.stderr)
     if useOpeningMode or useTacticsMode:
-        otIndex = sys.argv.index('--ot') if useOpeningMode else sys.argv.index('--tt')
-        fenString = " ".join(sys.argv[otIndex + 1:])
-        del sys.argv[otIndex:]
+        fenString = " ".join(parser.args_for_keyword("--ot")) if useOpeningMode else " ".join(parser.args_for_keyword("--tt"))
         try:
             G.ot_board = chess.Board(fen=fenString)
         except ValueError:
@@ -72,17 +74,28 @@ def main():
     else:
         preparations(builder)
 
+    if len(parser.get_leftover_args()) > 0:
+        load_new_game_from_pgn_file(parser.get_leftover_args()[0])
+
     # Read configuration file for command shortcuts
-    # TODO: Allow command line arg for different location
+    config_args = parser.args_for_keyword("--config", enforce_num_args=True)
+    if config_args == None:
+        config_file = "shortcuts.json"
+    else:
+        config_file = config_args[0]
     try:
-        load_shortcuts_from_config_file("shortcuts.json")
+        load_shortcuts_from_config_file(config_file)
     except FileNotFoundError:
-        print("shortcuts.json file not found, setting up default shortcuts", file=sys.stderr)
-        os.system("cp default_shortcuts.json shortcuts.json")
-        load_shortcuts_from_config_file("shortcuts.json")
+        if config_file == "shortcuts.json":
+            print("shortcuts.json file not found, setting up default shortcuts", file=sys.stderr)
+            os.system("cp default_shortcuts.json shortcuts.json")
+            load_shortcuts_from_config_file("shortcuts.json")
+        else:
+            print("Config file not found. Exiting.")
+            sys.exit(1)
 
     # Help?
-    if '-h' in sys.argv:
+    if '-h' in parser:
         print(full_help_report())
         exit(0)
 
@@ -147,10 +160,6 @@ def preparations(builder):
     G.pgn_buffer.create_tag(tag_name="comment", foreground="#009900")
     G.pgn_buffer.create_tag(tag_name="current", background="#9FCCFF")
 
-    # Handle command line arguments
-    if len(sys.argv) > 1:
-        load_new_game_from_pgn_file(sys.argv[1])
-    
     # Prepare repertoire and mark nodes
     try:
         G.rep = Repertoire("main.rep")

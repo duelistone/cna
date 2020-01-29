@@ -8,8 +8,16 @@ import global_variables as G
 import callbacks
 from shortcut_loader import load_shortcuts_from_config_file
 
+# Load config
 shortcuts_filename = "shortcuts.json"
+if len(sys.argv) > 1:
+    if os.path.isfile(sys.argv[1]):
+        shortcuts_filename = sys.argv[1]
+    else:
+        print("Invalid file given, using default.", file=sys.stderr)
 shortcut_list = load_shortcuts_from_config_file(shortcuts_filename)
+
+# Callbacks
 
 def do_nothing(*args):
     return True
@@ -17,8 +25,7 @@ def do_nothing(*args):
 def save_callback(*args):
     os.system("cp %s %s.backup" % (shortcuts_filename, shortcuts_filename))
     fil = open(shortcuts_filename, 'w')
-    json.dump(shortcut_list, fil)
-    pass
+    json.dump(shortcut_list, fil, indent=2)
 
 def create_entry_keypress_callback(callback_name, index, entry):
     # Creates the callback and also adds appropriate text
@@ -83,6 +90,7 @@ save_button = gtk.Button(label="Save")
 save_button.connect("clicked", save_callback)
 grid.attach(save_button, 0, i + 1, 3, 1)
 
+# Final preparations and start mainloop
 window.connect("destroy", gtk.main_quit)
 window.show_all()
 save_button.grab_focus()
