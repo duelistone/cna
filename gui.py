@@ -16,6 +16,8 @@ from help_helpers import *
 from engine import *
 from shortcut_loader import load_shortcuts_from_config_file
 from command_line_arguments import cla_parser
+from menu_items import MenuNode
+from json_loader import CallbackConfigManager
 
 def main():
     # Change directory to application directory
@@ -77,22 +79,36 @@ def main():
     if len(parser.get_leftover_args()) > 0:
         load_new_game_from_pgn_file(parser.get_leftover_args()[0])
 
-    # Read configuration file for command shortcuts
+    # Read and parse config file
     config_args = parser.args_for_keyword("--config", enforce_num_args=True)
     if config_args == None:
-        config_file = "shortcuts.json"
+        config_file = G.DEFAULT_CONFIG_FILENAME
     else:
         config_file = config_args[0]
     try:
-        load_shortcuts_from_config_file(config_file)
+        config_manager = CallbackConfigManager(G.handlers)
+        config_manager.load_json_from_file(config_file)
     except FileNotFoundError:
-        if config_file == "shortcuts.json":
-            print("shortcuts.json file not found, setting up default shortcuts", file=sys.stderr)
-            os.system("cp default_shortcuts.json shortcuts.json")
-            load_shortcuts_from_config_file("shortcuts.json")
+        if config_file == G.DEFAULT_CONFIG_FILENAME:
+            print("%s file not found, setting up default shortcuts" % G.DEFAULT_CONFIG_FILENAME, file=sys.stderr)
+            os.system("cp default_shortcuts.json %s" % G.DEFAULT_CONFIG_FILENAME)
+            load_shortcuts_from_config_file(G.DEFAULT_CONFIG_FILENAME)
         else:
             print("Config file not found. Exiting.")
             sys.exit(1)
+
+    # Add entry and keyboard shortcuts
+    config_manager.load_entry_shortcuts(G.command_callbacks)
+    config_manager.load_keyboard_shortcuts(G.key_binding_maps)
+
+    # Prepare main menu
+    menu_root = MenuNode()
+    for cb_name in G.handlers:
+        menu_list = config_manager.menu_list(cb_name)
+        if menu_list:
+            menu_root.add_menu_from_list(config_manager.menu_list(cb_name), cb=G.handlers[cb_name])
+    menu_root.insert(G.big_box)
+
 
     # Help?
     if '-h' in parser:
@@ -119,6 +135,7 @@ def main():
 def preparations(builder):
     # Widget extraction
     G.window = builder.get_object("main_window")
+    G.big_box = builder.get_object("big_box")
     G.board_display = builder.get_object("board_drawing_area")
     G.status_bar = builder.get_object("status_bar")
     G.stockfish_textview = builder.get_object("stockfish_textview")
