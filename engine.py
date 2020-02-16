@@ -55,7 +55,7 @@ class AnalysisEngine(object):
                 try:
                     await self.task
                 except asyncio.CancelledError:
-                    pass
+                    self.task = None
 
     async def handle_engine_info(self, analysis):
         async for info in analysis:

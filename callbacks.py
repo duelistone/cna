@@ -1233,17 +1233,29 @@ def start_engine_callback(*args):
     return False
 
 @gui_callback
-def next_engine_callback(initialize_new=True, *args):
+@documented
+def next_engine_callback(initialize_new=False, *args):
     '''Gets the next engine to analyze.'''
-    # Stop old engine (for now this assumes the old engine is being displayed and running).
-    # That's why this isn't documented yet.
-    G.engines[G.current_engine_index].stop()
+    # Parse text input
+    if type(initialize_new) == str:
+        lower = initialize_new.lower()
+        if lower == "true":
+            initialize_true = True
+        elif lower == "false":
+            initialize_true = False
+        else:
+            return True # Bad argument, doing nothing
+    # Do nothing if old engine isn't displayed and running
+    current_engine = G.engines[G.current_engine_index]
+    if current_engine.task == None or not current_engine.is_initialized():
+        return True 
+    current_engine.stop()
     G.current_engine_index = (G.current_engine_index + 1) % len(G.engines)
     if not initialize_new:
         # This can lead to an infinite loop if misused.
         while not G.engines[G.current_engine_index].is_initialized(): 
             G.current_engine_index = (G.current_engine_index + 1) % len(G.engines)
-    start_engine_callback()
+    return start_engine_callback()
 
 @gui_callback
 @documented
