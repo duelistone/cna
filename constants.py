@@ -8,7 +8,7 @@ DEFAULT_SQUARE_SIZE = 50
 SR_FULL_LINE_PROBABILITY = 0.3
 WEAK_STOCKFISH_DEFAULT_LEVEL = 4
 COMMENT_ENTRY_SIZE = 256
-DEFAULT_CONFIG_FILENAME = "mobile_shortcuts.json"
+DEFAULT_CONFIG_FILENAME = "shortcuts.json"
 
 nag_strings = 256 * [""]
 nag_strings[1:24] = ["!", "?", "\u203c", "\u2047", "\u2049", "\u2048", "\u25a1", "\u25a1", "", "=", "", "", "\u221e", "\u2a72", "\u2a71", "\u00b1", "\u2213", "+-", "-+", "1-0", "0-1", "\u2a00", "\u2a00"] 

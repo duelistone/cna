@@ -1,0 +1,1242 @@
+[
+  {
+    "name": "add_comment_callback",
+    "entries": [
+      "ec",
+      "edit_comment"
+    ],
+    "shortcuts": [
+      [
+        0,
+        99
+      ]
+    ],
+    "menu": [
+      "Variations",
+      "Add/edit comment"
+    ]
+  },
+  {
+    "name": "add_last_callback",
+    "entries": [
+      "add_last"
+    ],
+    "shortcuts": [],
+    "menu": [
+      "Variations",
+      "Add as last variation as default"
+    ]
+  },
+  {
+    "name": "add_main_callback",
+    "entries": [
+      "add_first",
+      "add_main"
+    ],
+    "shortcuts": [],
+    "menu": [
+      "Variations",
+      "Add as first variation as default"
+    ]
+  },
+  {
+    "name": "add_pieces_callback",
+    "entries": [
+      "add_pieces"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "analyze_callback",
+    "entries": [],
+    "shortcuts": [
+      [
+        4,
+        97
+      ]
+    ],
+    "menu": [
+      "File",
+      "Analyze game in separate instance"
+    ]
+  },
+  {
+    "name": "arrow_color_callback",
+    "entries": [
+      "arrow_color"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "arrow_transparency_callback",
+    "entries": [
+      "arrow_transparency"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "bishop_promotion_callback",
+    "entries": [
+      "set_bishop_promotion"
+    ],
+    "shortcuts": [
+      [
+        0,
+        66
+      ]
+    ],
+    "menu": [
+      "Board",
+      "Promotion",
+      "Set bishop promotion"
+    ]
+  },
+  {
+    "name": "board_draw_callback",
+    "entries": [],
+    "shortcuts": []
+  },
+  {
+    "name": "board_mouse_down_callback",
+    "entries": [],
+    "shortcuts": []
+  },
+  {
+    "name": "board_mouse_move_callback",
+    "entries": [],
+    "shortcuts": []
+  },
+  {
+    "name": "board_mouse_up_callback",
+    "entries": [],
+    "shortcuts": []
+  },
+  {
+    "name": "board_scroll_event_callback",
+    "entries": [],
+    "shortcuts": []
+  },
+  {
+    "name": "clear_arrows_callback",
+    "entries": [
+      "clear_arrows"
+    ],
+    "shortcuts": [],
+    "menu": [
+      "Board",
+      "Clear arrows"
+    ]
+  },
+  {
+    "name": "clear_headers_callback",
+    "entries": [
+      "clear_headers"
+    ],
+    "shortcuts": [],
+    "menu": [
+      "File",
+      "Reset PGN headers"
+    ]
+  },
+  {
+    "name": "copy_fen_callback",
+    "entries": [],
+    "shortcuts": [
+      [
+        4,
+        99
+      ]
+    ],
+    "menu": [
+      "File",
+      "Copy FEN"
+    ]
+  },
+  {
+    "name": "delete_children_callback",
+    "entries": [
+      "delete_children"
+    ],
+    "shortcuts": [
+      [
+        0,
+        65535
+      ]
+    ],
+    "menu": [
+      "Variations",
+      "Delete children"
+    ]
+  },
+  {
+    "name": "delete_nonspecial_nodes_callback",
+    "entries": [
+      "delete_nonspecial_nodes"
+    ],
+    "shortcuts": [],
+    "menu": [
+      "Variations",
+      "Delete nonspecial nodes"
+    ]
+  },
+  {
+    "name": "delete_opening_node_callback",
+    "entries": [],
+    "shortcuts": [
+      [
+        4,
+        65535
+      ]
+    ],
+    "menu": [
+      "Repertoire",
+      "Delete from repertoire"
+    ]
+  },
+  {
+    "name": "demote_callback",
+    "entries": [
+      "demote_variation"
+    ],
+    "shortcuts": [
+      [
+        0,
+        65364
+      ],
+      [
+        0,
+        74
+      ]
+    ],
+    "menu": [
+      "Variations",
+      "Demote variation 1 level"
+    ]
+  },
+  {
+    "name": "demote_to_last_callback",
+    "entries": [
+      "demote_to_last"
+    ],
+    "shortcuts": [
+      [
+        0,
+        65366
+      ]
+    ],
+    "menu": [
+      "Variations",
+      "Demote to last variation"
+    ]
+  },
+  {
+    "name": "display_repertoire_moves_callback",
+    "entries": [
+      "o",
+      "display_repertoire_moves"
+    ],
+    "shortcuts": [
+      [
+        0,
+        111
+      ]
+    ],
+    "menu": [
+      "Repertoire",
+      "Show repertoire moves"
+    ]
+  },
+  {
+    "name": "display_variations_callback",
+    "entries": [
+      "v",
+      "display_variations"
+    ],
+    "shortcuts": [
+      [
+        0,
+        118
+      ]
+    ],
+    "menu": [
+      "Variations",
+      "Show variations"
+    ]
+  },
+  {
+    "name": "next_engine_callback",
+    "entries": [
+      "next_engine",
+      "ne"
+    ],
+    "menu": [
+      "Engine",
+      "Start next engine"
+    ],
+    "advanced_menu": [
+      ["Engine", "Start next new engine"],
+      ["True"]
+    ]
+  },
+  {
+    "name": "engine_match_callback",
+    "entries": [
+      "engine_match"
+    ],
+    "shortcuts": [
+      [
+        0,
+        77
+      ]
+    ],
+    "menu": [
+      "Engine",
+      "Simulate game from current position"
+    ]
+  },
+  {
+    "name": "enter_analysis_mode_callback",
+    "entries": [
+      "enter_analysis_mode"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "enter_opening_test_mode_callback",
+    "entries": [
+      "enter_test_mode"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "entry_bar_callback",
+    "entries": [],
+    "shortcuts": []
+  },
+  {
+    "name": "entry_bar_key_press_callback",
+    "entries": [],
+    "shortcuts": []
+  },
+  {
+    "name": "flip_callback",
+    "entries": [
+      "flip",
+      "f"
+    ],
+    "shortcuts": [
+      [
+        0,
+        102
+      ]
+    ],
+    "menu": [
+      "Board",
+      "Flip"
+    ]
+  },
+  {
+    "name": "flip_turn_callback",
+    "entries": [
+      "flip_turn"
+    ],
+    "shortcuts": [],
+    "menu": [
+      "Board",
+      "New game with...",
+      "Flipped turn"
+    ]
+  },
+  {
+    "name": "go_back_callback",
+    "entries": [
+      "gb",
+      "go_back"
+    ],
+    "shortcuts": [
+      [
+        0,
+        65361
+      ],
+      [
+        0,
+        104
+      ],
+      [
+        0,
+        97
+      ]
+    ],
+    "menu": [
+      "Variations",
+      "Go back"
+    ]
+  },
+  {
+    "name": "go_forward_callback",
+    "entries": [
+      "gf",
+      "go_forward"
+    ],
+    "shortcuts": [
+      [
+        0,
+        65363
+      ],
+      [
+        0,
+        108
+      ],
+      [
+        0,
+        100
+      ]
+    ],
+    "advanced_shortcuts": [
+      [
+        0,
+        76
+      ],
+      [
+        1
+      ],
+      [
+        0,
+        68
+      ],
+      [
+        1
+      ],
+      [
+        4,
+        108
+      ],
+      [
+        2
+      ],
+      [
+        4,
+        100
+      ],
+      [
+        2
+      ],
+      [
+        4,
+        76
+      ],
+      [
+        3
+      ],
+      [
+        4,
+        68
+      ],
+      [
+        3
+      ]
+    ],
+    "menu": [
+      "Variations",
+      "Go forward to variation...",
+      "0 (main variation)"
+    ],
+    "advanced_menu": [
+      [
+        "Variations",
+        "Go forward to variation...",
+        "1"
+      ],
+      [
+        1
+      ],
+      [
+        "Variations",
+        "Go forward to variation...",
+        "2"
+      ],
+      [
+        2
+      ],
+      [
+        "Variations",
+        "Go forward to variation...",
+        "3"
+      ],
+      [
+        3
+      ],
+      [
+        "Variations",
+        "Go forward to variation...",
+        "4"
+      ],
+      [
+        4
+      ]
+    ]
+  },
+  {
+    "name": "go_to_beginning_callback",
+    "entries": [
+      "go_to_beginning",
+      "gtb"
+    ],
+    "shortcuts": [
+      [
+        0,
+        103
+      ],
+      [
+        0,
+        65360
+      ]
+    ]
+  },
+  {
+    "name": "go_to_end_callback",
+    "entries": [
+      "go_to_end",
+      "gte"
+    ],
+    "shortcuts": [
+      [
+        0,
+        71
+      ],
+      [
+        0,
+        65367
+      ]
+    ],
+    "menu": [
+      "Variations",
+      "Go to end"
+    ]
+  },
+  {
+    "name": "header_entry_callback",
+    "entries": [],
+    "shortcuts": []
+  },
+  {
+    "name": "header_set_callback",
+    "entries": [],
+    "shortcuts": []
+  },
+  {
+    "name": "insert_mode_callback",
+    "entries": [],
+    "shortcuts": [
+      [
+        0,
+        105
+      ]
+    ]
+  },
+  {
+    "name": "key_press_callback",
+    "entries": [],
+    "shortcuts": []
+  },
+  {
+    "name": "knight_promotion_callback",
+    "entries": [
+      "set_knight_promotion"
+    ],
+    "shortcuts": [
+      [
+        0,
+        78
+      ]
+    ],
+    "menu": [
+      "Board",
+      "Promotion",
+      "Set knight promotion"
+    ]
+  },
+  {
+    "name": "lichess_top_games_callback",
+    "entries": [
+      "lichess_top_games",
+      "ltg"
+    ],
+    "shortcuts": [
+      [
+        4,
+        116
+      ]
+    ],
+    "menu": [
+      "Repertoire",
+      "List lichess top games"
+    ]
+  },
+  {
+    "name": "load_fen_callback",
+    "entries": [],
+    "shortcuts": []
+  },
+  {
+    "name": "load_fen_entry_callback",
+    "entries": [
+      "load",
+      "l"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "load_lichess_game_1_callback",
+    "entries": [],
+    "shortcuts": [
+      [
+        4,
+        49
+      ]
+    ]
+  },
+  {
+    "name": "load_lichess_game_2_callback",
+    "entries": [],
+    "shortcuts": [
+      [
+        4,
+        50
+      ]
+    ]
+  },
+  {
+    "name": "load_lichess_game_3_callback",
+    "entries": [],
+    "shortcuts": [
+      [
+        4,
+        51
+      ]
+    ]
+  },
+  {
+    "name": "load_lichess_game_4_callback",
+    "entries": [],
+    "shortcuts": [
+      [
+        4,
+        52
+      ]
+    ]
+  },
+  {
+    "name": "load_lichess_game_callback",
+    "entries": [
+      "load_lichess_game",
+      "llg"
+    ],
+    "shortcuts": [],
+    "advanced_shortcuts": [],
+    "advanced_menu": []
+  },
+  {
+    "name": "load_repertoire_callback",
+    "entries": [
+      "load_repertoire",
+      "lr"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "make_report_callback",
+    "entries": [
+      "make_report"
+    ],
+    "shortcuts": [],
+    "menu": [
+      "Repertoire",
+      "Make opening report"
+    ]
+  },
+  {
+    "name": "next_game_callback",
+    "entries": [],
+    "shortcuts": [
+      [4, 65363]
+    ],
+    "menu": [
+      "File",
+      "Load next game"
+    ]
+  },
+  {
+    "name": "open_pgn_textview_callback",
+    "entries": [],
+    "shortcuts": [
+      [
+        4,
+        112
+      ]
+    ],
+    "menu": [
+      "Variations",
+      "Toggle PGN view"
+    ]
+  },
+  {
+    "name": "opening_games_callback",
+    "entries": [
+      "list_opening_games"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "opening_save_callback",
+    "entries": [
+      "save_opening"
+    ],
+    "shortcuts": [
+      [4, 96]
+    ],
+    "menu": [
+        "Repertoire",
+        "Add special nodes to repertoire"
+    ]
+  },
+  {
+    "name": "opening_save_game_callback",
+    "entries": [
+      "save_game_to_repertoire"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "opening_single_save_callback",
+    "entries": [
+      "save_opening_node"
+    ],
+    "shortcuts": [
+      [
+        0,
+        96
+      ]
+    ],
+    "menu": [
+      "Repertoire",
+      "Save current node"
+    ]
+  },
+  {
+    "name": "opening_size_callback",
+    "entries": [
+      "opening_size"
+    ],
+    "shortcuts": [
+      [
+        4,
+        110
+      ]
+    ],
+    "menu": [
+      "Repertoire",
+      "Show opening size"
+    ]
+  },
+  {
+    "name": "opening_test_callback",
+    "entries": [],
+    "shortcuts": []
+  },
+  {
+    "name": "paste_callback",
+    "entries": [
+      "paste_position"
+    ],
+    "shortcuts": [
+      [
+        4,
+        118
+      ]
+    ],
+    "menu": [
+      "File",
+      "Paste PGN"
+    ]
+  },
+  {
+    "name": "pgn_textview_key_press_callback",
+    "entries": [],
+    "shortcuts": []
+  },
+  {
+    "name": "play_move_callback",
+    "entries": [
+      "play_move"
+    ],
+    "shortcuts": [
+      [
+        0,
+        32
+      ]
+    ]
+  },
+  {
+    "name": "play_training_move_callback",
+    "entries": [
+      "play_training_move"
+    ],
+    "shortcuts": [
+      [
+        0,
+        116
+      ]
+    ],
+    "menu": [
+      "Engine",
+      "Play training move"
+    ]
+  },
+  {
+    "name": "previous_game_callback",
+    "entries": [],
+    "shortcuts": [
+      [4, 65361]
+    ],
+    "menu": [
+      "File",
+      "Load previous game"
+    ]
+  },
+  {
+    "name": "print_schedule_callback",
+    "entries": [
+      "print_schedule"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "promote_callback",
+    "entries": [
+      "promote_variation"
+    ],
+    "shortcuts": [
+      [
+        0,
+        65362
+      ],
+      [
+        0,
+        75
+      ]
+    ],
+    "menu": [
+      "Variations",
+      "Promote variation 1 level"
+    ]
+  },
+  {
+    "name": "promote_to_main_callback",
+    "entries": [
+      "promote_to_main"
+    ],
+    "shortcuts": [
+      [
+        0,
+        65365
+      ]
+    ]
+  },
+  {
+    "name": "puzzle_file_name_callback",
+    "entries": [
+      "puzzle_file_name"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "queen_promotion_callback",
+    "entries": [
+      "set_queen_promotion"
+    ],
+    "shortcuts": [
+      [
+        0,
+        81
+      ]
+    ],
+    "menu": [
+      "Board",
+      "Promotion",
+      "Set queen promotion"
+    ]
+  },
+  {
+    "name": "remove_nags_callback",
+    "entries": [
+      "remove_nags"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "remove_pieces_callback",
+    "entries": [
+      "remove_pieces"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "reset_learn_callback",
+    "entries": [
+      "reset_learn"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "reset_learn_timer_callback",
+    "entries": [
+      "reset_learn_timer"
+    ],
+    "shortcuts": [
+      [
+        4,
+        114
+      ]
+    ]
+  },
+  {
+    "name": "reset_test_mode_callback",
+    "entries": [
+      "reset_test_mode"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "rook_promotion_callback",
+    "entries": [
+      "set_rook_promotion"
+    ],
+    "shortcuts": [
+      [
+        0,
+        82
+      ]
+    ],
+    "menu": [
+      "Board",
+      "Promotion",
+      "Set rook promotion"
+    ]
+  },
+  {
+    "name": "run_script_callback",
+    "entries": [
+      "rs",
+      "run_script"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "save_callback",
+    "entries": [
+      "save"
+    ],
+    "shortcuts": [
+      [
+        4,
+        115
+      ]
+    ],
+    "menu": [
+      "File",
+      "Save"
+    ]
+  },
+  {
+    "name": "save_puzzle_callback",
+    "entries": [
+      "save_puzzle",
+      "sp"
+    ],
+    "shortcuts": [
+      [
+        4,
+        101
+      ]
+    ],
+    "menu": [
+      "Repertoire",
+      "Save puzzle to repertoire"
+    ]
+  },
+  {
+    "name": "set_castling_callback",
+    "entries": [
+      "set_castling"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "set_comment_callback",
+    "entries": [
+      "c",
+      "comment",
+      "set_comment"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "set_en_passant_callback",
+    "entries": [
+      "set_en_passant",
+      "set_ep_square"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "set_engine_callback",
+    "entries": [
+      "set_engine"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "set_engine_option_callback",
+    "entries": [
+      "set_engine_option"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "set_extended_save_format_callback",
+    "entries": [
+      "set_extended_save_format",
+      "set_arrow_save_format"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "set_game_to_learn_callback",
+    "entries": [
+      "set_game_to_learn"
+    ],
+    "shortcuts": [
+      [
+        4,
+        126
+      ]
+    ]
+  },
+  {
+    "name": "set_hash_callback",
+    "entries": [
+      "set_hash",
+      "set_ram"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "set_header_callback",
+    "entries": [
+      "sh",
+      "header",
+      "set_header"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "set_multipv_1_callback",
+    "entries": [],
+    "shortcuts": [
+      [
+        0,
+        49
+      ]
+    ]
+  },
+  {
+    "name": "set_multipv_2_callback",
+    "entries": [],
+    "shortcuts": [
+      [
+        0,
+        50
+      ]
+    ]
+  },
+  {
+    "name": "set_multipv_3_callback",
+    "entries": [],
+    "shortcuts": [
+      [
+        0,
+        51
+      ]
+    ]
+  },
+  {
+    "name": "set_multipv_4_callback",
+    "entries": [],
+    "shortcuts": [
+      [
+        0,
+        52
+      ]
+    ]
+  },
+  {
+    "name": "set_multipv_5_callback",
+    "entries": [],
+    "shortcuts": [
+      [
+        0,
+        53
+      ]
+    ]
+  },
+  {
+    "name": "set_multipv_callback",
+    "entries": [
+      "set_multipv"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "set_nag_callback",
+    "entries": [
+      "nag",
+      "add_nag",
+      "set_nag"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "set_proper_save_format_callback",
+    "entries": [
+      "set_proper_save_format"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "set_to_learn_callback",
+    "entries": [
+      "set_to_learn"
+    ],
+    "shortcuts": [
+      [
+        0,
+        126
+      ]
+    ]
+  },
+  {
+    "name": "show_learn_info_callback",
+    "entries": [
+      "show_learn_info"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "start_engine_callback",
+    "entries": [
+      "se",
+      "start_engine"
+    ],
+    "shortcuts": [
+      [
+        0,
+        69
+      ],
+      [
+        0,
+        112
+      ]
+    ]
+  },
+  {
+    "name": "stop_match_callback",
+    "entries": [
+      "stop_match"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "textview_mouse_pressed_callback",
+    "entries": [],
+    "shortcuts": []
+  },
+  {
+    "name": "textview_mouse_released_callback",
+    "entries": [],
+    "shortcuts": []
+  },
+  {
+    "name": "toggle_lichess_callback",
+    "entries": [
+      "toggle_lichess",
+      "tl"
+    ],
+    "shortcuts": [
+      [
+        0,
+        114
+      ]
+    ]
+  },
+  {
+    "name": "toggle_pv_callback",
+    "entries": [
+      "toggle_pv",
+      "tp"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "toggle_stockfish_callback",
+    "entries": [
+      "te",
+      "toggle_engine"
+    ],
+    "shortcuts": [
+      [
+        0,
+        101
+      ]
+    ]
+  },
+  {
+    "name": "destroy_main_window_callback",
+    "entries": [],
+    "shortcuts": []
+  },
+  {
+    "name": "set_opening_comment_callback",
+    "entries": [
+      "set_opening_comment",
+      "oc"
+    ],
+    "shortcuts": []
+  },
+  {
+    "name": "show_opening_comment_callback",
+    "entries": [
+      "show_opening_comment",
+      "display_opening_comment",
+      "doc"
+    ],
+    "shortcuts": [
+      [
+        0,
+        79
+      ]
+    ]
+  },
+  {
+    "name": "add_tactics_child",
+    "entries": [
+      "add_tactics_child"
+    ],
+    "shortcuts": [
+      [
+        4,
+        69
+      ]
+    ]
+  }
+]
