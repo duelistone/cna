@@ -119,7 +119,7 @@ class CallbackConfigManager(object):
                     args = advanced_shortcuts_list[i + 1]
                 except IndexError:
                     print("load_advanced_keyboard_shortcut: Missing args for shortcut %s for callback %s" % (str(shortcut), cb_name), file=sys.stderr)
-                    continue
+                    break
                 try:
                     mask = int(shortcut[0])
                     key = int(shortcut[1])
@@ -133,6 +133,28 @@ class CallbackConfigManager(object):
             load_keyboard_shortcut(cb_name)
             load_advanced_keyboard_shortcut(cb_name)
                     
+    def load_menu_items(self, menu_root):
+        # Important to avoid loop-related closure scope issues
+        def load(menu_list, cb, arg_list):
+            if menu_list:
+                menu_root.add_menu_from_list(menu_list, cb=lambda : cb(*arg_list))
+
+        for cb_name in self.callbacks:
+            cb = self.callbacks[cb_name]
+            # Easy part
+            menu_list = self.menu_list(cb_name)
+            if menu_list:
+                menu_root.add_menu_from_list(menu_list, cb=cb)
+            # Advanced part
+            advanced_menu_lists = self.advanced_menu_lists(cb_name)
+            for i in range(0, len(advanced_menu_lists), 2):
+                menu_list = advanced_menu_lists[i]
+                try:
+                    args = advanced_menu_lists[i + 1]
+                except IndexError:
+                    print("load_advanced_menu_lists: Missing args for shortcut %s for callback %s" % (str(menu_list), cb_name), file=sys.stderr)
+                    break
+                load(menu_list, cb, args)
 
 # TODO: EngineConfigManager?
 

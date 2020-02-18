@@ -64,7 +64,8 @@ class MenuNode(object):
             return
         def wrapper(*args):
             cb()
-        self.gtk_object.connect("button-press-event", wrapper)
+            return False
+        self.gtk_object.connect("activate", wrapper)
 
     def insert(self, parent):
         parent.pack_start(self.gtk_object, False, False, 0)

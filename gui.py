@@ -103,10 +103,7 @@ def main():
 
     # Prepare main menu
     menu_root = MenuNode()
-    for cb_name in G.handlers:
-        menu_list = config_manager.menu_list(cb_name)
-        if menu_list:
-            menu_root.add_menu_from_list(config_manager.menu_list(cb_name), cb=G.handlers[cb_name])
+    config_manager.load_menu_items(menu_root)
     menu_root.insert(G.big_box)
 
 
