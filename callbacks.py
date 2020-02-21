@@ -1075,10 +1075,8 @@ def analyze_callback(*args):
     movePath.reverse()
     prelude = '%' + " ".join(map(str, movePath))
     save_current_pgn(save_file_name="game.temp", show_status=False, prelude=prelude)
-    # TODO: Should eventually replace with 'at' script or with memorized command line arguments
-    # Issue currently is that this does not keep current command line arguments like a tablebases folder
-    # OR, perhaps better, keep the command line arguments saved.
-    subprocess.Popen(["python3", "gui.py", "game.temp"])
+    # Currently, sys.argv is trimmed in gui.py so that its value here makes sense
+    subprocess.Popen(["python3"] + sys.argv + ["game.temp"])
     return False
 
 @gui_callback

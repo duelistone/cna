@@ -41,6 +41,13 @@ def main():
     parser.register("--tt", -1, 9)
     parser.parse()
 
+    # Remove some arguments for analyze_callback
+    for s in ["--sr", "-b", "--ot", "--tt"]:
+        try:
+            sys.argv.remove(s)
+        except:
+            pass
+
     # Determine player color
     if '-b' in parser:
         G.player = chess.BLACK
@@ -78,6 +85,8 @@ def main():
 
     if len(parser.get_leftover_args()) > 0:
         load_new_game_from_pgn_file(parser.get_leftover_args()[0])
+        for e in parser.get_leftover_args():
+            sys.argv.remove(e)
 
     # Read and parse config file
     config_args = parser.args_for_keyword("--config", enforce_num_args=True)
