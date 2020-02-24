@@ -42,11 +42,17 @@ def main():
     parser.parse()
 
     # Remove some arguments for analyze_callback
+    # TODO: Factor this into parser class in a nicer way
     for s in ["--sr", "-b", "--ot", "--tt"]:
         try:
             sys.argv.remove(s)
         except:
             pass
+    for s in ["--ot", "--tt"]:
+        arg_list = parser.args_for_keyword(s)
+        if arg_list != None:
+            for t in arg_list:
+                sys.argv.remove(t)
 
     # Determine player color
     if '-b' in parser:

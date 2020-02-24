@@ -1433,7 +1433,7 @@ def save_puzzle_callback(*args):
 
 @gui_callback
 @documented
-def add_tactics_child(*args):
+def add_tactics_child_callback(*args):
     '''Adds the parent board and move leading up to current position to tactics repertoire.'''
     if G.g.parent != None:
         parent_board = G.g.parent.readonly_board
@@ -1791,6 +1791,12 @@ def key_press_callback(widget, event):
         return True
 
     return False
+
+@gui_callback
+@documented
+def exit_callback(*args):
+    '''Wrapper for destroy_main_window_callback to destroy main window.'''
+    return destroy_main_window_callback()
 
 # Other callbacks
 
