@@ -34,25 +34,12 @@ def main():
     parser = cla_parser(sys.argv)
     parser.register("--tb", 1)
     parser.register("--config", 1)
-    parser.register("--sr", 0, 2)
+    parser.register("--sr", 0, 2, remove_from_argv=True)
     parser.register("-h", 0, 2)
-    parser.register("-b", 0, 2)
-    parser.register("--ot", -1, 9)
-    parser.register("--tt", -1, 9)
+    parser.register("-b", 0, 2, remove_from_argv=True)
+    parser.register("--ot", -1, 9, remove_from_argv=True)
+    parser.register("--tt", -1, 9, remove_from_argv=True)
     parser.parse()
-
-    # Remove some arguments for analyze_callback
-    # TODO: Factor this into parser class in a nicer way
-    for s in ["--sr", "-b", "--ot", "--tt"]:
-        try:
-            sys.argv.remove(s)
-        except:
-            pass
-    for s in ["--ot", "--tt"]:
-        arg_list = parser.args_for_keyword(s)
-        if arg_list != None:
-            for t in arg_list:
-                sys.argv.remove(t)
 
     # Determine player color
     if '-b' in parser:
@@ -91,6 +78,7 @@ def main():
 
     if len(parser.get_leftover_args()) > 0:
         load_new_game_from_pgn_file(parser.get_leftover_args()[0])
+        # TODO: Factor this into parser class, and prevent a potential repeated arguments bug
         for e in parser.get_leftover_args():
             sys.argv.remove(e)
 
