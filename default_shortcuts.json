@@ -872,7 +872,8 @@
     "entries": [
       "remove_nags"
     ],
-    "shortcuts": []
+    "shortcuts": [],
+    "menu": ["Variations", "Remove NAGs"]
   },
   {
     "name": "remove_pieces_callback",
@@ -898,6 +899,27 @@
         4,
         114
       ]
+    ],
+    "menu": ["Repertoire", "Reset learn timer"]
+  },
+  {
+    "name": "walk_random_path_callback",
+    "entries": [
+        "walk_random_path"
+    ],
+    "menu": [
+      "Variations",
+      "Walk random path"
+    ]
+  },
+  {
+    "name": "walk_random_opening_path_callback",
+    "entries": [
+        "walk_random_opening_path"
+    ],
+    "menu": [
+      "Repertoire",
+      "Walk random path using repertoire"
     ]
   },
   {
@@ -1228,7 +1250,7 @@
     ]
   },
   {
-    "name": "add_tactics_child",
+    "name": "add_tactics_child_callback",
     "entries": [
       "add_tactics_child"
     ],
@@ -1238,5 +1260,10 @@
         69
       ]
     ]
+  },
+  {
+    "name": "exit_callback",
+    "entries": ["exit", "quit"],
+    "menu": ["File", "Quit"]
   }
 ]

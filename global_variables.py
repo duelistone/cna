@@ -116,7 +116,7 @@ current_engine_index = 0
 # Output related
 latest_engine_stats = [-1, -1, -1, -1, -1]
 latest_engine_lines = []
-multipv = 1
+multipv = 3
 show_engine_pv = True
 # Weak engine related
 playLevel = 20 # Int represents depth, float represents time

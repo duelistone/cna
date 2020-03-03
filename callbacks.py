@@ -180,6 +180,48 @@ def add_main_callback(*args):
     G.new_move_mode = G.ADD_MAIN_VARIATION
     return False
 
+@gui_callback
+@documented
+def walk_random_path_callback(*args):
+    '''Takes a random path from current node, 
+    following the options available in the PGN.'''
+    while G.g.variations:
+        G.g = random.choice(G.g.variations)
+    G.board_display.queue_draw()
+    update_pgn_textview_move(G.g)
+    return False
+
+@gui_callback
+@documented
+def walk_random_opening_path_callback(*args):
+    '''Takes a random path from current position
+    using repertoire. Avoids repeating positions when choosing a path.'''
+    if G.rep:
+        visited_hashes = set()
+        while True:
+            visited_hashes.add(chess.polyglot.zobrist_hash(G.g.board()))
+            try:
+                moves = list(G.rep.findMoves(G.player, G.g.board()))
+                while moves:
+                    index = random.randint(0, len(moves) - 1)
+                    choice = moves[index]
+                    temp_board = G.g.board()
+                    temp_board.push(choice)
+                    if chess.polyglot.zobrist_hash(temp_board) in visited_hashes:
+                        del moves[index]
+                        continue
+                    else:
+                        make_move(choice)
+                        break
+                else:
+                    break
+            except:
+                # In case findMoves raises IndexError instead of returning []
+                break
+    G.board_display.queue_draw()
+    return False
+
+
 #@gui_callback
 #@documented
 #def set_hash_callback(*args):
