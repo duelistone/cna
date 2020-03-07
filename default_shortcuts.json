@@ -740,11 +740,6 @@
     ]
   },
   {
-    "name": "opening_test_callback",
-    "entries": [],
-    "shortcuts": []
-  },
-  {
     "name": "paste_callback",
     "entries": [
       "paste_position"
@@ -920,6 +915,25 @@
     "menu": [
       "Repertoire",
       "Walk random path using repertoire"
+    ]
+  },
+  {
+    "name": "opening_test_callback",
+    "entries": [
+        "opening_test"
+    ],
+    "menu": [
+        "Repertoire",
+        "Start opening test"
+    ],
+    "advanced_menu": [
+        [
+            "Repertoire",
+            "Start opening test (learn mode)"
+        ],
+        [
+            true
+        ]
     ]
   },
   {

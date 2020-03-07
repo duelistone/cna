@@ -760,18 +760,25 @@ def delete_nonspecial_nodes_callback(*args):
     return False
 
 @gui_callback
+@documented
 def opening_test_callback(*args):
     '''Opens an opening test for the descendents of the current node in the repertoire.
 
     Uses the same point of view as currently being used.'''
+    learn_mode = False
+    if len(args) > 0:
+        learn_mode = args[0]
     if G.rep:
-        # Old method commented out
-        # create_opening_game("currentTest.pgn", G.rep, G.player, G.g)
-        # subprocess.Popen(['ot', 'currentTest.pgn'])
         if G.player == chess.WHITE:
-            subprocess.Popen(['python3', 'gui.py', '--ot', G.g.readonly_board.fen()])
+            if learn_mode:
+                subprocess.Popen(['python3', 'gui.py', '--ot', '--sr', G.g.readonly_board.fen()])
+            else:
+                subprocess.Popen(['python3', 'gui.py', '--ot', G.g.readonly_board.fen()])
         else:
-            subprocess.Popen(['python3', 'gui.py', '-b', '--ot', G.g.readonly_board.fen()])
+            if learn_mode:
+                subprocess.Popen(['python3', 'gui.py', '-b', '--ot', '--sr', G.g.readonly_board.fen()])
+            else:
+                subprocess.Popen(['python3', 'gui.py', '-b', '--ot', G.g.readonly_board.fen()])
     else:
         display_status("No repertoire file loaded.")
     return False
@@ -901,11 +908,9 @@ def board_mouse_up_callback(widget, event):
     if event.button == 8:
         if G.ot_board != None:
             return previous_game_callback()
-        return play_move_callback()
-    if event.button == 9:
-        if G.ot_board != None:
-            return next_game_callback()
         return play_training_move_callback()
+    if event.button == 9:
+        return play_move_callback()
     if event.button == 2:
         return analyze_callback()
         
@@ -1648,7 +1653,8 @@ def enter_opening_test_mode_callback(*args):
     '''Starts test mode using current position (from current perspective) as start.
     
     Unlike opening_test_callback, this does not start a new subprocess.
-    To get back to analysis mode, see enter_analysis_mode_callback.'''
+    To get back to analysis mode, see enter_analysis_mode_callback.
+    Not sure if this still works.'''
     if G.ot_board == None:
         G.ot_board = chess.Board(G.g.readonly_board.fen()) # To strip board history
         G.ot_gen = None
