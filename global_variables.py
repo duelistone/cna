@@ -103,6 +103,7 @@ command_index = 0
 ot_gen = None
 ot_board = None
 ot_info = OT_Information()
+sound = True # To toggle sound in opening trainer
 
 # Callback for after legal move is complete
 # Default is to do nothing

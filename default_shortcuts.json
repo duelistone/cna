@@ -937,6 +937,16 @@
     ]
   },
   {
+    "name": "toggle_sound_callback",
+    "entries": [
+        "toggle_sound"
+    ],
+    "menu": [
+        "Board",
+        "Toggle sound"
+    ]
+  },
+  {
     "name": "reset_test_mode_callback",
     "entries": [
       "reset_test_mode"

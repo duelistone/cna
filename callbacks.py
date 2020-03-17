@@ -221,6 +221,18 @@ def walk_random_opening_path_callback(*args):
     G.board_display.queue_draw()
     return False
 
+@gui_callback
+@documented
+def toggle_sound_callback(*args):
+    if len(args) > 0:
+        G.sound = bool(args[0])
+    else:
+        G.sound = not G.sound
+    if G.sound:
+        display_status("Sound turned on.")
+    else:
+        display_status("Sound turned off.")
+    return False
 
 #@gui_callback
 #@documented

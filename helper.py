@@ -10,6 +10,7 @@ from gi.repository import Pango as pango
 from gi.repository import GLib
 import global_variables as G
 import signal, math, subprocess, sys, os, os.path, shutil, chess, chess.pgn, shlex, io, requests, threading
+import sound_effects
 from functools import reduce
 from opening_pgn import *
 from mmrw import *
@@ -584,8 +585,10 @@ def ot_move_completed_callback(answer):
         # Currying
         def f(guess):
             if guess.from_square == answer.from_square and guess.to_square == answer.to_square and guess.promotion == answer.promotion:
+                if G.sound: sound_effects.perfect_fifth()
                 setup_ot_mode()
             else:
+                if G.sound: sound_effects.downward_perfect_fourth()
                 G.handlers["delete_children_callback"]() # Uses dictionary to avoid circular reference problem
                 G.handlers["show_opening_comment_callback"]()
         return f
@@ -648,6 +651,7 @@ def sr_move_completed_callback(answer, setup_function=setup_ot_mode, tt_mode=Fal
         def f(guess):
             if guess == answer:
                 # Correct answer
+                if G.sound: sound_effects.perfect_fifth()
                 # Update learning data
                 if tt_mode:
                     G.rep.update_learning_data(None, G.g.parent.readonly_board, answer, G.ot_info.incorrect_answers, time.time() - G.ot_info.starting_time)
@@ -670,6 +674,7 @@ def sr_move_completed_callback(answer, setup_function=setup_ot_mode, tt_mode=Fal
                 display_status("%s is a valid alternate." % G.g.readonly_board.san(guess))
                 G.ot_info.reset_time()
             else:
+                if G.sound: sound_effects.downward_perfect_fourth()
                 G.ot_info.incorrect_answer()
                 G.handlers["delete_children_callback"]()
                 G.handlers["show_opening_comment_callback"]()
