@@ -223,13 +223,18 @@ class Repertoire(object):
             self.save_initial_positions_to_file()
 
     def delete_orphaned_tactics(self):
+        from rep_visitor import tactics_visitor
         hashes = set()
+        # Make sure to modify this if default behavior of tactics_visitor changes
         for b, _ in tactics_visitor():
             hashes.add(chess.polyglot.zobrist_hash(b))
         # This can probably be more efficient, as each delete might be expensive
-        for i in range(0, len(self.t)):
+        i = 0
+        while i < len(self.t):
             if self.t[i].key not in hashes:
                 del self.t[i]
+            else:
+                i += 1
 
     def set_comment(self, position, comment):
         '''Saves the comment for the position in the self.comments file.'''
