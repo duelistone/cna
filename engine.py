@@ -201,7 +201,7 @@ async def engine_match(white_engine_name, black_engine_name, time_control, start
                         tb_result *= -1
                     if node.comment:
                         node.comment += " "
-                    node.comment += "TB result: %d (%s)" % (tb_result, G.tablebase_results[tb_result])
+                    node.comment += "TB result: %d (%s)" % (tb_result, G.TABLEBASE_RESULTS[tb_result])
                     GLib.idle_add(update_pgn_message)
                     break
 

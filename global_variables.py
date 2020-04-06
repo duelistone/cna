@@ -128,7 +128,6 @@ default_match_time_control = "1+1"
 
 # Tablebase
 tablebase = None
-tablebase_results = {-2 : "0-1", -1 : "Cursed black win", 0 : "1/2-1/2", 1 : "Cursed white win", 2 : "1-0"}
 
 # Weak engine
 weak_engine_enabled_event = None
@@ -155,5 +154,5 @@ top_game_ids = []
 # Autosave interval
 autosave = True # Set to False to turn off autosave
 autosave_dir = ".autosave/"
-autosave_interval = 60 # In seconds
+autosave_interval = 90 # In seconds
 last_autosave_pgn_string = None # Stores last autosaved PGN string, to avoid repeatedly saving same file
