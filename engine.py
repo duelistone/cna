@@ -51,6 +51,7 @@ class AnalysisEngine(object):
         while 1:
             await self.engine_enabled_event.wait()
             with await self.protocol.analysis(self.board, multipv=G.multipv, info=chess.engine.INFO_BASIC | chess.engine.INFO_SCORE | chess.engine.INFO_PV) as analysis:
+                self.latest_engine_lines = [] # Clear previous lines for next analysis
                 self.task = asyncio.create_task(self.handle_engine_info(analysis))
                 try:
                     await self.task
