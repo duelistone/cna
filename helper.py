@@ -35,9 +35,12 @@ def make_move(m):
             G.g = G.g.add_main_variation(m)
         elif G.new_move_mode == G.ADD_LAST_VARIATION:
             G.g = G.g.add_variation(m)
-        mark_nodes(G.g.root())
-        update_pgn_message()
-        G.move_completed_callback(m)
+        mark_nodes(G.g) # To initialize parts of G.g needed right away
+        G.board_display.queue_draw()
+        # These operations can wait a bit more
+        GLib.idle_add(mark_nodes, G.g.root())
+        GLib.idle_add(update_pgn_message)
+        GLib.idle_add(G.move_completed_callback, m)
         return True
     return False
 
@@ -511,13 +514,15 @@ def update_pgn_textview_tags(node):
 
 def update_pgn_message():
     if G.pgn_textview_enabled:
+        # Preparations (this can take a while)
         current_game_node = G.g
-        # Do updating
-        G.pgn_buffer.set_text(game_gui_string(G.g.root()))
+        s = game_gui_string(G.g.root())
 
-        # Update text tags
+        # Do updating
+        G.pgn_buffer.set_text(s)
         update_pgn_textview_tags(current_game_node)
         G.pgn_textview.queue_draw()
+
         # Scrolling will occur after drawing since 
         # the draw event has higher priority.
         # Would be nice to prevent unscrolling in first place when possible.
