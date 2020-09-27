@@ -1107,6 +1107,18 @@ def save_callback(*args):
 
 @gui_callback
 @documented
+def save_as_callback(*args):
+    dialog = gtk.FileChooserDialog(title="Choose save location", parent=G.window, action=gtk.FileChooserAction.SAVE)
+    dialog.add_buttons(gtk.STOCK_CANCEL, gtk.ResponseType.CANCEL, gtk.STOCK_SAVE, gtk.ResponseType.OK)
+    response = dialog.run()
+    filename = dialog.get_filename()
+    dialog.destroy()
+    if response == gtk.ResponseType.OK:
+        save_callback(filename)
+    return False
+
+@gui_callback
+@documented
 def open_pgn_textview_callback(*args):
     '''Toggles appearance of textview that displays game PGN.'''
     # Extract modifier keys
