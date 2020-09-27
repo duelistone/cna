@@ -995,6 +995,17 @@
     ]
   },
   {
+    "name": "save_as_callback",
+    "entries": [
+      "saveas"
+    ],
+    "shortcuts": [],
+    "menu": [
+      "File",
+      "Save As"
+    ]
+  },
+  {
     "name": "save_puzzle_callback",
     "entries": [
       "save_puzzle",
