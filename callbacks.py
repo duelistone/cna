@@ -1727,34 +1727,48 @@ def entry_bar_callback(widget):
     else:
         text = widget.get_text()
     args = shlex.split(text)
-
-    # Save in history
-    if len(args) > 0:
-        G.command_history.append(text)
-
-    while len(args) > 0:
-        # Try to parse moves
-        move = None
+    
+    while True:
+        # Check for &&
         try:
-            move = G.g.readonly_board.parse_san(args[0])
+            separator_index = args.index('&&')
+            rest = args[separator_index + 1:]
+            args = args[:separator_index]
         except ValueError:
-            pass
+            rest = []
 
-        if move:
-            # Legal move given
-            make_move(move)
-            G.board_display.queue_draw()
-            if type(widget) != str: widget.set_text("")
-            G.command_index = 0
-            del args[0]
-        else:
-            # Command given
-            if args[0] in G.command_callbacks:
-                future_callback = G.command_callbacks[args[0]](*args[1:])
+        # Save in history
+        if args:
+            G.command_history.append(text)
+
+        while args:
+            # Try to parse moves
+            move = None
+            try:
+                move = G.g.readonly_board.parse_san(args[0])
+            except ValueError:
+                pass
+
+            if move:
+                # Legal move given
+                make_move(move)
+                G.board_display.queue_draw()
                 if type(widget) != str: widget.set_text("")
-                if callable(future_callback):
-                    future_callback()
                 G.command_index = 0
+                del args[0]
+            else:
+                # Command given
+                if args[0] in G.command_callbacks:
+                    future_callback = G.command_callbacks[args[0]](*args[1:])
+                    if type(widget) != str: widget.set_text("")
+                    if callable(future_callback):
+                        future_callback()
+                    G.command_index = 0
+                break
+        
+        if rest:
+            args = rest
+        else:
             break
 
     return False
