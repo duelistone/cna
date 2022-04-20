@@ -71,7 +71,7 @@ class MemoryMappedReaderWriter(chess.polyglot.MemoryMappedReader):
         if index >= len(self):
             return False
         suggestion = self[index]
-        while suggestion.key == entry.key:
+        while suggestion.key == entry.key and index < len(self):
             if suggestion.move == entry.move:
                 return True
             index += 1
@@ -547,5 +547,30 @@ class Repertoire(object):
             e, c, n = update_spaced_repetition_values(e, c, n, q)
             weight, learn = export_values(e, c, n)
             mmrw.edit_entry(index, position, entry.move, weight, learn)
+            index += 1
+            counter += 1
+
+    def remove_learning_data(self, player, position, move):
+        # TODO Refactor to avoid repeated code
+        mmrw = self.get_mmrw(player, position.turn)
+        position_hash = chess.polyglot.zobrist_hash(position)
+        index = mmrw.bisect_key_left(position_hash)
+        counter = 0
+        while index < len(mmrw):
+            entry = mmrw[index]
+            if entry.key != position_hash:
+                break
+            if entry.move != move:
+                index += 1
+                continue
+            if counter > 0:
+                # This shouldn't happen!
+                # To make work, need to compare positions
+                print("Warning: following board/move pair has multiple entries")
+                print(position)
+                print("Board hash: %d" % position_hash)
+                print(move)
+                break
+            mmrw.edit_entry(index, position, entry.move, 1, 0)
             index += 1
             counter += 1
