@@ -71,10 +71,12 @@ class MemoryMappedReaderWriter(chess.polyglot.MemoryMappedReader):
         if index >= len(self):
             return False
         suggestion = self[index]
-        while suggestion.key == entry.key and index < len(self):
+        while suggestion.key == entry.key:
             if suggestion.move == entry.move:
                 return True
             index += 1
+            if index >= len(self):
+                return False
             suggestion = self[index]
         return False
 
