@@ -279,6 +279,77 @@ def set_engine_callback(*args):
         G.engines = [G.engines[index]] + G.engines[:index] + G.engines[index + 1:]
 
     return False
+    
+@gui_callback
+@documented
+def wait_callback(*args):
+    '''Waiting callback. Behavior depends on types of arguments given.
+    Here are some ideas (ones with asterisk not implemented):
+    sleep float              -> Sleep for that many seconds
+    nodes integer float      -> Wait until current analysis reaches that many nodes.
+                                The third argument is optional and represents how often, in seconds,
+                                the analysis is checked.
+    *depth integer float      -> Similar, but with depth
+    *turn color float         -> Similar, but with color (white/w or black/w)
+    *score bound_type integer -> Wait until score meets a certain bound. bound_type is upperbound/lowerbound/mate.
+                                     If mate is given, the integer argument is optional, and would represent the
+                                     number of moves the mate needs to be achieved by.'''
+    default_resolution = 1
+    if args[0] == "sleep":
+        try:
+            sleep_time = float(args[1])
+        except:
+            display_status("No time given for sleep command.")
+            return False
+        time.sleep(sleep_time)
+        
+    if args[0] == "nodes":
+        try:
+            nodes = int(args[1])
+        except:
+            display_status("No number of nodes given for wait command.")
+            return False
+        try:
+            resolution = float(args[2])
+            assert(resolution >= 0)
+        except:
+            resolution = default_resolution
+
+        while G.engines[G.current_engine_index].latest_engine_stats[4] < nodes:
+            time.sleep(resolution)
+
+        return False
+
+    return False
+
+@gui_callback
+@documented
+def comment_move_callback(*args):
+    '''Appends PV of engine at the end of current comment.'''
+    engine = G.engines[G.current_engine_index]
+    if engine.latest_engine_lines:
+        if G.g.comment:
+            G.g.comment += " " + engine.latest_engine_lines[0]
+        else:
+            G.g.comment += engine.latest_engine_lines[0]
+        update_pgn_message()
+    return False
+
+@gui_callback
+@documented
+def repeat_callback(*args):
+    '''Repeats a command a given number of times.'''
+    try:
+        num_repetitions = int(args[0])
+    except:
+        display_status("Did not provide an integer number of repetitions")
+    try:
+        command = args[1]
+    except:
+        return False
+    command_list = num_repetitions * [command]
+    entry_bar_callback(" && ".join(command_list))
+    return False
 
 @gui_callback
 @documented
@@ -350,7 +421,7 @@ def display_repertoire_moves_callback(*args):
                 moves = lichess_opening_moves(board)
                 if moves != None:
                     words.extend(moves)
-                GLib.idle_add(lambda: display_status(" ".join(words)))
+                display_status(" ".join(words))
                 
             thread = threading.Thread(target=load_lichess_moves, args=(words,), daemon=True)
             thread.start()
@@ -363,7 +434,7 @@ def display_repertoire_moves_callback(*args):
 def lichess_top_games_callback(*args):
     def load_lichess_top_games():
         info_list, G.top_game_ids = lichess_top_games(G.g.board())
-        GLib.idle_add(lambda: display_status(", ".join(info_list)))
+        display_status(", ".join(info_list))
     
     thread = threading.Thread(target=load_lichess_top_games, daemon=True)
     thread.start()
@@ -394,7 +465,7 @@ def load_lichess_game_callback(*args):
                 update_game_info()
             GLib.idle_add(load_and_give_info)
         else:
-            GLib.idle_add(lambda : display_status("An error occurred fetching or parsing the game."))
+            display_status("An error occurred fetching or parsing the game.")
 
     thread = threading.Thread(target=load_lichess_game, args=(game_id,), daemon=True)
     thread.start()
@@ -521,11 +592,11 @@ def copy_fen_callback(*args):
 def clear_arrows_callback(*args):
     '''Clears all arrows from the current position.'''
     # Remove any arrow NAGs
-    for source, target in G.g.arrows:
-        nag = arrow_nag(source, target, G.g.arrows[(source, target)])
+    for source, target in G.g.my_arrows:
+        nag = arrow_nag(source, target, G.g.my_arrows[(source, target)])
         G.g.nags.remove(nag)
     # Clear arrows dict and redraw board
-    G.g.arrows.clear()
+    G.g.my_arrows.clear()
     G.board_display.queue_draw()
     return True
 
@@ -832,8 +903,8 @@ def board_draw_callback(widget, cr):
                 cr.fill()
 
             # Highlight square if necessary
-            if (square, square) in G.g.arrows:
-                highlight_square(cr, G.g.arrows[(square, square)], square_size)
+            if (square, square) in G.g.my_arrows:
+                highlight_square(cr, G.g.my_arrows[(square, square)], square_size)
 
             # Draw the piece, if there is one
             piece = G.g.readonly_board.piece_at(square)
@@ -849,9 +920,9 @@ def board_draw_callback(widget, cr):
     cr.restore()
 
     # Draw arrows
-    for e in G.g.arrows:
+    for e in G.g.my_arrows:
         if e[0] == e[1]: continue # These are the highlighted squares, already done
-        draw_arrow(cr, G.g.arrows[e], square_size, e[0], e[1])
+        draw_arrow(cr, G.g.my_arrows[e], square_size, e[0], e[1])
 
     # Draw little circle for side to move on bottom left
     # and for opening status (if necessary)
@@ -935,10 +1006,10 @@ def board_mouse_up_callback(widget, event):
 
         if arrow_target != None and G.arrow_source != None:
             elem = (G.arrow_source, arrow_target)
-            if elem in G.g.arrows:
-                nag = arrow_nag(G.arrow_source, arrow_target, G.g.arrows[elem])
+            if elem in G.g.my_arrows:
+                nag = arrow_nag(G.arrow_source, arrow_target, G.g.my_arrows[elem])
                 G.g.nags.remove(nag)
-                del G.g.arrows[elem]
+                del G.g.my_arrows[elem]
             else:
                 modifiers = gtk.accelerator_get_default_mod_mask()
                 if event.state & modifiers == gdk.ModifierType.CONTROL_MASK:
@@ -955,7 +1026,7 @@ def board_mouse_up_callback(widget, event):
                     colorRGBA = color.red_float, color.green_float, color.blue_float, G.arrowRGBA[3]
                 else:
                     colorRGBA = tuple(G.arrowRGBA)
-                G.g.arrows[elem] = colorRGBA
+                G.g.my_arrows[elem] = colorRGBA
                 G.g.nags.add(arrow_nag(G.arrow_source, arrow_target, colorRGBA))
 
         G.arrow_source = G.NULL_SQUARE
@@ -1277,7 +1348,7 @@ def toggle_stockfish_callback(*args):
     if engine.is_initialized() == False:
         # Start up engine
         engine.board = G.g.board()
-        engine.engine_enabled_event.set()
+        engine.engine_async_loop.call_soon_threadsafe(engine.engine_enabled_event.set)
         G.stockfish_textview.show_all()
     elif engine.engine_enabled_event.is_set():
         # Turn stockfish off
@@ -1455,7 +1526,7 @@ def play_move_callback(*args):
 @documented
 def play_training_move_callback(*args):
     # Play engine in training mode
-    G.weak_engine_enabled_event.set()
+    G.weak_engine_async_loop.call_soon_threadsafe(G.weak_engine_enabled_event.set)
     return False
 
 @gui_callback
@@ -1565,6 +1636,18 @@ def set_to_learn_callback(*args):
         # Note the following does nothing if position isn't in repertoire already,
         # or if it is already learnable
         G.rep.make_position_learnable(G.g.board(), G.player)
+        G.rep.flush()
+        mark_nodes(G.g)
+        update_pgn_message()
+    return False
+
+@gui_callback
+@documented
+def unlearn_callback(*args):
+    '''Removes a position+move from spaced repetition, but keeps it in repertoire.'''
+    if G.rep:
+        for var in G.g.variations:
+            G.rep.remove_learning_data(G.player, G.g.board(), var.move)
         G.rep.flush()
         mark_nodes(G.g)
         update_pgn_message()
@@ -1711,7 +1794,13 @@ def run_script_callback(*args):
         display_status("Could not open file '%s'" % args[0])
         return False
     for line in fil:
-        entry_bar_callback(line.strip())
+        words = shlex.split(line)
+        if words[-1] == "&":
+            words = words[:-1]
+            entry_bar_callback(" ".join(words))
+        else:
+            thread = entry_bar_callback(" ".join(words))
+            thread.join()
     return False
 
 @gui_callback
@@ -1726,50 +1815,59 @@ def entry_bar_callback(widget):
         text = widget
     else:
         text = widget.get_text()
-    args = shlex.split(text)
     
-    while True:
-        # Check for &&
-        try:
-            separator_index = args.index('&&')
-            rest = args[separator_index + 1:]
-            args = args[:separator_index]
-        except ValueError:
-            rest = []
-
-        # Save in history
-        if args:
-            G.command_history.append(text)
-
-        while args:
-            # Try to parse moves
-            move = None
+    def f():
+        args = shlex.split(text)
+        while True:
+            # Check for &&
             try:
-                move = G.g.readonly_board.parse_san(args[0])
+                separator_index = args.index('&&')
+                rest = args[separator_index + 1:]
+                args = args[:separator_index]
             except ValueError:
-                pass
+                rest = []
 
-            if move:
-                # Legal move given
-                make_move(move)
-                G.board_display.queue_draw()
-                if type(widget) != str: widget.set_text("")
-                G.command_index = 0
-                del args[0]
-            else:
-                # Command given
-                if args[0] in G.command_callbacks:
-                    future_callback = G.command_callbacks[args[0]](*args[1:])
-                    if type(widget) != str: widget.set_text("")
-                    if callable(future_callback):
-                        future_callback()
+            # Save in history
+            if args:
+                G.command_history.append(text)
+
+            while args:
+                # Try to parse moves
+                move = None
+                try:
+                    move = G.g.readonly_board.parse_san(args[0])
+                except ValueError:
+                    pass
+
+                if move:
+                    # Legal move given
+                    make_move(move)
+                    G.board_display.queue_draw()
+                    if type(widget) != str: 
+                        GLib.idle_add(widget.set_text, "")
                     G.command_index = 0
+                    del args[0]
+                else:
+                    # Command given
+                    if args[0] in G.command_callbacks:
+                        future_callback = G.command_callbacks[args[0]](*args[1:])
+                        if type(widget) != str: 
+                            GLib.idle_add(widget.set_text, "")
+                        if callable(future_callback):
+                            future_callback()
+                        G.command_index = 0
+                    break
+            
+            if rest:
+                args = rest
+            else:
                 break
-        
-        if rest:
-            args = rest
-        else:
-            break
+    thread = threading.Thread(target=f)
+    thread.start()
+
+    if type(widget) == str:
+        # Internal calls don't need to return booleans like GTK ones
+        return thread
 
     return False
 

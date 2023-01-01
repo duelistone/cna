@@ -6,6 +6,7 @@ class OT_Information(object):
     '''An object to store information of an opening test.'''
     def __init__(self):
         self.ot_progress = (0, 0) # Correct and total answered in session
+        self.previous_board = None
         self.reset_question_info()
 
     def reset_time(self):
@@ -20,4 +21,3 @@ class OT_Information(object):
 
     def update_progress(self, b):
         self.ot_progress = (self.ot_progress[0] + b, self.ot_progress[1] + 1) # Typecasting bool b to int
-

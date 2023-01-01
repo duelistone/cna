@@ -39,8 +39,17 @@ def rep_visitor(board, player=None, only_sr=False, return_entry=False):
                 board.push(entry.move)
                 yield from rep_visitor(board.copy(), player, only_sr, return_entry)
                 board.pop()
+
     return rep_visitor(board, player, only_sr, return_entry)
 
+# Incomplete
+def batch_rep_visitor(board, player=None, only_sr=False, return_entry=False):
+    def batch_rep_visitor(board, player=None, only_sr=False, return_entry=False):
+        count = 0
+        while True:
+            yield from rep_visitor(board, player, only_sr, return_entry)
+            count += 1
+    
 def tactics_visitor(board=None, only_sr=False, return_entry=False, **kw):
     '''Visits tactics repertoire nodes that are either the exercises starting from
     the given initial position, or visits all tactics repertoire nodes

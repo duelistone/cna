@@ -34,11 +34,12 @@ def main():
     parser = cla_parser(sys.argv)
     parser.register("--tb", 1)
     parser.register("--config", 1)
-    parser.register("--sr", 0, 2, remove_from_argv=True)
     parser.register("-h", 0, 2)
     parser.register("-b", 0, 2, remove_from_argv=True)
+    parser.register("--sr", 0, 2, remove_from_argv=True)
     parser.register("--ot", -1, 9, remove_from_argv=True)
     parser.register("--tt", -1, 9, remove_from_argv=True)
+    parser.register("--ot_batch", 1, remove_from_argv=True)
     parser.parse()
 
     # Determine player color
@@ -60,6 +61,7 @@ def main():
     useOpeningMode = '--ot' in parser
     useTacticsMode = '--tt' in parser
     useLearningMode = '--sr' in parser # Still needs to have '--ot' or '--tt' as well, for now
+    useBatchMode = '--ot_batch' in parser
     if useLearningMode and not (useOpeningMode or useTacticsMode):
         print("Incorrect usage. Cannot practice spaced repetition without ot mode.", file=sys.stderr)
         exit(1)

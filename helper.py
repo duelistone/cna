@@ -124,8 +124,8 @@ def mark_nodes(game):
     '''Marks special and book nodes, as well as the arrows given by arrow nags.'''
     # TODO: Create subclass to have these attributes
     # Make sure node has an arrows attribute
-    if not hasattr(game, 'arrows'):
-        game.arrows = {}
+    if not hasattr(game, 'my_arrows'):
+        game.my_arrows = {}
 
     if not hasattr(game, 'readonly_board'):
         game.readonly_board = game.board()
@@ -136,7 +136,7 @@ def mark_nodes(game):
         if is_arrow_nag(nag):
             # See parse_arrow_nag for details
             start_square, end_square, red, green, blue, transparency = parse_arrow_nag(nag)
-            game.arrows[(start_square, end_square)] = (red, green, blue, transparency)
+            game.my_arrows[(start_square, end_square)] = (red, green, blue, transparency)
 
     # Check if special or book node
     mark_if_special(game)
@@ -190,8 +190,10 @@ def learn_special_nodes(game):
             learn_special_nodes(node)
 
 def display_status(s):
-    G.status_bar.remove_all(G.status_bar_cid)
-    G.status_bar.push(G.status_bar_cid, s)
+    def f():
+        G.status_bar.remove_all(G.status_bar_cid)
+        G.status_bar.push(G.status_bar_cid, s)
+    GLib.idle_add(f)
 
 def update_game_info():
     stringToDisplay = "%s vs %s, %s, %s, %s, %s" % (G.g.root().headers["White"], G.g.root().headers["Black"], G.g.root().headers["Event"], G.g.root().headers["Site"], G.g.root().headers["Date"], G.g.root().headers["Result"])
@@ -519,8 +521,8 @@ def update_pgn_message():
         s = game_gui_string(G.g.root())
 
         # Do updating
-        G.pgn_buffer.set_text(s)
-        update_pgn_textview_tags(current_game_node)
+        GLib.idle_add(G.pgn_buffer.set_text, s)
+        GLib.idle_add(update_pgn_textview_tags, current_game_node)
         G.pgn_textview.queue_draw()
 
         # Scrolling will occur after drawing since 
@@ -530,17 +532,19 @@ def update_pgn_message():
         GLib.idle_add(update_pgn_textview_move, current_game_node)
 
 def update_pgn_textview_move(node):
-    if G.pgn_textview_enabled:
-        G.pgn_buffer.remove_tag_by_name("current", G.pgn_buffer.get_start_iter(), G.pgn_buffer.get_end_iter())
-        start, end = G.nodesToRanges[node]
-        start = G.pgn_buffer.get_iter_at_offset(start)
-        end = G.pgn_buffer.get_iter_at_offset(end)
-        G.pgn_buffer.apply_tag_by_name("current", start, end)
-        if G.pgn_textview_mark == None:
-            G.pgn_textview_mark = G.pgn_buffer.create_mark(None, end, False)
-        else:
-            G.pgn_buffer.move_mark(G.pgn_textview_mark, end)
-        G.pgn_textview.scroll_to_mark(G.pgn_textview_mark, 0, True, 0.5, 0.5)
+    def f():
+        if G.pgn_textview_enabled:
+            G.pgn_buffer.remove_tag_by_name("current", G.pgn_buffer.get_start_iter(), G.pgn_buffer.get_end_iter())
+            start, end = G.nodesToRanges[node]
+            start = G.pgn_buffer.get_iter_at_offset(start)
+            end = G.pgn_buffer.get_iter_at_offset(end)
+            G.pgn_buffer.apply_tag_by_name("current", start, end)
+            if G.pgn_textview_mark == None:
+                G.pgn_textview_mark = G.pgn_buffer.create_mark(None, end, False)
+            else:
+                G.pgn_buffer.move_mark(G.pgn_textview_mark, end)
+            G.pgn_textview.scroll_to_mark(G.pgn_textview_mark, 0, True, 0.5, 0.5)
+    GLib.idle_add(f)
 
 def make_report():
     if G.rep:
@@ -617,7 +621,8 @@ def setup_ot_mode(only_sr=False, visitor=rep_visitor):
 
     # Set new answer + callback, and load new board
     if only_sr:
-        if not tt_mode and random.random() < G.SR_FULL_LINE_PROBABILITY:
+        if not tt_mode and determine_if_restart_line(G.ot_info.previous_board, b):
+            G.ot_info.previous_board = b.copy()
             return sr_full_line_setup(create_board_answer_stack(b, m), True)
         else:
             G.ot_info.reset_question_info()
@@ -700,6 +705,36 @@ def create_board_answer_stack(board, final_answer):
         stack.append((board.copy(), last_move))
 
     return stack
+
+def determine_if_restart_line(prev_board, curr_board):
+    if prev_board == None:
+        return True
+
+    # We seek how long each line is, and when they deviate from each other
+    index = 0
+    while index < len(prev_board.move_stack) and index < len(curr_board.move_stack):
+        if prev_board.move_stack[index].from_square == curr_board.move_stack[index].from_square and \
+            prev_board.move_stack[index].to_square == curr_board.move_stack[index].to_square:
+            index += 1
+        else:
+            break
+    deviation_length = len(prev_board.move_stack) + len(curr_board.move_stack) - 2 * index
+
+    # The higher the deviation length and smaller the index,
+    # the greater the probability of covering the entire line should be.
+    # On the other hand, a deviation length of 2 or less should never, 
+    # or very rarely, warrant reviewing the entire line.
+    prob_not_restarted = 0.94 ** (deviation_length - 2)
+    #prob_not_restarted -= 0.09 ** (index / 10)
+    prob_not_restarted = min(prob_not_restarted, 1)
+    prob_not_restarted = max(prob_not_restarted, 0)
+    p = 1 - prob_not_restarted
+
+    # Push probability closer to extremes
+    p = 0.5 + math.copysign((2 * abs(p - 0.5)) ** 0.4 / 2, p - 0.5)
+
+    print("Deviation length: %d, Common length: %d, Probability of restarting: %f" % (deviation_length, index, p))
+    return random.random() < p
 
 def save_current_pgn(save_file_name, show_status=False, prelude=None, set_global_save_file=False, proper_format=False):
     '''Saves current game to specified file.

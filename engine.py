@@ -258,6 +258,7 @@ async def engine_match_wrapper(*args, **kwargs):
 
 # Prepare weak engine
 async def weak_engine_init():
+    G.weak_engine_async_loop = asyncio.get_running_loop()
     G.weak_engine_enabled_event = asyncio.Event()
     await G.weak_engine_enabled_event.wait()
     engine = await chess.engine.popen_uci("stockfish") # TODO: Flexible engine path

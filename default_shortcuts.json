@@ -1300,5 +1300,17 @@
     "name": "exit_callback",
     "entries": ["exit", "quit"],
     "menu": ["File", "Quit"]
+  },
+  {
+    "name": "wait_callback",
+    "entries": ["wait"]
+  },
+  {
+    "name": "repeat_callback",
+    "entries": ["repeat"]
+  },
+  {
+    "name": "comment_move_callback",
+    "entries": ["comment_move"]
   }
 ]

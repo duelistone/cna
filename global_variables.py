@@ -110,14 +110,14 @@ sound = True # To toggle sound in opening trainer
 move_completed_callback = lambda x : None
 
 # Engine
-engine_commands = ["leela", "stockfish", "ethereal"] # Used for order
-engine_settings = {"stockfish" : {"Hash" : 12288, "Threads" : 12, "Contempt" : 0}, "leela" : {}, "ethereal" : {"Hash" : 4096, "Threads" : 4}}
+engine_commands = ["stockfish", "leela", "ethereal"] # Used for order
+engine_settings = {"stockfish" : {"Hash" : 12288, "Threads" : 12, "UCI_AnalyseMode" : "true"}, "leela" : {}, "ethereal" : {"Hash" : 4096, "Threads" : 4}}
 engines = [] # Have to be defined elsewhere due to engine.py dependency on this file
 current_engine_index = 0
 # Output related
 latest_engine_stats = [-1, -1, -1, -1, -1]
 latest_engine_lines = []
-multipv = 3
+multipv = 1
 show_engine_pv = True
 # Weak engine related
 playLevel = 20 # Int represents depth, float represents time
