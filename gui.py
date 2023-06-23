@@ -181,7 +181,7 @@ def preparations(builder):
 
     # Prepare repertoire and mark nodes
     try:
-        G.rep = Repertoire("main.rep")
+        G.rep = Repertoire(G.repertoire_file_name)
     except:
         pass
     mark_nodes(G.g.root())

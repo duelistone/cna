@@ -2,6 +2,7 @@
 
 import mmap, os, os.path, time, sys, subprocess
 import chess, chess.polyglot, chess.pgn
+import global_variables as G
 from spaced_repetition import *
 from chess_tools import *
 from bisect import bisect_left
@@ -171,7 +172,10 @@ class Repertoire(object):
         comments_filename = os.sep.join([directory, 'comments'])
         if os.path.getsize(comments_filename) == 0:
             fil = open(comments_filename, 'w')
-            fil.write(G.COMMENT_ENTRY_SIZE * '\0') # Change if comment entry size changes
+            try:
+                fil.write(G.COMMENT_ENTRY_SIZE * '\0') # Change if comment entry size changes
+            except Exception as e:
+                print(e, file=sys.stderr)
             fil.close()
         comments_file = os.open(comments_filename, os.O_RDWR)
         try:
